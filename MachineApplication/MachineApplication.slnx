@@ -17,5 +17,6 @@
     <Project Path="src/MachineApplication.Entrance/MachineApplication.Entrance.csproj" />
     <Project Path="src/RestSharp/RestSharp.csproj" />
   </Folder>
+  <Project Path="MachineApplication.Create/MachineApplication.Create.csproj" />
   <Project Path="MachineApplication.Startup/MachineApplication.Startup.csproj" />
 </Solution>
