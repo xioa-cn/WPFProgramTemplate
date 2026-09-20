@@ -1,10 +1,9 @@
 ﻿using Machine.ModuleLoad.Mvvm;
-
-namespace MachineApplication.Entrance.Models;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using MaterialDesignThemes.Wpf;
 using MachineApplication.Entrance.ViewModels;
+
+namespace MachineApplication.Entrance.Models;
 
 public partial class NavModel : ViewModelBase
 {
