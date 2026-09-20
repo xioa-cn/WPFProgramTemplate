@@ -5,7 +5,7 @@ namespace MachineApplication.Create;
 
 internal static class ProjectTemplates
 {
-    public static Dictionary<string, string> Create(string root, string target, string project, string module, bool createModule)
+    public static Dictionary<string, string> Create(string root, string target, string project, string module, bool createModule, bool loadDesignerStyles)
     {
         var basePath = Path.Combine(root, "src", "Machine.ModuleLoad", "Machine.ModuleLoad.csproj");
         var analyzer = Path.Combine(root, "src", "I18n.LangsGenerator", "I18n.LangsGenerator.csproj");
@@ -26,10 +26,15 @@ internal static class ProjectTemplates
                     new XAttribute("OutputItemType", "Analyzer"), new XAttribute("ReferenceOutputAssembly", "false")),
                 new XElement("AdditionalFiles", new XAttribute("Include", "**/lang.*.json"),
                     new XAttribute("Exclude", "bin/**;obj/**"))));
-        if (!createModule) return new Dictionary<string, string> { [project + ".csproj"] = xml.ToString() };
+        if (loadDesignerStyles)
+            DesignResourcesTemplate.Configure(xml, root, target);
         var files = new Dictionary<string, string>
         {
-            [project + ".csproj"] = xml.ToString(),
+            [project + ".csproj"] = xml.ToString()
+        };
+        if (!createModule) return files;
+        var languageFiles = new Dictionary<string, string>
+        {
             ["Resources/lang.zh.json"] = JsonSerializer.Serialize(new { Global = new { ModuleName = project } }, new JsonSerializerOptions { WriteIndented = true }),
             [$"Resources/{module}Lang.cs"] = $$"""
                 using I18nExtensions;
@@ -41,6 +46,7 @@ internal static class ProjectTemplates
                 }
                 """
         };
+        foreach (var (name, content) in languageFiles) files[name] = content;
         if (createModule)
             files[module + ".cs"] = $$"""
                 using Machine.ModuleLoad;
@@ -71,5 +77,9 @@ internal static class ProjectTemplates
         return files;
     }
 }
+
+
+
+
 
 

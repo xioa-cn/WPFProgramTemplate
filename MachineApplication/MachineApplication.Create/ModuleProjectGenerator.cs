@@ -22,13 +22,14 @@ public sealed class ModuleProjectGenerator
                 module = ConsoleUi.Ask("模块类名称（同时用于命名语言类）", "SampleModule");
                 NameRules.Validate(module, false);
             }
+            var loadDesignerStyles = ConsoleUi.Ask("是否加载设计器样式？Y/n", "Y").Equals("Y", StringComparison.OrdinalIgnoreCase);
             ConsoleUi.Info("📂 现有解决方案文件夹：" + string.Join(", ", SolutionService.Folders(solution)));
             var folder = ConsoleUi.Ask("解决方案文件夹（可输入已有或新名称，/ 表示根目录）", "/modules/");
             var dir = Path.GetFullPath(Path.Combine(root, parent, project));
             PathRules.Validate(root, dir);
             if (Directory.Exists(dir) || File.Exists(dir))
                 throw new InvalidOperationException("项目目录已存在，请使用新项目名称。");
-            var files = ProjectTemplates.Create(root, dir, project, module, createModule);
+            var files = ProjectTemplates.Create(root, dir, project, module, createModule, loadDesignerStyles);
             ConsoleUi.Step(3, "🔨 生成项目");
             using (var progress = new GenerationProgress(files.Count + 1))
             {
@@ -56,6 +57,7 @@ public sealed class ModuleProjectGenerator
     }
 
 }
+
 
 
 
