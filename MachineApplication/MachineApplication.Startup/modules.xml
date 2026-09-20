@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wpfModules>
+    <!-- 单元模块 -->
+    <unitModules Name="Common" LoadMode="SourceGenerator">
+        <!-- 单元模块中的dll模块 -->
+        <dllModule Name="MachineApplication" Dll="MachineApplication.Entrance" Path=".">
+            <!-- dll模块中的加载类 -->
+            <loadClass Name="EntranceModule"/>
+        </dllModule>
+    </unitModules>
+</wpfModules>

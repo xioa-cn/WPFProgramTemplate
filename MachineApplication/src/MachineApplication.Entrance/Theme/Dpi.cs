@@ -1,0 +1,48 @@
+﻿using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Media;
+
+namespace MachineApplication.Entrance.Theme;
+
+public record struct Dpi(int X, int Y)
+{
+    /// <summary>
+    /// Horizontal factor to standard DPI
+    /// </summary>
+    public double FactorX => (double)X / Standard.X;
+
+    /// <summary>
+    /// Vertical factor to standard DPI
+    /// </summary>
+    public double FactorY => (double)Y / Standard.Y;
+
+    /// <summary>
+    /// Standard DPI
+    /// </summary>
+    public static Dpi Standard => new Dpi(96, 96);
+
+    /// <summary>
+    /// System DPI
+    /// </summary>
+    public static Dpi System => new Dpi(GetDeviceCaps(default, LOGPIXELSX), GetDeviceCaps(default, LOGPIXELSY));
+
+    public static Dpi GetFromVisual(Visual visual)
+    {
+        var source = PresentationSource.FromVisual(visual);
+        var dpiX = 96;
+        var dpiY = 96;
+        if (source?.CompositionTarget != null)
+        {
+            dpiX = (int)(96 * source.CompositionTarget.TransformToDevice.M11);
+            dpiY = (int)(96 * source.CompositionTarget.TransformToDevice.M22);
+        }
+        return new Dpi(dpiX, dpiY);
+    }
+
+
+    const int LOGPIXELSX = 88;
+    const int LOGPIXELSY = 90;
+
+    [DllImport("Gdi32", ExactSpelling = true)]
+    private static extern int GetDeviceCaps(nint hDC, int index);
+}

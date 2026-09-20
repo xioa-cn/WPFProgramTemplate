@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/i18n/">
+    <Project Path="src/I18n.LangsGenerator/I18n.LangsGenerator.csproj" />
+    <Project Path="src/I18nExtensions/I18nExtensions.csproj" />
+  </Folder>
+  <Folder Name="/modules/" />
+  <Folder Name="/src/mls/">
+    <Project Path="src/ModuleLoadGenerator/ModuleLoadGenerator.csproj" />
+    <Project Path="src/ModuleLoadSources/ModuleLoadSources.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/I18n.LangsGenerator.Tests/I18n.LangsGenerator.Tests.csproj" />
+    <Project Path="tests/MachineApplication.Entrance.Tests/MachineApplication.Entrance.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Machine.ModuleLoad/Machine.ModuleLoad.csproj" />
+    <Project Path="src/MachineApplication.Entrance/MachineApplication.Entrance.csproj" />
+    <Project Path="src/RestSharp/RestSharp.csproj" />
+  </Folder>
+  <Project Path="MachineApplication.Startup/MachineApplication.Startup.csproj" />
+</Solution>

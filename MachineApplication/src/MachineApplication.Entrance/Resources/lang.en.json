@@ -1,0 +1,60 @@
+﻿{
+  "Global": {
+    "AppName" : "WPF_Application"
+  },
+  "MainWindow": {
+    "Navigation": "Workspace",
+    "General": "General",
+    "Appearance": "Appearance",
+    "Home": "Home",
+    "Settings": "Settings",
+    "ThemeColor": "Theme color",
+    "Pin": "Pin on top",
+    "Unpin": "Unpin",
+    "Minimize": "Minimize",
+    "Maximize": "Maximize",
+    "Restore": "Restore",
+    "Close": "Close",
+    "ChangeLanguage": "Change language"
+  },
+  "ThemeColorsView": {
+    "AdjustmentSettings": "Color adjustment settings",
+    "DesiredContrastRatio": "Desired contrast ratio",
+    "Contrast": "Contrast",
+    "ColorSelection": "Color selection",
+    "None": "None",
+    "Low": "Low",
+    "Medium": "Medium",
+    "High": "High",
+    "Primary": "Primary",
+    "Secondary": "Secondary",
+    "All": "All",
+    "ColorAdjustment": "Color adjustment",
+    "ColorAdjustmentHint": "Adjust theme color contrast using the selected settings.",
+    "Title": "Theme color",
+    "LightDark": "Toggle light/dark theme",
+    "LightTheme": "Light theme",
+    "DarkTheme": "Dark theme",
+    "Palettes": {
+      "red": "Red",
+      "pink": "Pink",
+      "purple": "Purple",
+      "deeppurple": "Deep purple",
+      "indigo": "Indigo",
+      "blue": "Blue",
+      "lightblue": "Light blue",
+      "cyan": "Cyan",
+      "teal": "Teal",
+      "green": "Green",
+      "lightgreen": "Light green",
+      "lime": "Lime",
+      "yellow": "Yellow",
+      "amber": "Amber",
+      "orange": "Orange",
+      "deeporange": "Deep orange",
+      "brown": "Brown",
+      "grey": "Grey",
+      "bluegrey": "Blue grey"
+    }
+  }
+}

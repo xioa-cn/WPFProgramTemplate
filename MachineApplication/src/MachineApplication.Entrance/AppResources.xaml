@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <ResourceDictionary.MergedDictionaries>
+        <materialDesign:BundledTheme BaseTheme="Light"
+                                     ColorAdjustment="{materialDesign:ColorAdjustment}"
+                                     PrimaryColor="Blue"
+                                     SecondaryColor="Orange" />
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    <!-- 内容表面使用主题卡片色，细边和柔和投影营造层次；明暗切换仍由 MaterialDesign 管理。 -->
+    <Style x:Key="WorkspaceCard" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#182238" BlurRadius="16" ShadowDepth="3" Opacity="0.08" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- 统一使用 MaterialDesign 简约滚动条：隐藏箭头，保留圆角滑块和主题配色。 -->
+    <Style TargetType="ScrollBar" BasedOn="{StaticResource MaterialDesignScrollBarMinimal}">
+        <Setter Property="materialDesign:ScrollBarAssist.ThumbCornerRadius" Value="3" />
+        <Setter Property="materialDesign:ScrollBarAssist.ThumbWidth" Value="6" />
+        <Setter Property="materialDesign:ScrollBarAssist.ThumbHeight" Value="6" />
+    </Style>
+</ResourceDictionary>
