@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Navigation;
 
 namespace Machine.ModuleLoad.Utils;
 
@@ -29,7 +30,12 @@ public static class ViewDesignInclude
     private static void OnSourceChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
     {
         if (sender is FrameworkElement view && args.NewValue is string source && !string.IsNullOrWhiteSpace(source))
-            view.IncludeDesignStyles(new Uri(source, UriKind.RelativeOrAbsolute));
+        {
+            if (source.Trim() == ".")
+                view.IncludeDesignStyles();
+            else
+                view.IncludeDesignStyles(new Uri(source, UriKind.RelativeOrAbsolute));
+        }
     }
 
 
@@ -43,7 +49,49 @@ public static class ViewDesignInclude
         if (!IsDesignMode(view))
             return view;
 
-        var assemblyName = view.GetType().Assembly.GetName().Name;
+        // A designer may substitute the root with a proxy. Prefer the XAML URI.
+        var baseUri = BaseUriHelper.GetBaseUri(view);
+        var path = baseUri?.OriginalString;
+        var componentEnd = path?.IndexOf(";component/", StringComparison.OrdinalIgnoreCase) ?? -1;
+        if (componentEnd >= 0)
+        {
+            var componentRoot = path![..(componentEnd + ";component/".Length)];
+            return view.IncludeDesignStyles(new Uri(
+                componentRoot + "Design/SharedStyles.xaml", UriKind.RelativeOrAbsolute));
+        }
+
+        var assembly = view.GetType().Assembly;
+        if (assembly == typeof(FrameworkElement).Assembly ||
+            (assembly.GetName().Name?.Contains("Xaml.Previewer", StringComparison.OrdinalIgnoreCase) ?? false))
+        {
+            // Rider can create a plain UserControl without a component BaseUri.
+            // Inspect resource indexes only; do not instantiate arbitrary views.
+            var candidates = new List<string>();
+            foreach (var loaded in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (loaded.IsDynamic) continue;
+                var name = loaded.GetName().Name;
+                using var stream = loaded.GetManifestResourceStream(name + ".g.resources");
+                if (stream is null) continue;
+                using var reader = new System.Resources.ResourceReader(stream);
+                var entries = reader.GetEnumerator();
+                while (entries.MoveNext())
+                {
+                    if (string.Equals(entries.Key as string, "design/sharedstyles.baml", StringComparison.OrdinalIgnoreCase))
+                    {
+                        candidates.Add(name!);
+                        break;
+                    }
+                }
+            }
+            if (candidates.Count == 1)
+                return view.IncludeDesignStyles(new Uri(
+                    $"/{candidates[0]};component/Design/SharedStyles.xaml", UriKind.Relative));
+            throw new InvalidOperationException(
+                $"Source=\".\" found {candidates.Count} shared-style assemblies ({string.Join(", ", candidates)}). " +
+                "Specify /YourModule;component/Design/SharedStyles.xaml when the designer omits the page identity and the resource is ambiguous or missing.");
+        }
+        var assemblyName = assembly.GetName().Name;
         return view.IncludeDesignStyles(
             new Uri($"/{assemblyName};component/Design/SharedStyles.xaml", UriKind.Relative));
     }
