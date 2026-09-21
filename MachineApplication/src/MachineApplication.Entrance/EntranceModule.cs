@@ -12,6 +12,10 @@ public sealed class EntranceModule : IModule
     public void ModuleStartupCommand(StartupCommand? command = null) { }
     public void RegisterTypes(IServiceCollection services)
     {
+        services.AddTransient<UserManagementViewModel>();
+        services.AddTransient<UserManagement>();
+        services.AddTransient<PermissionSettingsViewModel>();
+        services.AddTransient<PermissionSettings>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<RouterSettingViewModel>();
         services.AddTransient<RouterSetting>();
@@ -24,6 +28,9 @@ public sealed class EntranceModule : IModule
     {
         var navigation = provider.GetRequiredService<INavigationService>();
         navigation.Register("settings/routes", typeof(RouterSetting), "Common");
+        navigation.Register("settings/users", typeof(UserManagement), "Common");
+        navigation.Register("settings/permissions", typeof(PermissionSettings), "Common");
+       
         navigation.Register("home", typeof(HomeView), "Common");
         navigation.Register("settings", typeof(SettingsView), "Common");
         navigation.Register("theme/colors", typeof(ThemeColorsView), "Common");

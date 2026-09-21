@@ -1,6 +1,10 @@
+using Machine.ModuleLoad.Mapper;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Machine.ModuleLoad;
+
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Models;
 using MaterialDesignThemes.Wpf;
@@ -44,11 +48,31 @@ public partial class RouteEditorNode : ObservableObject
 
     [ObservableProperty] private string? _url;
     [ObservableProperty] private PackIconKind _icon = PackIconKind.FileOutline;
+    [ObservableProperty] private PermissionLevel? _levelToAdd;
+    public ObservableCollection<PermissionLevel> Levels { get; } = [];
+    public ObservableCollection<PermissionLevel> RequiredLevels { get; } = [];
     public ObservableCollection<RouteEditorNode> Children { get; } = [];
+
+    /// <summary>将下拉框中选中的等级加入允许访问列表，已存在则忽略。</summary>
+    [RelayCommand]
+    private void AddRequiredLevel()
+    {
+        if (LevelToAdd is not { } level || RequiredLevels.Any(item => item.Id == level.Id)) return;
+        RequiredLevels.Add(new PermissionLevel { Id = level.Id, Name = level.Name, Rank = level.Rank });
+    }
+
+    /// <summary>从当前页面的允许访问列表中移除指定等级。</summary>
+    [RelayCommand]
+    private void RemoveRequiredLevel(PermissionLevel? level)
+    {
+        var existing = RequiredLevels.FirstOrDefault(item => item.Id == level?.Id);
+        if (existing is not null) RequiredLevels.Remove(existing);
+    }
 
     public static RouteEditorNode From(NavigationItemConfiguration item)
     {
         var node = new RouteEditorNode { LanguageKey = item.LanguageKey, Icon = item.Icon, Url = item.Url };
+        foreach (var levelId in item.RequiredLevelIds) node.RequiredLevels.Add(new PermissionLevel { Id = levelId });
         foreach (var title in item.Titles)
             node.Titles.Add(new RouteTitleEditor { Culture = title.Key, Title = title.Value });
         foreach (var child in item.Children) node.Children.Add(From(child));
@@ -59,7 +83,7 @@ public partial class RouteEditorNode : ObservableObject
     {
         LanguageKey = LanguageKey.Trim(), Icon = Icon, Url = Children.Count > 0 ? null : Url,
         Titles = BuildTitles(),
-        Children = Children.Select(child => child.ToConfiguration()).ToList()
+        Children = Children.Select(child => child.ToConfiguration()).ToList(), RequiredLevelIds = RequiredLevels.Select(x => x.Id).ToList()
     };
 }
 
@@ -67,6 +91,7 @@ public partial class RouterSettingViewModel : ObservableObject
 {
     private readonly INavigationService _navigation;
     private readonly MainWindowViewModel _main;
+    private readonly PermissionService _permissions;
     public ObservableCollection<RouteEditorNode> Items { get; } = [];
     public ObservableCollection<RegisteredRoute> Pages { get; } = [];
 
@@ -76,11 +101,60 @@ public partial class RouterSettingViewModel : ObservableObject
     [ObservableProperty] private RouteEditorNode? _selectedItem;
     [ObservableProperty] private string _status = "";
 
-    public RouterSettingViewModel(INavigationService navigation, MainWindowViewModel main)
+    public RouterSettingViewModel(INavigationService navigation, MainWindowViewModel main, PermissionService permissions)
     {
         _navigation = navigation;
         _main = main;
+        _permissions = permissions;
+        _permissions.CatalogChanged += OnCatalogChanged;
         Reload();
+    }
+
+    private void OnCatalogChanged(object? sender, EventArgs args) => RefreshLevels();
+
+    /// <summary>同步最新权限等级，不丢弃尚未保存的菜单编辑。</summary>
+    public void RefreshLevels()
+    {
+        try
+        {
+            ApplyLevels(_permissions.Levels());
+        }
+        catch (Exception ex)
+        {
+            Status = "刷新权限等级失败：" + ex.Message;
+        }
+    }
+
+    private IReadOnlyList<PermissionLevel> CurrentLevels()
+    {
+        try { return _permissions.Levels(); }
+        catch { return []; }
+    }
+
+    private void ApplyLevels(IReadOnlyList<PermissionLevel> levels)
+    {
+        void Sync(IEnumerable<RouteEditorNode> nodes)
+        {
+            foreach (var node in nodes)
+            {
+                var selectedId = node.LevelToAdd?.Id;
+                node.Levels.Clear();
+                foreach (var level in levels)
+                    node.Levels.Add(new PermissionLevel { Id = level.Id, Name = level.Name, Rank = level.Rank });
+                var requiredIds = node.RequiredLevels.Select(item => item.Id).ToList();
+                node.RequiredLevels.Clear();
+                foreach (var id in requiredIds)
+                {
+                    var match = levels.FirstOrDefault(item => item.Id == id);
+                    node.RequiredLevels.Add(match is null
+                        ? new PermissionLevel { Id = id, Name = $"已删除等级 {id}" }
+                        : new PermissionLevel { Id = match.Id, Name = match.Name, Rank = match.Rank });
+                }
+                node.LevelToAdd = node.Levels.FirstOrDefault(item => item.Id == selectedId) ?? node.Levels.FirstOrDefault();
+                Sync(node.Children);
+            }
+        }
+        Sync(Items);
     }
 
     [RelayCommand]
@@ -98,6 +172,7 @@ public partial class RouterSettingViewModel : ObservableObject
             var config = RouterConfiguration.Read();
             Items.Clear();
             foreach (var item in config.NavigationItems) Items.Add(RouteEditorNode.From(item));
+            ApplyLevels(CurrentLevels());
             SelectedItem = Items.FirstOrDefault();
             RefreshPages();
             Status = "已加载配置。留空的语言标题使用语言键对应的现有翻译。";
@@ -112,6 +187,8 @@ public partial class RouterSettingViewModel : ObservableObject
     private void AddRoot()
     {
         var node = new RouteEditorNode();
+        foreach (var level in CurrentLevels()) node.Levels.Add(new PermissionLevel { Id = level.Id, Name = level.Name, Rank = level.Rank });
+        node.LevelToAdd = node.Levels.FirstOrDefault();
         Items.Add(node);
         SelectedItem = node;
     }
@@ -121,6 +198,8 @@ public partial class RouterSettingViewModel : ObservableObject
     {
         if (SelectedItem is null) return;
         var node = new RouteEditorNode();
+        foreach (var level in CurrentLevels()) node.Levels.Add(new PermissionLevel { Id = level.Id, Name = level.Name, Rank = level.Rank });
+        node.LevelToAdd = node.Levels.FirstOrDefault();
         SelectedItem.Children.Add(node);
         SelectedItem.Url = null;
         SelectedItem = node;
@@ -170,13 +249,15 @@ public partial class RouterSettingViewModel : ObservableObject
                 foreach (var node in nodes)
                 {
                     if (node.Children.Count == 0 &&
-                        (string.IsNullOrWhiteSpace(node.Url) || !_navigation.CanNavigate(node.Url)))
+                        (string.IsNullOrWhiteSpace(node.Url) || !_navigation.GetRegisteredRoutes().Any(route => string.Equals(route.Url, node.Url, StringComparison.OrdinalIgnoreCase))))
                         throw new InvalidOperationException($"菜单 {node.LanguageKey} 请选择已注册页面。");
                     Validate(node.Children);
                 }
             }
 
             Validate(config.NavigationItems);
+            // 即使绕过界面直接执行命令，也必须验证保存权限。
+            MainProvider.ServiceProvider!.GetRequiredService<Machine.ModuleLoad.Mapper.PermissionService>().Demand("page:settings/routes");
             RouterConfiguration.Save(config);
             _main.ReloadNavigation();
             Status = "已保存 Router.json，导航菜单已更新。";

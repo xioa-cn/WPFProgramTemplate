@@ -33,6 +33,24 @@
             "zh": "路由配置",
             "en": "Route settings"
           }
+        },
+        {
+          "LanguageKey": "MainWindow_Permissions",
+          "Icon": "ShieldAccount",
+          "Url": "settings/permissions",
+          "Titles": {
+            "zh": "权限配置",
+            "en": "Permission settings"
+          }
+        },
+        {
+          "LanguageKey": "MainWindow_Users",
+          "Icon": "AccountGroup",
+          "Url": "settings/users",
+          "Titles": {
+            "zh": "用户管理",
+            "en": "User management"
+          }
         }
       ]
     }

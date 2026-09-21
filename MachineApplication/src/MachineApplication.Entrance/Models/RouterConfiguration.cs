@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MaterialDesignThemes.Wpf;
@@ -47,6 +47,8 @@ public sealed class NavigationItemConfiguration
     public required PackIconKind Icon { get; init; }
     public Dictionary<string, string> Titles { get; init; } = new();
     public string? Url { get; init; }
+    /// <summary>访问该页面所需的权限等级编号；未勾选时仅最高权限账号可访问。</summary>
+    public List<int> RequiredLevelIds { get; init; } = [];
     public List<NavigationItemConfiguration> Children { get; init; } = [];
 
     internal NavModel ToModel()
@@ -55,6 +57,6 @@ public sealed class NavigationItemConfiguration
             throw new JsonException("Each navigation item requires a LanguageKey and a non-null Children collection.");
         if (Children.Count == 0 && string.IsNullOrWhiteSpace(Url))
             throw new JsonException($"Navigation item '{LanguageKey}' requires a Url or Children.");
-        return new NavModel(LanguageKey, Icon, Url, Children.Select(child => child.ToModel()).ToArray()) { Titles = Titles };
+        return new NavModel(LanguageKey, Icon, Url, Children.Select(child => child.ToModel()).ToArray()) { Titles = Titles, RequiredLevelIds = RequiredLevelIds };
     }
 }

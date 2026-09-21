@@ -15,7 +15,25 @@ public sealed class RegionManager : IRegionNavigationService
     // Keep each cached Page attached to its own Frame when switching region content.
     private readonly ConditionalWeakTable<Page, Frame> _pageHosts = new();
     private readonly Dictionary<string, UIElement> _activeViews = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<Type, HashSet<string>> _pagePermissions = new();
     private readonly IServiceProvider _rootProvider;
+
+    /// <summary>登记页面类型的权限；同类型存在多个路由时要求全部授权，防止别名绕过。</summary>
+    internal void RegisterPermission(Type type, string key)
+    {
+        if (!_pagePermissions.TryGetValue(type, out var keys)) _pagePermissions[type] = keys = new(StringComparer.OrdinalIgnoreCase);
+        keys.Add(key);
+    }
+
+    /// <summary>检查页面实例，包括区域直接导航和历史返回。</summary>
+    private void CheckPermission(UIElement view)
+    {
+        var permissions = _rootProvider.GetService<Mapper.PermissionService>();
+        if (permissions is null) return;
+        if (!_pagePermissions.TryGetValue(view.GetType(), out var keys))
+            throw new UnauthorizedAccessException("页面未登记权限。");
+        foreach (var key in keys) permissions.Demand(key);
+    }
     private readonly Dictionary<string, ContentControl> _regions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Stack<UIElement>> _history = new(StringComparer.OrdinalIgnoreCase);
 
@@ -24,7 +42,19 @@ public sealed class RegionManager : IRegionNavigationService
     public static void SetRegionName(DependencyObject element, string? value) => element.SetValue(RegionNameProperty, value);
     public static string? GetRegionName(DependencyObject element) => (string?)element.GetValue(RegionNameProperty);
 
-    public RegionManager(IServiceProvider rootProvider) => _rootProvider = rootProvider ?? throw new ArgumentNullException(nameof(rootProvider));
+    /// <summary>身份或授权变化后清空可见内容及历史，防止继续操作旧身份页面。</summary>
+    public RegionManager(IServiceProvider rootProvider)
+    {
+        _rootProvider = rootProvider ?? throw new ArgumentNullException(nameof(rootProvider));
+        if (_rootProvider.GetService<Mapper.PermissionService>() is { } permissions)
+            permissions.Changed += (_, _) =>
+            {
+                foreach (var host in _regions.Values)
+                    host.Dispatcher.Invoke(() => host.Content = null);
+                _activeViews.Clear();
+                _history.Clear();
+            };
+    }
 
     private static void OnRegionNameChanged(DependencyObject obj, DependencyPropertyChangedEventArgs args)
     {
@@ -57,6 +87,7 @@ public sealed class RegionManager : IRegionNavigationService
     public UIElement Navigate(string regionName, UIElement view, bool keepAlive = true)
     {
         regionName = RegionRoute.Normalize(regionName);
+        CheckPermission(view);
         var host = Get(regionName);
         var old = _activeViews.GetValueOrDefault(regionName) ?? host.Content as UIElement;
         if (old == view) return view;

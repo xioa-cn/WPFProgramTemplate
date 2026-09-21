@@ -1,3 +1,6 @@
+using Machine.ModuleLoad;
+using Microsoft.Extensions.DependencyInjection;
+using Machine.ModuleLoad.Mapper;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows;
@@ -15,6 +18,25 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Loaded += OnLoginRequired;
+    }
+
+    /// <summary>首次显示主窗体必须登录，取消登录则关闭程序。</summary>
+    private void OnLoginRequired(object sender, RoutedEventArgs args)
+    {
+        Loaded -= OnLoginRequired;
+        var permissions = MainProvider.ServiceProvider?.GetService<PermissionService>();
+        if (permissions is null || permissions.CurrentUser is not null) return;
+        if (new LoginWindow(permissions) { Owner = this }.ShowDialog() != true) Close();
+    }
+
+    /// <summary>切换账号前清空身份和区域历史，取消后保持注销状态。</summary>
+    private void SwitchAccountClick(object sender, RoutedEventArgs args)
+    {
+        var permissions = MainProvider.ServiceProvider?.GetRequiredService<PermissionService>();
+        if (permissions is null) return;
+        permissions.Logout();
+        if (new LoginWindow(permissions) { Owner = this }.ShowDialog() != true) Close();
     }
 
     private HwndSource? _windowSource;
@@ -54,10 +76,16 @@ public partial class MainWindow : Window
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct NativePoint { public int X, Y; }
+    private struct NativePoint
+    {
+        public int X, Y;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct NativeRect { public int Left, Top, Right, Bottom; }
+    private struct NativeRect
+    {
+        public int Left, Top, Right, Bottom;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct MinMaxInfo
@@ -78,4 +106,5 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);}
+    private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+}

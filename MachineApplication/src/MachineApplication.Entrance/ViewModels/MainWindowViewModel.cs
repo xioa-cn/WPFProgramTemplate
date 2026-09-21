@@ -42,7 +42,12 @@ public partial class MainWindowViewModel : MachineViewModelBase
     /// <summary>导航成功后更新整棵菜单，快捷入口也复用此方法。</summary>
     private void NavigateTo(string url)
     {
-        _navigation.Navigate("MainRegion", url);
+        try { _navigation.Navigate("MainRegion", url); }
+        catch (UnauthorizedAccessException ex)
+        {
+            System.Windows.MessageBox.Show(ex.Message, "权限不足");
+            return;
+        }
         foreach (var item in NavigationItems) item.SelectRoute(url);
     }
 

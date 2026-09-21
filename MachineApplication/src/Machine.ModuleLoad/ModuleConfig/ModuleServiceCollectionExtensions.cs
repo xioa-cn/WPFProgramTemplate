@@ -10,6 +10,7 @@ public static class ModuleServiceCollectionExtensions
 {
     private static readonly Type[] InfrastructureServiceTypes =
     [
+        typeof(Machine.ModuleLoad.Mapper.PermissionService),
         typeof(StartupCommand),
         typeof(Application),
         typeof(RegionManager),

@@ -1,0 +1,29 @@
+<UserControl x:Class="MachineApplication.Entrance.Views.PermissionSettings"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:permissions="clr-namespace:Machine.ModuleLoad.Mapper;assembly=Machine.ModuleLoad"
+ Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+ <Grid Margin="12">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <TextBlock Text="权限配置" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,20"/>
+    <Grid Grid.Row="1" Margin="0,12">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <DockPanel>
+      <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+       <Button Content="新增" Command="{Binding NewLevelCommand}" Margin="0,0,8,0"/>
+       <Button Content="删除" Command="{Binding DeleteLevelCommand}"/>
+      </WrapPanel>
+      <ListBox ItemsSource="{Binding Levels}" SelectedItem="{Binding SelectedLevel}" DisplayMemberPath="Name"/>
+     </DockPanel>
+     <DockPanel Grid.Column="2">
+      <StackPanel DockPanel.Dock="Top">
+       <TextBlock Text="等级名称"/><TextBox Text="{Binding LevelName, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+       <TextBlock Text="排序等级（不自动继承权限）"/><TextBox Text="{Binding Rank, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Margin="0,4,0,12"/>
+       <TextBlock Text="权限等级信息" Margin="0,0,0,12"/>
+      </StackPanel>
+      <Button DockPanel.Dock="Bottom" Content="保存等级" Command="{Binding SaveLevelCommand}" Margin="0,12,0,0"/>
+      <TextBlock Text="在此录入权限等级。页面访问等级请在路由配置中设置。" TextWrapping="Wrap"/>
+     </DockPanel>
+    </Grid>
+  <TextBlock Grid.Row="2" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,16,0,0"/>
+ </Grid>
+</UserControl>

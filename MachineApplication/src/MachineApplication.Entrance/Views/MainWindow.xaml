@@ -234,6 +234,8 @@
                                     Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
                                     BorderThickness="0,1,0,0"
                                     BorderBrush="{DynamicResource MaterialDesign.Brush.Divider}">
+                                <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="切换账号" Click="SwitchAccountClick" Style="{StaticResource MaterialDesignFlatButton}" Height="24" FontSize="11" Padding="8,0"/>
                                 <TextBlock x:Name="FooterTextBlock"
                                            Text="{Binding FooterText}"
                                            FontSize="8" Opacity="0.65"
@@ -241,6 +243,7 @@
                                            HorizontalAlignment="Center"
                                            TextTrimming="CharacterEllipsis"
                                            ToolTip="{Binding FooterText}" />
+                                </DockPanel>
                             </Border>
                         </Grid>
                     </Border>

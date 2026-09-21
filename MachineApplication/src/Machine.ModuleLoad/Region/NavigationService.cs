@@ -25,7 +25,10 @@ public sealed class NavigationService : INavigationService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
         if (!typeof(UIElement).IsAssignableFrom(viewType)) throw new ArgumentException("视图类型必须继承 UIElement。", nameof(viewType));
-        _routes[RegionRoute.Normalize(url)] = (viewType, moduleName);
+        var normalized = RegionRoute.Normalize(url);
+        _routes[normalized] = (viewType, moduleName);
+        _regionManager.RegisterPermission(viewType, "page:" + normalized);
+
     }
 
     /// <summary>按 URL 创建视图并导航到区域。</summary>
@@ -37,6 +40,8 @@ public sealed class NavigationService : INavigationService
         var normalizedRegion = RegionRoute.Normalize(regionName);
         if (!_routes.TryGetValue(normalizedUrl, out var route))
             throw new KeyNotFoundException($"未注册导航页面: {url}");
+        // 缓存命中也必须重新检查身份，避免切换账号后复用越权页面。
+        _rootProvider.GetService<Mapper.PermissionService>()?.Demand("page:" + normalizedUrl);
         var cacheKey = $"{normalizedRegion}::{normalizedUrl}";
         UIElement view;
         if (keepAlive && _viewCache.TryGetValue(cacheKey, out var cachedView))
@@ -65,7 +70,7 @@ public sealed class NavigationService : INavigationService
 
     public IReadOnlyList<RegisteredRoute> GetRegisteredRoutes() => _routes.Select(route => new RegisteredRoute(route.Key, route.Value.ViewType, route.Value.ModuleName)).OrderBy(route => route.Url).ToArray();
 
-    public bool CanNavigate(string url) => _routes.ContainsKey(RegionRoute.Normalize(url));
+    public bool CanNavigate(string url) => _routes.ContainsKey(RegionRoute.Normalize(url)) && (_rootProvider.GetService<Mapper.PermissionService>()?.Allows("page:" + RegionRoute.Normalize(url)) ?? true);
     public bool GoBack(string regionName) => _regionManager.GoBack(regionName);
 }
 

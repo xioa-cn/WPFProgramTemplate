@@ -21,6 +21,7 @@ public partial class NavModel : ViewModelBase
         ? title : ViewModelLocator.EntranceLang.GetValue(LanguageKey);
     public PackIconKind Icon { get; }
     public string? Url { get; }
+    public IReadOnlyList<int> RequiredLevelIds { get; init; } = [];
     public IReadOnlyList<NavModel> Children { get; }
     public bool HasChildren => Children.Count > 0;
     [ObservableProperty] private bool _isExpanded;

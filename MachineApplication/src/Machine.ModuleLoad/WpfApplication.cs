@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using Machine.ModuleLoad.Logger;
 using Machine.ModuleLoad.ModuleConfig;
 using Machine.ModuleLoad.StartupTool;
@@ -31,6 +31,7 @@ public static class WpfApplication
 
 
         serviceCollection.AddSingleton(new StartupCommand(args));
+        serviceCollection.AddSingleton<Mapper.PermissionService>();
         serviceCollection.AddSingleton<RegionManager>();
         GlobalLogger.DebuggerLogger?.Debug("Registered region manager RegionManager.");
         serviceCollection.AddSingleton<NavigationService>();

@@ -7,20 +7,35 @@
       xmlns:vm="clr-namespace:MachineApplication.Entrance.ViewModels"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
-      d:DataContext="{d:DesignInstance Type=vm:RouterSettingViewModel}"  mc:Ignorable="d"
+      d:DataContext="{d:DesignInstance Type=vm:RouterSettingViewModel}" mc:Ignorable="d"
       Title="路由配置" Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
     <Page.Resources>
         <Style x:Key="Section" TargetType="Border">
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}"/>
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,0,0,16" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
         </Style>
         <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Padding" Value="10,0"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style x:Key="LevelChip" TargetType="Border">
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="10,4,4,4" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+            <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
+        </Style>
+        <Style x:Key="ChipRemoveButton" TargetType="Button" BasedOn="{StaticResource QuietButton}">
+            <Setter Property="MinWidth" Value="24" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="14" />
         </Style>
     </Page.Resources>
     <Grid Margin="8">
@@ -37,139 +52,199 @@
             </Grid.ColumnDefinitions>
             <Border Padding="18" Background="{DynamicResource MaterialDesign.Brush.Card.Background}" CornerRadius="10">
                 <DockPanel>
-                <StackPanel DockPanel.Dock="Top">
-                    <TextBlock Text="菜单结构" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                    <UniformGrid Columns="2" Margin="0,0,0,8">
-                        <Button Content="新增菜单" Command="{Binding AddRootCommand}" Height="34" Padding="8,0" FontSize="12" Margin="0,0,6,0"/>
-                        <Button Content="添加子项" Command="{Binding AddChildCommand}" Style="{StaticResource QuietButton}"/>
-                    </UniformGrid>
-                    <DockPanel Margin="0,0,0,12">
-                        <Button DockPanel.Dock="Right" Content="删除" Command="{Binding DeleteCommand}" Style="{StaticResource QuietButton}"/>
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="↑" ToolTip="上移" AutomationProperties.Name="上移" Command="{Binding MoveUpCommand}" Style="{StaticResource QuietButton}"/>
-                            <Button Content="↓" ToolTip="下移" AutomationProperties.Name="下移" Command="{Binding MoveDownCommand}" Style="{StaticResource QuietButton}"/>
-                        </StackPanel>
-                    </DockPanel>
-
-                </StackPanel>
-                <Border BorderThickness="1" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}"
-                        CornerRadius="8" Padding="8" ClipToBounds="True">
-                <TreeView ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                          ScrollViewer.CanContentScroll="True" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource MaterialDesign.Brush.Foreground}" ItemsSource="{Binding Items}" SelectedItemChanged="OnSelectedItemChanged">
-                    <TreeView.ItemContainerStyle>
-                        <Style TargetType="TreeViewItem">
-                            <Setter Property="IsExpanded" Value="True" />
-                        </Style>
-                    </TreeView.ItemContainerStyle>
-                    <TreeView.ItemTemplate>
-                        <HierarchicalDataTemplate DataType="{x:Type vm:RouteEditorNode}"
-                                                  ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal" Margin="4,6">
-                                <md:PackIcon Kind="{Binding Icon}" Foreground="{DynamicResource MaterialDesign.Brush.Foreground}" Width="20" Height="20" Margin="0,0,8,0" />
-                                <TextBlock Text="{Binding LanguageKey}" Foreground="{DynamicResource MaterialDesign.Brush.Foreground}" VerticalAlignment="Center" />
+                    <StackPanel DockPanel.Dock="Top">
+                        <TextBlock Text="菜单结构" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12" />
+                        <UniformGrid Columns="2" Margin="0,0,0,8">
+                            <Button Content="新增菜单" Command="{Binding AddRootCommand}" Height="34" Padding="8,0"
+                                    FontSize="12" Margin="0,0,6,0" />
+                            <Button Content="添加子项" Command="{Binding AddChildCommand}"
+                                    Style="{StaticResource QuietButton}" />
+                        </UniformGrid>
+                        <DockPanel Margin="0,0,0,12">
+                            <Button DockPanel.Dock="Right" Content="删除" Command="{Binding DeleteCommand}"
+                                    Style="{StaticResource QuietButton}" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="↑" ToolTip="上移" AutomationProperties.Name="上移"
+                                        Command="{Binding MoveUpCommand}" Style="{StaticResource QuietButton}" />
+                                <Button Content="↓" ToolTip="下移" AutomationProperties.Name="下移"
+                                        Command="{Binding MoveDownCommand}" Style="{StaticResource QuietButton}" />
                             </StackPanel>
-                        </HierarchicalDataTemplate>
-                    </TreeView.ItemTemplate>
-                </TreeView>
-                </Border>
-            </DockPanel>
+                        </DockPanel>
+
+                    </StackPanel>
+                    <Border BorderThickness="1"
+                            BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}"
+                            CornerRadius="8" Padding="8" ClipToBounds="True">
+                        <TreeView ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.CanContentScroll="True" Background="Transparent" BorderThickness="0"
+                                  Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                  ItemsSource="{Binding Items}" SelectedItemChanged="OnSelectedItemChanged">
+                            <TreeView.ItemContainerStyle>
+                                <Style TargetType="TreeViewItem">
+                                    <Setter Property="IsExpanded" Value="True" />
+                                </Style>
+                            </TreeView.ItemContainerStyle>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate DataType="{x:Type vm:RouteEditorNode}"
+                                                          ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="4,6">
+                                        <md:PackIcon Kind="{Binding Icon}"
+                                                     Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                     Width="20" Height="20" Margin="0,0,8,0" />
+                                        <TextBlock Text="{Binding LanguageKey}"
+                                                   Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </Border>
+                </DockPanel>
             </Border>
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBlock Text="菜单属性" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                <TextBlock Text="菜单属性" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16" />
                 <Border Grid.Row="1" BorderThickness="1"
                         BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}"
                         CornerRadius="8" Padding="12" ClipToBounds="True">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel>
 
-                    <Border Style="{StaticResource Section}"><StackPanel>
-                    <TextBlock Text="基本信息" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                    <TextBlock Text="语言键" FontSize="12" Opacity=".7"/>
-                    <TextBox Text="{Binding SelectedItem.LanguageKey, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,4,0,16" />
-                    </StackPanel></Border>
-                    <Border Style="{StaticResource Section}">
-                    <StackPanel DataContext="{Binding SelectedItem}" Margin="0,0,0,16">
-                        <TextBlock Text="多语言标题" FontWeight="SemiBold" />
-                        <TextBlock Text="语言代码与应用切换语言时使用的代码一致，如 ja、fr、de、zh-CN。" TextWrapping="Wrap" Opacity=".65"
-                                   Margin="0,4,0,8" />
-                        <ItemsControl ItemsSource="{Binding Titles}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,0,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70" /><ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox Text="{Binding Culture, UpdateSourceTrigger=PropertyChanged}"
-                                                 md:HintAssist.Hint="语言代码" Margin="0,0,8,0" />
-                                        <TextBox Grid.Column="1"
-                                                 Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                                                 md:HintAssist.Hint="菜单标题" Margin="0,0,8,0" />
-                                        <Button Grid.Column="2" Style="{StaticResource QuietButton}" Content="×" ToolTip="移除语言" AutomationProperties.Name="移除语言"
-                                                Command="{Binding DataContext.RemoveLanguageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Button Style="{StaticResource QuietButton}" Content="+ 添加语言" Command="{Binding AddLanguageCommand}" HorizontalAlignment="Left" />
-                    </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource Section}"><StackPanel>
-                    <TextBlock Text="页面与图标" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                    <TextBlock Text="目标页面 · 分组无需选择" FontSize="12" Opacity=".7"/>
-                    <ComboBox ItemsSource="{Binding Pages}" SelectedValuePath="Url"
-                              SelectedValue="{Binding SelectedItem.Url}" Margin="0,4,0,8">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
+                            <Border Style="{StaticResource Section}">
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Url}" />
-                                    <TextBlock Text="{Binding ViewType.FullName}" FontSize="11" Opacity=".6" />
+                                    <TextBlock Text="基本信息" FontWeight="SemiBold" Margin="0,0,0,12" />
+                                    <TextBlock Text="语言键" FontSize="12" Opacity=".7" />
+                                    <TextBox
+                                        Text="{Binding SelectedItem.LanguageKey, UpdateSourceTrigger=PropertyChanged}"
+                                        Margin="0,4,0,16" />
                                 </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <Button Style="{StaticResource QuietButton}" Content="刷新页面列表" Command="{Binding RefreshPagesCommand}" HorizontalAlignment="Left"
-                            Margin="0,0,0,16" />
-                    <TextBlock Text="图标（输入英文名称搜索）" />
-                    <ComboBox ItemsSource="{Binding Icons}" SelectedItem="{Binding SelectedItem.Icon}"
-                              IsEditable="True" IsTextSearchEnabled="True"
-                              VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
-                              MaxDropDownHeight="280" Margin="0,4,0,16">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Margin="4,6"
-                                            TextSearch.Text="{Binding Mode=OneWay}">
-                                    <md:PackIcon Kind="{Binding Mode=OneWay}" Width="28" Height="28" Margin="0,0,14,0"
-                                                 VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding Mode=OneWay}" VerticalAlignment="Center" />
+                            </Border>
+                            <Border Style="{StaticResource Section}">
+                                <StackPanel DataContext="{Binding SelectedItem}" Margin="0,0,0,16">
+                                    <TextBlock Text="多语言标题" FontWeight="SemiBold" />
+                                    <TextBlock Text="语言代码与应用切换语言时使用的代码一致，如 ja、fr、de、zh-CN。" TextWrapping="Wrap"
+                                               Opacity=".65"
+                                               Margin="0,4,0,8" />
+                                    <ItemsControl ItemsSource="{Binding Titles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70" /><ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox
+                                                        Text="{Binding Culture, UpdateSourceTrigger=PropertyChanged}"
+                                                        md:HintAssist.Hint="语言代码" Margin="0,0,8,0" />
+                                                    <TextBox Grid.Column="1"
+                                                             Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                                                             md:HintAssist.Hint="菜单标题" Margin="0,0,8,0" />
+                                                    <Button Grid.Column="2" Style="{StaticResource QuietButton}"
+                                                            Content="×" ToolTip="移除语言" AutomationProperties.Name="移除语言"
+                                                            Command="{Binding DataContext.RemoveLanguageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Button Style="{StaticResource QuietButton}" Content="+ 添加语言"
+                                            Command="{Binding AddLanguageCommand}" HorizontalAlignment="Left" />
                                 </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                        <ComboBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel />
-                            </ItemsPanelTemplate>
-                        </ComboBox.ItemsPanel>
-                    </ComboBox>
-                    <md:PackIcon Kind="{Binding SelectedItem.Icon}" Width="48" Height="48" HorizontalAlignment="Left" />
-                    </StackPanel></Border>
-                    <TextBlock Text="保存后立即更新导航菜单。" TextWrapping="Wrap" Opacity=".65"
-                               Margin="0,20,0,0" />
-                </StackPanel>
-            </ScrollViewer>
+                            </Border>
+                            <Border Style="{StaticResource Section}">
+                                <StackPanel>
+                                    <TextBlock Text="页面与图标" FontWeight="SemiBold" Margin="0,0,0,12" />
+                                    <TextBlock Text="目标页面" FontSize="12" Opacity=".7" />
+                                    <TextBlock Text="分组菜单无需选择页面。" FontSize="12" Opacity=".55" Margin="0,2,0,6" />
+                                    <DockPanel Margin="0,0,0,16" LastChildFill="True">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource QuietButton}" Content="刷新"
+                                                Command="{Binding RefreshPagesCommand}" VerticalAlignment="Center"
+                                                Margin="8,0,0,0" />
+                                        <ComboBox ItemsSource="{Binding Pages}" SelectedValuePath="Url"
+                                                  SelectedValue="{Binding SelectedItem.Url}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Url}" />
+                                                        <TextBlock Text="{Binding ViewType.FullName}" FontSize="11" Opacity=".6" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </DockPanel>
+                                    <TextBlock Text="允许访问的等级" FontSize="12" Opacity=".7" />
+                                    <TextBlock Text="仅添加的等级可进入该页面；未添加时只有最高权限账号可访问。"
+                                               TextWrapping="Wrap" Opacity=".55" Margin="0,2,0,8" />
+                                    <DockPanel Margin="0,0,0,8" LastChildFill="True">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource QuietButton}" Content="添加"
+                                                Command="{Binding SelectedItem.AddRequiredLevelCommand}"
+                                                VerticalAlignment="Center" Margin="8,0,0,0" />
+                                        <ComboBox ItemsSource="{Binding SelectedItem.Levels}" DisplayMemberPath="Name"
+                                                  SelectedItem="{Binding SelectedItem.LevelToAdd}"
+                                                  md:HintAssist.Hint="选择要添加的等级" />
+                                    </DockPanel>
+                                    <ItemsControl ItemsSource="{Binding SelectedItem.RequiredLevels}" Margin="0,0,0,16">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource LevelChip}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                        <Button Style="{StaticResource ChipRemoveButton}" Content="×"
+                                                                ToolTip="移除该等级" AutomationProperties.Name="移除该等级"
+                                                                Command="{Binding DataContext.SelectedItem.RemoveRequiredLevelCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                CommandParameter="{Binding}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Text="图标" FontSize="12" Opacity=".7" />
+                                    <TextBlock Text="输入英文名称搜索。" FontSize="12" Opacity=".55" Margin="0,2,0,6" />
+                                    <ComboBox ItemsSource="{Binding Icons}" SelectedItem="{Binding SelectedItem.Icon}"
+                                              IsEditable="True" IsTextSearchEnabled="True"
+                                              VirtualizingPanel.IsVirtualizing="True"
+                                              VirtualizingPanel.VirtualizationMode="Recycling"
+                                              MaxDropDownHeight="280" Margin="0,0,0,12">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="4,6"
+                                                            TextSearch.Text="{Binding Mode=OneWay}">
+                                                    <md:PackIcon Kind="{Binding Mode=OneWay}" Width="28" Height="28"
+                                                                 Margin="0,0,14,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Mode=OneWay}" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                        <ComboBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel />
+                                            </ItemsPanelTemplate>
+                                        </ComboBox.ItemsPanel>
+                                    </ComboBox>
+                                    <md:PackIcon Kind="{Binding SelectedItem.Icon}" Width="48" Height="48"
+                                                 HorizontalAlignment="Left" />
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Text="保存后立即更新导航菜单。" TextWrapping="Wrap" Opacity=".65"
+                                       Margin="0,20,0,0" />
+                        </StackPanel>
+                    </ScrollViewer>
                 </Border>
             </Grid>
         </Grid>
         <DockPanel Grid.Row="2" Margin="0,20,0,0">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                <Button Style="{StaticResource QuietButton}" Content="重新加载" Command="{Binding ReloadCommand}" Margin="0,0,12,0" />
+                <Button Style="{StaticResource QuietButton}" Content="重新加载" Command="{Binding ReloadCommand}"
+                        Margin="0,0,12,0" />
                 <Button Content="保存配置" Command="{Binding SaveCommand}" />
             </StackPanel>
             <TextBlock Text="{Binding Status}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,16,0" />
