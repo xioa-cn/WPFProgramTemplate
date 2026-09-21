@@ -37,22 +37,15 @@
             ResizeBorderThickness="6"
             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
-    <Window.Resources><ResourceDictionary Source="/MachineApplication.Entrance;component/Theme/MainWindowResources.xaml" /></Window.Resources>
+    <Window.Resources>
+        <ResourceDictionary Source="/MachineApplication.Entrance;component/Theme/MainWindowResources.xaml" />
+    </Window.Resources>
     <AdornerDecorator>
         <Border
             Background="{DynamicResource MaterialDesign.Brush.Background}"
             BorderBrush="{DynamicResource MaterialDesign.Brush.Divider}"
             BorderThickness="0">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Style.Triggers>
-                        <!--  最大化时为系统缩放边框留出内容边距。  -->
-                        <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
-                            <Setter Property="Padding" Value="{x:Static SystemParameters.WindowResizeBorderThickness}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
+
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="70" />
@@ -119,12 +112,18 @@
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
                                 <Button.Style>
                                     <Style BasedOn="{StaticResource CaptionButton}" TargetType="Button">
-                                        <Setter Property="ToolTip" Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Pin}" />
+                                        <Setter Property="ToolTip"
+                                                Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Pin}" />
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Topmost, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
-                                                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Light.Foreground}" />
-                                                <Setter Property="ToolTip" Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Unpin}" />
+                                            <DataTrigger
+                                                Binding="{Binding Topmost, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Value="True">
+                                                <Setter Property="Background"
+                                                        Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
+                                                <Setter Property="Foreground"
+                                                        Value="{DynamicResource MaterialDesign.Brush.Primary.Light.Foreground}" />
+                                                <Setter Property="ToolTip"
+                                                        Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Unpin}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -159,10 +158,14 @@
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
                                 <Button.Style>
                                     <Style BasedOn="{StaticResource CaptionButton}" TargetType="Button">
-                                        <Setter Property="ToolTip" Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Maximize}" />
+                                        <Setter Property="ToolTip"
+                                                Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Maximize}" />
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
-                                                <Setter Property="ToolTip" Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Restore}" />
+                                            <DataTrigger
+                                                Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Value="Maximized">
+                                                <Setter Property="ToolTip"
+                                                        Value="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Restore}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -172,7 +175,9 @@
                                         <Style TargetType="materialDesign:PackIcon">
                                             <Setter Property="Kind" Value="WindowMaximize" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                                                <DataTrigger
+                                                    Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Value="Maximized">
                                                     <Setter Property="Kind" Value="WindowRestore" />
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -208,16 +213,34 @@
                     <components:LeftNavMode x:Name="LeftNavigation" Panel.ZIndex="1" />
                     <Border Grid.Column="1" Background="{DynamicResource MaterialDesign.Brush.Background}">
                         <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
                             <!--  微量主色铺底让留白更柔和，卡片与菜单保持独立的视觉层次。  -->
                             <Border
                                 Background="{DynamicResource MaterialDesign.Brush.Primary}"
                                 IsHitTestVisible="False"
                                 Opacity="0.025" />
-                            <Border
-                                Margin="16,16,16,16"
-                                Padding="20"
-                                Style="{StaticResource WorkspaceCard}">
-                                <ContentControl region:RegionManager.RegionName="MainRegion" />
+                            <Grid Margin="16">
+                                <!-- Keep the shadow on an empty surface: page controls must not
+                                     become part of the bitmap processed by DropShadowEffect. -->
+                                <Border Style="{StaticResource WorkspaceCard}" IsHitTestVisible="False" />
+                                <Border Padding="20">
+                                    <ContentControl region:RegionManager.RegionName="MainRegion" />
+                                </Border>
+                            </Grid>
+                            <Border Grid.Row="1" MinHeight="25" Padding="20,6"
+                                    Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                                    BorderThickness="0,1,0,0"
+                                    BorderBrush="{DynamicResource MaterialDesign.Brush.Divider}">
+                                <TextBlock x:Name="FooterTextBlock"
+                                           Text="{Binding FooterText}"
+                                           FontSize="8" Opacity="0.65"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding FooterText}" />
                             </Border>
                         </Grid>
                     </Border>
@@ -226,6 +249,3 @@
         </Border>
     </AdornerDecorator>
 </Window>
-
-
-

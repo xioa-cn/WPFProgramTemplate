@@ -1,2 +1,40 @@
 {
+  "NavigationItems": [
+    {
+      "LanguageKey": "MainWindow_Home",
+      "Icon": "ViewDashboardOutline",
+      "Url": "home"
+    },
+    {
+      "LanguageKey": "MainWindow_Settings",
+      "Icon": "CogOutline",
+      "Children": [
+        {
+          "LanguageKey": "MainWindow_General",
+          "Icon": "Tune",
+          "Url": "settings"
+        },
+        {
+          "LanguageKey": "MainWindow_Appearance",
+          "Icon": "PaletteOutline",
+          "Children": [
+            {
+              "LanguageKey": "MainWindow_ThemeColor",
+              "Icon": "Palette",
+              "Url": "theme/colors"
+            }
+          ]
+        },
+        {
+          "LanguageKey": "MainWindow_Routes",
+          "Icon": "Routes",
+          "Url": "settings/routes",
+          "Titles": {
+            "zh": "路由配置",
+            "en": "Route settings"
+          }
+        }
+      ]
+    }
+  ]
 }

@@ -13,6 +13,8 @@ public sealed class EntranceModule : IModule
     public void RegisterTypes(IServiceCollection services)
     {
         services.AddSingleton<MainWindowViewModel>();
+        services.AddTransient<RouterSettingViewModel>();
+        services.AddTransient<RouterSetting>();
         services.AddTransient<HomeView>();
         services.AddTransient<SettingsView>();
         services.AddSingleton<ThemeColorsViewModel>();
@@ -21,6 +23,7 @@ public sealed class EntranceModule : IModule
     public void OnInitialized(IServiceProvider provider)
     {
         var navigation = provider.GetRequiredService<INavigationService>();
+        navigation.Register("settings/routes", typeof(RouterSetting), "Common");
         navigation.Register("home", typeof(HomeView), "Common");
         navigation.Register("settings", typeof(SettingsView), "Common");
         navigation.Register("theme/colors", typeof(ThemeColorsView), "Common");

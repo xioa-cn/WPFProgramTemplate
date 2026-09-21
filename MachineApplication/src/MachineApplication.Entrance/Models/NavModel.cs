@@ -1,4 +1,4 @@
-﻿using Machine.ModuleLoad.Mvvm;
+using Machine.ModuleLoad.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MaterialDesignThemes.Wpf;
 using MachineApplication.Entrance.ViewModels;
@@ -16,7 +16,9 @@ public partial class NavModel : ViewModelBase
         Children = children;
     }
     public string LanguageKey { get; }
-    public string Title => ViewModelLocator.EntranceLang.GetValue(LanguageKey);
+    public IReadOnlyDictionary<string, string> Titles { get; init; } = new Dictionary<string, string>();
+    public string Title => Titles.TryGetValue(I18nExtensions.LanguageManager.Instance.CurrentCulture, out var title) && !string.IsNullOrWhiteSpace(title)
+        ? title : ViewModelLocator.EntranceLang.GetValue(LanguageKey);
     public PackIconKind Icon { get; }
     public string? Url { get; }
     public IReadOnlyList<NavModel> Children { get; }

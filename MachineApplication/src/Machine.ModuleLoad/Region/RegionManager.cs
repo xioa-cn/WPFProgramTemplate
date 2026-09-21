@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Navigation;
 using Machine.ModuleLoad.ModuleConfig;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,6 +12,9 @@ namespace Machine.ModuleLoad.Region;
 public sealed class RegionManager : IRegionNavigationService
 {
     private static readonly ConditionalWeakTable<IServiceProvider, RegionManager> Instances = new();
+    // Keep each cached Page attached to its own Frame when switching region content.
+    private readonly ConditionalWeakTable<Page, Frame> _pageHosts = new();
+    private readonly Dictionary<string, UIElement> _activeViews = new(StringComparer.OrdinalIgnoreCase);
     private readonly IServiceProvider _rootProvider;
     private readonly Dictionary<string, ContentControl> _regions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Stack<UIElement>> _history = new(StringComparer.OrdinalIgnoreCase);
@@ -39,7 +44,12 @@ public sealed class RegionManager : IRegionNavigationService
     public void RegisterRegion(string regionName, ContentControl host) => Register(regionName, host);
     public ContentControl GetRegion(string regionName) => Get(regionName);
     public void Show(string regionName, UIElement view) => Navigate(regionName, view);
-    public void Clear(string regionName) => Get(regionName).Content = null;
+    public void Clear(string regionName)
+    {
+        regionName = RegionRoute.Normalize(regionName);
+        Get(regionName).Content = null;
+        _activeViews.Remove(regionName);
+    }
 
     /// <summary>解析并导航到指定页面，页面的 DataContext 由 ModuleUI 自动组装。</summary>
 
@@ -48,13 +58,21 @@ public sealed class RegionManager : IRegionNavigationService
     {
         regionName = RegionRoute.Normalize(regionName);
         var host = Get(regionName);
-        var old = host.Content as UIElement;
+        var old = _activeViews.GetValueOrDefault(regionName) ?? host.Content as UIElement;
         if (old == view) return view;
+        if (view is INavigationAware candidate && !candidate.IsNavigationTarget(new RegionNavigationContext(regionName))) return view;
+        var timing = Stopwatch.StartNew();
         if (old is INavigationAware oldAware) oldAware.OnNavigatedFrom();
         if (old is IRegionView oldRegion) oldRegion.OnDeactivated();
-        if (view is INavigationAware aware && !aware.IsNavigationTarget(new RegionNavigationContext(regionName))) return view;
+
+        var deactivateMs = timing.Elapsed.TotalMilliseconds;
         view.AssemblyUI();
-        host.Content = view;
+        var assemblyMs = timing.Elapsed.TotalMilliseconds;
+        host.Content = view is Page page
+            ? _pageHosts.GetValue(page, CreatePageHost)
+            : view;
+        var contentMs = timing.Elapsed.TotalMilliseconds;
+        _activeViews[regionName] = view;
         if (!_history.TryGetValue(regionName, out var stack)) _history[regionName] = stack = new Stack<UIElement>();
         if (keepAlive || stack.Count == 0) stack.Push(view);
         if (view is IRegionView region) region.OnActivated();
@@ -67,9 +85,41 @@ public sealed class RegionManager : IRegionNavigationService
     {
         regionName = RegionRoute.Normalize(regionName);
         if (!_history.TryGetValue(regionName, out var stack) || stack.Count < 2) return false;
-        stack.Pop(); Navigate(regionName, stack.Peek(), true); return true;
+        var current = stack.Pop();
+        var previous = stack.Peek();
+        try
+        {
+            Navigate(regionName, previous, false);
+            if (_activeViews.GetValueOrDefault(regionName) == previous) return true;
+            stack.Push(current);
+            return false;
+        }
+        catch
+        {
+            stack.Push(current);
+            throw;
+        }
     }
 
+    private static Frame CreatePageHost(Page page)
+    {
+        var frame = new Frame
+        {
+            NavigationUIVisibility = NavigationUIVisibility.Hidden,
+            JournalOwnership = JournalOwnership.OwnsJournal
+        };
+        // Frame is a Page host, not a second navigation controller. Subscribe before
+        // setting Content: initial navigation is asynchronous and must remain allowed.
+        // Reject URI links, native Back/Forward/Refresh and direct Navigate calls that
+        // would bypass region history, view caching and navigation lifecycle callbacks.
+        frame.Navigating += (_, args) =>
+        {
+            if (args.NavigationMode != NavigationMode.New || !ReferenceEquals(args.Content, page))
+                args.Cancel = true;
+        };
+        frame.Content = page;
+        return frame;
+    }
     public bool CanNavigate(string regionName) => _regions.ContainsKey(RegionRoute.Normalize(regionName));
     public ContentControl Get(string regionName) => _regions.TryGetValue(RegionRoute.Normalize(regionName), out var host) ? host : throw new KeyNotFoundException($"区域 '{regionName}' 未注册。");
 }
