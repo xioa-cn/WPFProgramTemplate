@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Machine.ModuleLoad;
-
+using Machine.ModuleLoad.Mapper.Entity;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Models;
 using MaterialDesignThemes.Wpf;

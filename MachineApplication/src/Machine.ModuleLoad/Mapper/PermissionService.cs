@@ -1,6 +1,7 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Machine.ModuleLoad.Mapper.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Machine.ModuleLoad.Mapper;

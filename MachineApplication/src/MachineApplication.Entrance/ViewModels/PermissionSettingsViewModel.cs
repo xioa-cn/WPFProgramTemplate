@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Machine.ModuleLoad.Mapper;
+using Machine.ModuleLoad.Mapper.Entity;
 
 namespace MachineApplication.Entrance.ViewModels;
 
