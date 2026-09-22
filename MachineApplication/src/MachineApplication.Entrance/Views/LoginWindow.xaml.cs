@@ -79,6 +79,8 @@ public partial class LoginWindow : Window, ILoginWindow
                 SetError(() => ViewModelLocator.EntranceLang.Login_SaveFailed);
                 return;
             }
+            // 保持加载态片刻，让用户明确看到身份验证已完成，再切换到主页。
+            await Task.Delay(2420, _closing.Token);
             CompleteLogin();
         }
         catch (OperationCanceledException) { }
