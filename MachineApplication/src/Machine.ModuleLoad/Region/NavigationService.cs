@@ -18,6 +18,19 @@ public sealed class NavigationService : INavigationService
     {
         _rootProvider = rootProvider;
         _regionManager = regionManager;
+        if (_rootProvider.GetService<Mapper.PermissionService>() is { } permissions)
+            permissions.Changed += (_, _) => _viewCache.Clear();
+    }
+
+    /// <summary>成功激活路由后通知页签等导航观察者。</summary>
+    public event EventHandler<RouteNavigatedEventArgs>? Navigated;
+    public event EventHandler<RouteNavigatedEventArgs>? Floated;
+
+    /// <summary>移除已关闭页签的缓存和历史，重新打开时创建新页面。</summary>
+    public void ClosePage(string regionName, string url)
+    {
+        var key = $"{RegionRoute.Normalize(regionName)}::{RegionRoute.Normalize(url)}";
+        if (_viewCache.Remove(key, out var view)) _regionManager.RemoveView(regionName, view);
     }
 
     /// <summary>注册 URL 到视图类型的映射。</summary>
@@ -65,9 +78,21 @@ public sealed class NavigationService : INavigationService
             NavigationTimingLog.Write($"[NavigationTiming] {url}: dispatcher-idle={timing.Elapsed.TotalMilliseconds:F1}ms")));
         if (!keepAlive)
             _viewCache.Remove(cacheKey);
+        if (ReferenceEquals(result, view) && !_regionManager.IsFloating(view))
+            Navigated?.Invoke(this, new RouteNavigatedEventArgs(normalizedRegion, normalizedUrl));
         return result;
     }
 
+    /// <summary>弹出缓存页面；关闭独立窗口时重新通过路由返回。</summary>
+    public void FloatPage(string regionName, string url, Window window, System.Windows.Controls.ContentControl host)
+    {
+        var view = Navigate(regionName, url);
+        if (_regionManager.IsFloating(view)) return;
+        _regionManager.FloatView(regionName, view, window, host, () => Navigate(regionName, url));
+        if (!_regionManager.IsFloating(view)) return;
+        Floated?.Invoke(this, new RouteNavigatedEventArgs(RegionRoute.Normalize(regionName), RegionRoute.Normalize(url)));
+        window.Activate();
+    }
     public IReadOnlyList<RegisteredRoute> GetRegisteredRoutes() => _routes.Select(route => new RegisteredRoute(route.Key, route.Value.ViewType, route.Value.ModuleName)).OrderBy(route => route.Url).ToArray();
 
     public bool CanNavigate(string url) => _routes.ContainsKey(RegionRoute.Normalize(url)) && (_rootProvider.GetService<Mapper.PermissionService>()?.Allows("page:" + RegionRoute.Normalize(url)) ?? true);
@@ -85,3 +110,10 @@ public interface INavigationService
 }
 
 public sealed record RegisteredRoute(string Url, Type ViewType, string? ModuleName);
+
+/// <summary>导航完成后的区域和路由信息。</summary>
+public sealed class RouteNavigatedEventArgs(string regionName, string url) : EventArgs
+{
+    public string RegionName { get; } = regionName;
+    public string Url { get; } = url;
+}

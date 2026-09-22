@@ -1,0 +1,123 @@
+<Window x:Class="MachineApplication.Entrance.Views.FloatingPageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MachineApplication.Entrance.Views"
+        xmlns:vm="clr-namespace:MachineApplication.Entrance.ViewModels"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Width="960" Height="640" MinWidth="480" MinHeight="320"
+        WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterOwner"
+        FontFamily="Segoe UI, Microsoft YaHei UI" FontSize="14" UseLayoutRounding="True"
+        Background="{DynamicResource MaterialDesign.Brush.Background}"
+        Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="52" ResizeBorderThickness="6"
+                            GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/MachineApplication.Entrance;component/Theme/MainWindowResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <SolidColorBrush x:Key="FloatingWindowBorderBrush" Color="#737373" />
+            <Style x:Key="FloatingCaptionButton" TargetType="Button" BasedOn="{StaticResource WindowButton}">
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Width" Value="36" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <AdornerDecorator>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="52" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}" BorderThickness="0,0,0,1"
+                        BorderBrush="{StaticResource FloatingWindowBorderBrush}"
+                        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+                    <Grid Margin="16,0,6,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <DockPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <materialDesign:PackIcon DockPanel.Dock="Left" Kind="OpenInNew"
+                                                     Width="20" Height="20" Margin="0,0,10,0"
+                                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                            <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                        </DockPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource FloatingCaptionButton}" Click="DockClick"
+                                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=FloatingWindow_Dock}" AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                <materialDesign:PackIcon Kind="ArrowCollapse" Width="19" Height="19" />
+                            </Button>
+                            <Button Style="{StaticResource FloatingCaptionButton}"
+                                    Command="{x:Static local:WindowCommands.ToggleTopmost}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=FloatingWindow_Topmost}" AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                <materialDesign:PackIcon Kind="Pin" Width="17" Height="17" />
+                            </Button>
+                            <Border Width="1" Height="16" Margin="8,0" Opacity="0.25"
+                                    Background="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                            <Button Style="{StaticResource FloatingCaptionButton}"
+                                    Command="{x:Static local:WindowCommands.Minimize}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Minimize}"
+                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                <materialDesign:PackIcon Kind="WindowMinimize" Width="17" Height="17" />
+                            </Button>
+                            <Button Style="{StaticResource FloatingCaptionButton}"
+                                    Command="{x:Static local:WindowCommands.ToggleMaximize}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=FloatingWindow_Maximize}" AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                <materialDesign:PackIcon Width="17" Height="17">
+                                    <materialDesign:PackIcon.Style>
+                                        <Style TargetType="materialDesign:PackIcon">
+                                            <Setter Property="Kind" Value="WindowMaximize" />
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Value="Maximized">
+                                                    <Setter Property="Kind" Value="WindowRestore" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </materialDesign:PackIcon.Style>
+                                </materialDesign:PackIcon>
+                            </Button>
+                            <Button Command="{x:Static local:WindowCommands.Close}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=FloatingWindow_Close}" AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource FloatingCaptionButton}">
+                                        <Setter Property="Template" Value="{StaticResource CloseButtonTemplate}" />
+                                    </Style>
+                                </Button.Style>
+                                <materialDesign:PackIcon Kind="Close" Width="18" Height="18" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Grid.Row="1" Margin="16" Padding="20" CornerRadius="6"
+                        Background="{DynamicResource MaterialDesign.Brush.Card.Background}">
+                    <ContentControl x:Name="FloatingContent"
+                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                        <ContentControl.Template>
+                            <ControlTemplate TargetType="ContentControl">
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                            </ControlTemplate>
+                        </ContentControl.Template>
+                    </ContentControl>
+                </Border>
+            </Grid>
+        </AdornerDecorator>
+        <!-- 加粗外框与独立标题栏共同区分主窗口和浮动页面。 -->
+        <Border BorderThickness="2" BorderBrush="{StaticResource FloatingWindowBorderBrush}"
+                IsHitTestVisible="False" SnapsToDevicePixels="True" Panel.ZIndex="1" />
+    </Grid>
+</Window>

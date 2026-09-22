@@ -19,6 +19,8 @@ public sealed class EntranceModule : IModule
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<RouterSettingViewModel>();
         services.AddTransient<RouterSetting>();
+        services.AddTransient<WelcomeViewModel>();
+        services.AddTransient<Welcome>();
         services.AddTransient<HomeView>();
         services.AddTransient<SettingsView>();
         services.AddSingleton<ThemeColorsViewModel>();
@@ -31,6 +33,7 @@ public sealed class EntranceModule : IModule
         navigation.Register("settings/users", typeof(UserManagement), "Common");
         navigation.Register("settings/permissions", typeof(PermissionSettings), "Common");
        
+        navigation.Register("welcome", typeof(Welcome), "Common");
         navigation.Register("home", typeof(HomeView), "Common");
         navigation.Register("settings", typeof(SettingsView), "Common");
         navigation.Register("theme/colors", typeof(ThemeColorsView), "Common");

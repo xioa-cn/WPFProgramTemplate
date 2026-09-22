@@ -1,67 +1,23 @@
-using Machine.ModuleLoad;
-using Microsoft.Extensions.DependencyInjection;
-using Machine.ModuleLoad.Mapper;
+using System;
 using System.Runtime.InteropServices;
-using System.Windows.Interop;
 using System.Windows;
-using Machine.ModuleLoad.ModuleConfig;
-using MachineApplication.Entrance.ViewModels;
+using System.Windows.Controls;
+using System.Windows.Interop;
 
 namespace MachineApplication.Entrance.Views;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-[ModuleDataContextAttribute<MainWindowViewModel>("Common")]
-public partial class MainWindow : Window
+/// <summary>可复用的无边框页面窗口，内容宿主与路由移交逻辑分离。</summary>
+public partial class FloatingPageWindow : Window
 {
-    public MainWindow()
+    public FloatingPageWindow()
     {
         InitializeComponent();
-
     }
 
-    /// <summary>通过框架隐藏主页、注销并显示居中的登录窗口。</summary>
-    private void SwitchAccountClick(object sender, RoutedEventArgs args)
-    {
-        try
-        {
-            MainProvider.ServiceProvider!.GetRequiredService<LoginWindowFlow>().SwitchAccount();
-        }
-        catch (Exception ex)
-        {
-            // 流程服务已处理退出，记录异常但不继续向 WPF 消息循环抛出。
-            Machine.ModuleLoad.Logger.GlobalLogger.Error(ex.ToString());
-        }
-    }
-    private void PopOutPageClick(object sender, RoutedEventArgs args)
-    {
-        if (sender is not FrameworkElement { DataContext: WorkspaceTab tab }) return;
-        try
-        {
-            var navigation = MainProvider.ServiceProvider!.GetRequiredService<Machine.ModuleLoad.Region.INavigationService>();
-            if (navigation is Machine.ModuleLoad.Region.NavigationService routes)
-            {
-                var window = new FloatingPageWindow { Owner = this, Title = tab.Title };
-                // 绑定菜单对象，弹出后移除页签也不会中断语言刷新。
-                if (DataContext is MainWindowViewModel viewModel &&
-                    viewModel.FindNavigationItem(tab.Url) is { } menu)
-                {
-                    window.SetBinding(Window.TitleProperty, new System.Windows.Data.Binding(nameof(menu.Title))
-                    {
-                        Source = menu,
-                        Mode = System.Windows.Data.BindingMode.OneWay
-                    });
-                }
-                routes.FloatPage("MainRegion", tab.Url, window, window.PageHost);
-            }
-        }
-        catch (Exception ex)
-        {
-            Machine.ModuleLoad.Logger.GlobalLogger.Error(ex.ToString());
-            MessageBox.Show(this, ex.Message, "页面弹出失败");
-        }
-    }
+    public ContentControl PageHost => FloatingContent;
+
+    // 关闭窗口统一走 RegionManager 的页面回填流程。
+    private void DockClick(object sender, RoutedEventArgs args) => Close();
     private HwndSource? _windowSource;
     private bool _isClosed;
 

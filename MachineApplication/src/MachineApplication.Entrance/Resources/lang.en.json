@@ -170,5 +170,17 @@
                   "VisualTitle":  "Connected devices. Complete control.",
                   "VisualSubtitle":  "MACHINE APPLICATION",
                   "Required":  "Enter your account and password."
-              }
+              },
+    "Welcome":  {
+                    "Title":  "Welcome back",
+                    "Enter":  "Enter workspace",
+                    "Subtitle":  "Great to see you again. Wishing you a productive day."
+                }
+    ,"FloatingWindow":  {
+                           "Label":  "Detached window",
+                           "Dock":  "Dock to main window",
+                           "Topmost":  "Pin / unpin",
+                           "Maximize":  "Maximize / restore",
+                           "Close":  "Close and return to main window"
+                       }
 }

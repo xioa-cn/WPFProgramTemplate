@@ -14,6 +14,8 @@ public sealed class RegionManager : IRegionNavigationService
     private static readonly ConditionalWeakTable<IServiceProvider, RegionManager> Instances = new();
     // Keep each cached Page attached to its own Frame when switching region content.
     private readonly ConditionalWeakTable<Page, Frame> _pageHosts = new();
+    private readonly ConditionalWeakTable<UIElement, object> _assembledViews = new();
+    private readonly Dictionary<UIElement, (Window Window, ContentControl Host)> _floatingViews = new();
     private readonly Dictionary<string, UIElement> _activeViews = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Type, HashSet<string>> _pagePermissions = new();
     private readonly IServiceProvider _rootProvider;
@@ -49,6 +51,7 @@ public sealed class RegionManager : IRegionNavigationService
         if (_rootProvider.GetService<Mapper.PermissionService>() is { } permissions)
             permissions.Changed += (_, _) =>
             {
+                foreach (var view in _floatingViews.Keys.ToArray()) CloseFloatingView(view);
                 foreach (var host in _regions.Values)
                     host.Dispatcher.Invoke(() => host.Content = null);
                 _activeViews.Clear();
@@ -88,6 +91,12 @@ public sealed class RegionManager : IRegionNavigationService
     {
         regionName = RegionRoute.Normalize(regionName);
         CheckPermission(view);
+        if (_floatingViews.TryGetValue(view, out var floating))
+        {
+            if (floating.Window.WindowState == WindowState.Minimized) floating.Window.WindowState = WindowState.Normal;
+            floating.Window.Activate();
+            return view;
+        }
         var host = Get(regionName);
         var old = _activeViews.GetValueOrDefault(regionName) ?? host.Content as UIElement;
         if (old == view) return view;
@@ -97,7 +106,12 @@ public sealed class RegionManager : IRegionNavigationService
         if (old is IRegionView oldRegion) oldRegion.OnDeactivated();
 
         var deactivateMs = timing.Elapsed.TotalMilliseconds;
-        view.AssemblyUI();
+        // 缓存页面只组装一次，标签来回切换时保留同一个编辑模型。
+        if (!_assembledViews.TryGetValue(view, out _))
+        {
+            view.AssemblyUI();
+            _assembledViews.Add(view, new object());
+        }
         var assemblyMs = timing.Elapsed.TotalMilliseconds;
         host.Content = view is Page page
             ? _pageHosts.GetValue(page, CreatePageHost)
@@ -109,6 +123,21 @@ public sealed class RegionManager : IRegionNavigationService
         if (view is IRegionView region) region.OnActivated();
         if (view is INavigationAware target) target.OnNavigatedTo(new RegionNavigationContext(regionName));
         return view;
+    }
+
+    /// <summary>关闭页面时移除宿主引用和历史记录，防止后退重新打开已关闭页签。</summary>
+    public void RemoveView(string regionName, UIElement view)
+    {
+        regionName = RegionRoute.Normalize(regionName);
+        CloseFloatingView(view);
+        if (_activeViews.GetValueOrDefault(regionName) == view)
+        {
+            if (view is INavigationAware aware) aware.OnNavigatedFrom();
+            if (view is IRegionView regionView) regionView.OnDeactivated();
+            Clear(regionName);
+        }
+        if (_history.TryGetValue(regionName, out var history))
+            _history[regionName] = new Stack<UIElement>(history.Reverse().Where(item => !ReferenceEquals(item, view)));
     }
 
     /// <summary>返回上一个页面。</summary>
@@ -132,10 +161,95 @@ public sealed class RegionManager : IRegionNavigationService
         }
     }
 
+    /// <summary>移动现有页面宿主到独立窗口，保留页面和 DataContext。</summary>
+    public void FloatView(string regionName, UIElement view, Window window, ContentControl host, Action dock)
+    {
+        regionName = RegionRoute.Normalize(regionName);
+        CheckPermission(view);
+        if (_floatingViews.TryGetValue(view, out var existing))
+        {
+            if (existing.Window.WindowState == WindowState.Minimized) existing.Window.WindowState = WindowState.Normal;
+            existing.Window.Activate();
+            return;
+        }
+        var owner = window.Owner ?? throw new InvalidOperationException("弹出窗口必须指定主窗口。");
+        var regionHost = Get(regionName);
+        UIElement content = view is Page page ? _pageHosts.GetValue(page, CreatePageHost) : view;
+        host.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+        host.VerticalContentAlignment = VerticalAlignment.Stretch;
+        // Page 连同原有 Frame 一起移动，避免重复建立父子关系或重建页面。
+        RemoveView(regionName, view);
+        // 清空 Content 后同步旧模板，释放 ContentPresenter 对页面/Frame 的引用。
+        regionHost.UpdateLayout();
+        try { host.Content = content; }
+        catch
+        {
+            host.Content = null;
+            host.UpdateLayout();
+            dock();
+            throw;
+        }
+        _floatingViews.Add(view, (window, host));
+        var ownerClosing = false;
+        System.ComponentModel.CancelEventHandler ownerClosingHandler = (_, _) =>
+        {
+            ownerClosing = true;
+            owner.Dispatcher.BeginInvoke(new Action(() => ownerClosing = false));
+        };
+        owner.Closing += ownerClosingHandler;
+        window.Closed += (_, _) =>
+        {
+            owner.Closing -= ownerClosingHandler;
+            host.Content = null;
+            host.UpdateLayout();
+            if (!_floatingViews.Remove(view)) return;
+            if (ownerClosing || owner.Dispatcher.HasShutdownStarted || !owner.IsVisible) return;
+            try
+            {
+                if (view is INavigationAware aware) aware.OnNavigatedFrom();
+                if (view is IRegionView active) active.OnDeactivated();
+                dock();
+            }
+            catch (Exception ex)
+            {
+                Machine.ModuleLoad.Logger.GlobalLogger.Error(ex.ToString());
+                MessageBox.Show(owner, ex.Message, "页面返回失败");
+            }
+        };
+        try
+        {
+            window.Show();
+            if (view is IRegionView active) active.OnActivated();
+            if (view is INavigationAware aware) aware.OnNavigatedTo(new RegionNavigationContext(regionName));
+        }
+        catch
+        {
+            CloseFloatingView(view);
+            dock();
+            throw;
+        }
+    }
+
+    public bool IsFloating(UIElement view) => _floatingViews.ContainsKey(view);
+
+    private void CloseFloatingView(UIElement view)
+    {
+        if (!_floatingViews.Remove(view, out var floating)) return;
+        floating.Window.Dispatcher.Invoke(() =>
+        {
+            floating.Host.Content = null;
+            floating.Host.UpdateLayout();
+            floating.Window.Close();
+        });
+    }
     private static Frame CreatePageHost(Page page)
     {
         var frame = new Frame
         {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
             NavigationUIVisibility = NavigationUIVisibility.Hidden,
             JournalOwnership = JournalOwnership.OwnsJournal
         };

@@ -222,14 +222,160 @@
                                 Background="{DynamicResource MaterialDesign.Brush.Primary}"
                                 IsHitTestVisible="False"
                                 Opacity="0.025" />
+                            <DockPanel>
+                                <Border DockPanel.Dock="Top" Padding="12,6" Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                                        BorderBrush="{DynamicResource MaterialDesign.Brush.Divider}" BorderThickness="0,0,0,1">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding OpenTabs.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                                        <ItemsControl ItemsSource="{Binding OpenTabs}" x:Name="WorkspaceTabs">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="0,0,6,0" CornerRadius="4" BorderThickness="1">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Background}" />
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Divider}" />
+                                                                <Setter Property="TextElement.Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                                                                        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
+                                                                        <Setter Property="TextElement.Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Light.Foreground}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Button Height="32" Padding="10,0,8,0" MinWidth="80" MaxWidth="200"
+                                                                    Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=Border}}"
+                                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                                    Command="{Binding DataContext.SelectTabCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}" ToolTip="{Binding Title}"
+                                                                    AutomationProperties.Name="{Binding Title}">
+                                                                <DockPanel>
+                                                                    <materialDesign:PackIcon DockPanel.Dock="Left" Kind="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                                </DockPanel>
+                                                            </Button>
+                                                            <Button Grid.Column="1" Width="22" Height="22" Margin="0,0,2,0" VerticalAlignment="Center"
+                                                                    Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=Border}}"
+                                                                    Click="PopOutPageClick"
+                                                                    ToolTip="弹出页面"
+                                                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button">
+                                                                        <Setter Property="Background" Value="Transparent" />
+                                                                        <Setter Property="BorderThickness" Value="0" />
+                                                                        <Setter Property="Padding" Value="0" />
+                                                                        <Setter Property="MinWidth" Value="0" />
+                                                                        <Setter Property="MinHeight" Value="0" />
+                                                                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Grid Background="Transparent">
+                                                                                        <Border x:Name="HoverSurface" CornerRadius="4" Background="{TemplateBinding Foreground}" Opacity="0" />
+                                                                                        <ContentPresenter x:Name="CloseGlyph" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.65" />
+                                                                                    </Grid>
+                                                                                    <ControlTemplate.Triggers>
+                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                                            <Setter TargetName="HoverSurface" Property="Opacity" Value="0.12" />
+                                                                                            <Setter TargetName="CloseGlyph" Property="Opacity" Value="1" />
+                                                                                        </Trigger>
+                                                                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                                                                            <Setter TargetName="HoverSurface" Property="Opacity" Value="0.18" />
+                                                                                            <Setter TargetName="CloseGlyph" Property="Opacity" Value="1" />
+                                                                                        </Trigger>
+                                                                                        <Trigger Property="IsPressed" Value="True">
+                                                                                            <Setter TargetName="HoverSurface" Property="Opacity" Value="0.24" />
+                                                                                        </Trigger>
+                                                                                        <Trigger Property="IsEnabled" Value="False">
+                                                                                            <Setter TargetName="CloseGlyph" Property="Opacity" Value="0.3" />
+                                                                                        </Trigger>
+                                                                                    </ControlTemplate.Triggers>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                                <materialDesign:PackIcon Kind="OpenInNew" Width="12" Height="12" />
+                                                            </Button>
+                                                            <Button Grid.Column="2" Width="22" Height="22" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                                    Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=Border}}"
+                                                                    Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Close}"
+                                                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button">
+                                                                        <Setter Property="Background" Value="Transparent" />
+                                                                        <Setter Property="BorderThickness" Value="0" />
+                                                                        <Setter Property="Padding" Value="0" />
+                                                                        <Setter Property="MinWidth" Value="0" />
+                                                                        <Setter Property="MinHeight" Value="0" />
+                                                                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Grid Background="Transparent">
+                                                                                        <Border x:Name="HoverSurface" CornerRadius="4" Background="{TemplateBinding Foreground}" Opacity="0" />
+                                                                                        <ContentPresenter x:Name="CloseGlyph" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.65" />
+                                                                                    </Grid>
+                                                                                    <ControlTemplate.Triggers>
+                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                                            <Setter TargetName="HoverSurface" Property="Opacity" Value="0.12" />
+                                                                                            <Setter TargetName="CloseGlyph" Property="Opacity" Value="1" />
+                                                                                        </Trigger>
+                                                                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                                                                            <Setter TargetName="HoverSurface" Property="Opacity" Value="0.18" />
+                                                                                            <Setter TargetName="CloseGlyph" Property="Opacity" Value="1" />
+                                                                                        </Trigger>
+                                                                                        <Trigger Property="IsPressed" Value="True">
+                                                                                            <Setter TargetName="HoverSurface" Property="Opacity" Value="0.24" />
+                                                                                        </Trigger>
+                                                                                        <Trigger Property="IsEnabled" Value="False">
+                                                                                            <Setter TargetName="CloseGlyph" Property="Opacity" Value="0.3" />
+                                                                                        </Trigger>
+                                                                                    </ControlTemplate.Triggers>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                                <materialDesign:PackIcon Kind="Close" Width="12" Height="12" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
                             <Grid Margin="16">
                                 <!-- Keep the shadow on an empty surface: page controls must not
                                      become part of the bitmap processed by DropShadowEffect. -->
                                 <Border Style="{StaticResource WorkspaceCard}" IsHitTestVisible="False" />
                                 <Border Padding="20">
-                                    <ContentControl region:RegionManager.RegionName="MainRegion" />
+                                    <ContentControl region:RegionManager.RegionName="MainRegion" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                                 </Border>
                             </Grid>
+                            </DockPanel>
                             <Border Grid.Row="1" MinHeight="25" Padding="20,6"
                                     Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
                                     BorderThickness="0,1,0,0"
