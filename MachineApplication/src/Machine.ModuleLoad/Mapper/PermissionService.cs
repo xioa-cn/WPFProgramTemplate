@@ -158,7 +158,7 @@ public sealed class PermissionService
         if (id is null) db.Levels.Add(level);
         db.SaveChanges();
         transaction.Commit();
-        Refresh();
+        NotifyCatalogChanged();
     }
 
     /// <summary>删除未被账号引用的等级。</summary>
@@ -169,7 +169,7 @@ public sealed class PermissionService
         if (db.Users.Any(x => x.LevelId == id)) throw new InvalidOperationException("该等级仍有账号使用，请先调整账号等级。");
         db.Levels.Remove(db.Levels.Single(x => x.Id == id));
         db.SaveChanges();
-        Refresh();
+        NotifyCatalogChanged();
     }
 
     /// <summary>新增账号或修改等级、密码，保留最高权限账号身份。</summary>

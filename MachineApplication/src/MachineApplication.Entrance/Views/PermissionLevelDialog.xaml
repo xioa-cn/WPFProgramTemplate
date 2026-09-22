@@ -1,0 +1,29 @@
+<UserControl x:Class="MachineApplication.Entrance.Views.PermissionLevelDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:MachineApplication.Entrance.ViewModels"
+             xmlns:design="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:PermissionSettingsViewModel}"
+             design:ViewDesignInclude.Source="/MachineApplication.Entrance;component/AppResources.xaml"
+             Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+    <StackPanel Width="420" Margin="28">
+        <TextBlock Text="{Binding EditorTitle}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,24" />
+        <TextBlock Text="等级名称" />
+        <TextBox Text="{Binding LevelName, UpdateSourceTrigger=PropertyChanged}" MaxLength="100"
+                 Margin="0,6,0,20" />
+        <TextBlock Text="排序值" />
+        <TextBox Text="{Binding Rank, UpdateSourceTrigger=PropertyChanged}" Margin="0,6,0,12" />
+        <TextBlock Text="按数值从小到大排列；排序不会自动继承权限。" Opacity=".65" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding EditorError}"
+                   Foreground="{DynamicResource MaterialDesign.Brush.ValidationError}" TextWrapping="Wrap"
+                   Margin="0,12" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="取消" Command="{Binding CloseEditorCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,12,0" />
+            <Button Content="保存等级" Command="{Binding SaveLevelCommand}" IsDefault="True" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>
