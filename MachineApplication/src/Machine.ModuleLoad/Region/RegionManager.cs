@@ -36,6 +36,20 @@ public sealed class RegionManager : IRegionNavigationService
             throw new UnauthorizedAccessException("页面未登记权限。");
         foreach (var key in keys) permissions.Demand(key);
     }
+
+    /// <summary>
+    /// 获取视图和其 DataContext 上的导航生命周期对象。
+    /// 视图与 VM 同时实现时两者都会收到回调，但同一个实例只处理一次。
+    /// </summary>
+    private static IReadOnlyList<INavigationAware> GetNavigationAware(UIElement view)
+    {
+        var result = new List<INavigationAware>(capacity: 2);
+        if (view is INavigationAware viewAware) result.Add(viewAware);
+        if (view is FrameworkElement { DataContext: INavigationAware dataContextAware } &&
+            !result.Contains(dataContextAware))
+            result.Add(dataContextAware);
+        return result;
+    }
     private readonly Dictionary<string, ContentControl> _regions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Stack<UIElement>> _history = new(StringComparer.OrdinalIgnoreCase);
 
@@ -100,18 +114,21 @@ public sealed class RegionManager : IRegionNavigationService
         var host = Get(regionName);
         var old = _activeViews.GetValueOrDefault(regionName) ?? host.Content as UIElement;
         if (old == view) return view;
-        if (view is INavigationAware candidate && !candidate.IsNavigationTarget(new RegionNavigationContext(regionName))) return view;
         var timing = Stopwatch.StartNew();
-        if (old is INavigationAware oldAware) oldAware.OnNavigatedFrom();
-        if (old is IRegionView oldRegion) oldRegion.OnDeactivated();
-
-        var deactivateMs = timing.Elapsed.TotalMilliseconds;
-        // 缓存页面只组装一次，标签来回切换时保留同一个编辑模型。
+        // 先组装页面，才能解析由 ModuleUI 注入的 ViewModel 生命周期对象。
         if (!_assembledViews.TryGetValue(view, out _))
         {
             view.AssemblyUI();
             _assembledViews.Add(view, new object());
         }
+        var aware = GetNavigationAware(view);
+        var context = new RegionNavigationContext(regionName);
+        if (aware.Any(candidate => !candidate.IsNavigationTarget(context))) return view;
+
+        foreach (var oldAware in old is null ? [] : GetNavigationAware(old)) oldAware.OnNavigatedFrom();
+        if (old is IRegionView oldRegion) oldRegion.OnDeactivated();
+
+        var deactivateMs = timing.Elapsed.TotalMilliseconds;
         var assemblyMs = timing.Elapsed.TotalMilliseconds;
         host.Content = view is Page page
             ? _pageHosts.GetValue(page, CreatePageHost)
@@ -121,7 +138,7 @@ public sealed class RegionManager : IRegionNavigationService
         if (!_history.TryGetValue(regionName, out var stack)) _history[regionName] = stack = new Stack<UIElement>();
         if (keepAlive || stack.Count == 0) stack.Push(view);
         if (view is IRegionView region) region.OnActivated();
-        if (view is INavigationAware target) target.OnNavigatedTo(new RegionNavigationContext(regionName));
+        foreach (var target in aware) target.OnNavigatedTo(context);
         return view;
     }
 
@@ -132,7 +149,7 @@ public sealed class RegionManager : IRegionNavigationService
         CloseFloatingView(view);
         if (_activeViews.GetValueOrDefault(regionName) == view)
         {
-            if (view is INavigationAware aware) aware.OnNavigatedFrom();
+            foreach (var aware in GetNavigationAware(view)) aware.OnNavigatedFrom();
             if (view is IRegionView regionView) regionView.OnDeactivated();
             Clear(regionName);
         }
@@ -206,7 +223,7 @@ public sealed class RegionManager : IRegionNavigationService
             if (ownerClosing || owner.Dispatcher.HasShutdownStarted || !owner.IsVisible) return;
             try
             {
-                if (view is INavigationAware aware) aware.OnNavigatedFrom();
+                foreach (var aware in GetNavigationAware(view)) aware.OnNavigatedFrom();
                 if (view is IRegionView active) active.OnDeactivated();
                 dock();
             }
@@ -220,7 +237,8 @@ public sealed class RegionManager : IRegionNavigationService
         {
             window.Show();
             if (view is IRegionView active) active.OnActivated();
-            if (view is INavigationAware aware) aware.OnNavigatedTo(new RegionNavigationContext(regionName));
+            foreach (var aware in GetNavigationAware(view))
+                aware.OnNavigatedTo(new RegionNavigationContext(regionName));
         }
         catch
         {
@@ -253,10 +271,9 @@ public sealed class RegionManager : IRegionNavigationService
             NavigationUIVisibility = NavigationUIVisibility.Hidden,
             JournalOwnership = JournalOwnership.OwnsJournal
         };
-        // Frame is a Page host, not a second navigation controller. Subscribe before
-        // setting Content: initial navigation is asynchronous and must remain allowed.
-        // Reject URI links, native Back/Forward/Refresh and direct Navigate calls that
-        // would bypass region history, view caching and navigation lifecycle callbacks.
+        // Frame 是一个页面宿主，而不是第二个导航控制器。
+        // 在设置 Content 之前订阅：初始导航是异步的，必须保持允许。
+        // 拒绝 URI 链接、本地的后退/前进/刷新以及直接的 Navigate 调用，这些会绕过区域历史记录、视图缓存和导航生命周期回调。
         frame.Navigating += (_, args) =>
         {
             if (args.NavigationMode != NavigationMode.New || !ReferenceEquals(args.Content, page))
