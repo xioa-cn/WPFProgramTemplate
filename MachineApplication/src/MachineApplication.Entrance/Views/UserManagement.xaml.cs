@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.ViewModels;
@@ -17,10 +17,5 @@ public partial class UserManagement : UserControl, INavigationAware
         if (DataContext is UserManagementViewModel model) model.RefreshLevels();
     }
     public void OnNavigatedFrom() { }
-    /// <summary>只在保存时传递一次性密码，操作后立即清空输入。</summary>
-    private void SaveUserClick(object sender, RoutedEventArgs args)
-    {
-        ((UserManagementViewModel)DataContext).SaveUser(NewPassword.Password);
-        NewPassword.Clear();
-    }
+
 }
