@@ -16,7 +16,8 @@
                        "Maximize":  "Maximize",
                        "Restore":  "Restore",
                        "Close":  "Close",
-                       "ChangeLanguage":  "Change language"
+                       "ChangeLanguage":  "Change language",
+                       "TabsOverflow":  "Show all pages"
                    },
     "ThemeColorsView":  {
                             "AdjustmentSettings":  "Color adjustment settings",

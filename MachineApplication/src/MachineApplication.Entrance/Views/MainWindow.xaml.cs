@@ -4,6 +4,8 @@ using Machine.ModuleLoad.Mapper;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using Machine.ModuleLoad.ModuleConfig;
 using MachineApplication.Entrance.ViewModels;
 
@@ -40,6 +42,38 @@ public partial class MainWindow : Window
         {
             // 流程服务已处理退出，记录异常但不继续向 WPF 消息循环抛出。
             Machine.ModuleLoad.Logger.GlobalLogger.Error(ex.ToString());
+        }
+    }
+
+    private void WorkspaceTabsMouseWheel(object sender, MouseWheelEventArgs args)
+    {
+        if (sender is not ScrollViewer viewer || viewer.ExtentWidth <= viewer.ViewportWidth)
+            return;
+
+        var offset = viewer.HorizontalOffset - args.Delta * 0.75;
+        viewer.ScrollToHorizontalOffset(Math.Clamp(offset, 0, viewer.ExtentWidth - viewer.ViewportWidth));
+        args.Handled = true;
+    }
+
+    private void WorkspaceTabsScrollChanged(object sender, ScrollChangedEventArgs args) => UpdateWorkspaceTabsOverflow();
+
+    private void WorkspaceTabsScrollerSizeChanged(object sender, SizeChangedEventArgs args) => UpdateWorkspaceTabsOverflow();
+
+    private void UpdateWorkspaceTabsOverflow()
+    {
+        if (!IsInitialized || WorkspaceTabScroller is null || WorkspaceTabsOverflowButton is null) return;
+        WorkspaceTabsOverflowButton.Visibility =
+            WorkspaceTabScroller.ExtentWidth > WorkspaceTabScroller.ViewportWidth + 1
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+    }
+
+    private void WorkspaceTabsOverflowClick(object sender, RoutedEventArgs args)
+    {
+        if (sender is Button button && button.ContextMenu is { } menu)
+        {
+            menu.PlacementTarget = button;
+            menu.IsOpen = true;
         }
     }
     private void PopOutPageClick(object sender, RoutedEventArgs args)

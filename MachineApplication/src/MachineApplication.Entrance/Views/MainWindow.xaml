@@ -252,7 +252,16 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                                    <Grid>
+                                        <ScrollViewer x:Name="WorkspaceTabScroller"
+                                                      Padding="0,0,36,0"
+                                                      HorizontalScrollBarVisibility="Hidden"
+                                                      VerticalScrollBarVisibility="Disabled"
+                                                      CanContentScroll="False"
+                                                      PanningMode="HorizontalOnly"
+                                                      PreviewMouseWheel="WorkspaceTabsMouseWheel"
+                                                      ScrollChanged="WorkspaceTabsScrollChanged"
+                                                      SizeChanged="WorkspaceTabsScrollerSizeChanged">
                                         <ItemsControl ItemsSource="{Binding OpenTabs}" x:Name="WorkspaceTabs">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
@@ -383,7 +392,38 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-                                    </ScrollViewer>
+                                        </ScrollViewer>
+                                        <Button x:Name="WorkspaceTabsOverflowButton"
+                                                Width="32"
+                                                Height="32"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,2,0"
+                                                Padding="0"
+                                                Click="WorkspaceTabsOverflowClick"
+                                                ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_TabsOverflow}"
+                                                AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                                Visibility="Collapsed"
+                                                Style="{StaticResource CaptionButton}">
+                                            <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18" />
+                                            <Button.ContextMenu>
+                                                <ContextMenu ItemsSource="{Binding PlacementTarget.DataContext.OpenTabs, RelativeSource={RelativeSource Self}}">
+                                                    <ContextMenu.ItemContainerStyle>
+                                                        <Style TargetType="MenuItem">
+                                                            <Setter Property="Header" Value="{Binding Title}" />
+                                                            <Setter Property="Command" Value="{Binding PlacementTarget.DataContext.SelectTabCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                            <Setter Property="CommandParameter" Value="{Binding}" />
+                                                            <Setter Property="Icon">
+                                                                <Setter.Value>
+                                                                    <materialDesign:PackIcon Kind="{Binding Icon}" Width="16" Height="16" />
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </ContextMenu.ItemContainerStyle>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
+                                        </Button>
+                                    </Grid>
                                 </Border>
                             <Grid Margin="16">
                                 <!-- Keep the shadow on an empty surface: page controls must not
