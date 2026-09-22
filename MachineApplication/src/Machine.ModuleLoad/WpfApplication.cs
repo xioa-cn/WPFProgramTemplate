@@ -59,6 +59,13 @@ public static class WpfApplication
             return serviceCollection.BuildWpfServiceProvider();
         }
 
+        public IServiceProvider BuildWpfWithLoginStartupWindow<TL, TM>() where TL : Window where TM : Window
+        {
+            serviceCollection.AddKeyedSingleton<Window, TM>(Config.StartupWindow);
+            serviceCollection.AddKeyedSingleton<Window, TL>(Config.LoginWindow);
+            return serviceCollection.BuildWpfServiceProvider();
+        }
+
         /// <summary>
         /// 构建Wpf容器 
         /// </summary>
@@ -67,13 +74,15 @@ public static class WpfApplication
         {
             GlobalLogger.DebuggerLogger?.Trace("Build the already prepared WPF desktop program");
             // 明确调用 Microsoft DI，避免与宿主扩展方法重名导致递归。
-            MainProvider.ServiceProvider = ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(serviceCollection);
+            MainProvider.ServiceProvider =
+                ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(serviceCollection);
 
             return MainProvider.ServiceProvider;
         }
 
         [Obsolete("请使用 BuildWpfWithStartupWindow。")]
-        public IServiceProvider BuildWpfOfStartup<T>() where T : Window => BuildWpfWithStartupWindow<T>(serviceCollection);
+        public IServiceProvider BuildWpfOfStartup<T>() where T : Window =>
+            BuildWpfWithStartupWindow<T>(serviceCollection);
 
         [Obsolete("请使用 BuildWpfServiceProvider。")]
         public IServiceProvider BuildWpfApp() => serviceCollection.BuildWpfServiceProvider();
@@ -90,6 +99,23 @@ public static class WpfApplication
         var window = serviceProvider.GetRequiredKeyedService<Window>(
             Config.StartupWindow);
         window.AssemblyUI();
+        app.MainWindow = window;
+        GlobalLogger.DebuggerLogger?.Success("The WPF desktop program has started successfully.");
+        GlobalLogger.DebuggerLogger?.Warn("Start monitoring the desktop program....");
+        app.Run(window);
+    }
+
+    public static void RunWpfOfLogin(this IServiceProvider serviceProvider)
+    {
+        var app = serviceProvider.GetRequiredService<Application>();
+        (app as IWpfApp)?.InitializeWpfComponent();
+        var window = serviceProvider.GetRequiredKeyedService<Window>(
+            Config.LoginWindow);
+        window.AssemblyUI();
+        var mainWindow = serviceProvider.GetRequiredKeyedService<Window>(
+            Config.StartupWindow);
+        mainWindow.AssemblyUI();
+        app.MainWindow = mainWindow;
         GlobalLogger.DebuggerLogger?.Success("The WPF desktop program has started successfully.");
         GlobalLogger.DebuggerLogger?.Warn("Start monitoring the desktop program....");
         app.Run(window);

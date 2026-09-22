@@ -18,39 +18,64 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Loaded += OnLoginRequired;
+
     }
 
-    /// <summary>首次显示主窗体必须登录，取消登录则关闭程序。</summary>
-    private void OnLoginRequired(object sender, RoutedEventArgs args)
-    {
-        Loaded -= OnLoginRequired;
-        var permissions = MainProvider.ServiceProvider?.GetService<PermissionService>();
-        if (permissions is null || permissions.CurrentUser is not null) return;
-        if (new LoginWindow(permissions) { Owner = this }.ShowDialog() != true) Close();
-    }
-
-    /// <summary>切换账号前清空身份和区域历史，取消后保持注销状态。</summary>
+    /// <summary>隐藏主页后居中登录，认证成功恢复主页，取消登录则退出。</summary>
     private void SwitchAccountClick(object sender, RoutedEventArgs args)
     {
         var permissions = MainProvider.ServiceProvider?.GetRequiredService<PermissionService>();
         if (permissions is null) return;
-        permissions.Logout();
-        if (new LoginWindow(permissions) { Owner = this }.ShowDialog() != true) Close();
+        // 先隐藏主页，避免登录界面后方继续显示业务内容。
+        Hide();
+        try
+        {
+            permissions.Logout();
+            var login = new LoginWindow(permissions, allowAutoLogin: false)
+            {
+                Owner = this,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen
+            };
+            if (login.ShowDialog() == true && !_isClosed)
+            {
+                // 复用原主窗口，保留切换前的位置和窗口状态。
+                Show();
+                Activate();
+            }
+            else if (!_isClosed)
+            {
+                Close();
+            }
+        }
+        catch
+        {
+            // 隐藏后若登录窗口创建失败，关闭主窗口，避免进程无窗口驻留。
+            if (!_isClosed) Close();
+            throw;
+        }
     }
 
     private HwndSource? _windowSource;
+    private bool _isClosed;
 
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        _windowSource = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
-        _windowSource?.AddHook(WindowMessage);
+        // SourceInitialized 事件处理器可能进入嵌套消息循环并关闭窗口。
+        // 不为已销毁的窗口重新创建句柄，也不将零句柄传给 FromHwnd。
+        if (_isClosed || Dispatcher.HasShutdownStarted) return;
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero) return;
+        var source = HwndSource.FromHwnd(handle);
+        if (source is null || source.IsDisposed) return;
+        _windowSource = source;
+        _windowSource.AddHook(WindowMessage);
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _windowSource?.RemoveHook(WindowMessage);
+        _isClosed = true;
+        if (_windowSource is { IsDisposed: false }) _windowSource.RemoveHook(WindowMessage);
         _windowSource = null;
         base.OnClosed(e);
     }

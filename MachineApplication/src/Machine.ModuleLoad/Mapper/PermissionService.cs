@@ -104,6 +104,23 @@ public sealed class PermissionService
     }
 
     /// <summary>校验账号与密码哈希，成功后加载权限快照。</summary>
+    public async Task<bool> LoginAsync(string name, string password, CancellationToken cancellationToken = default)
+    {
+        // 数据库读取和密码哈希校验放入后台；身份事件仍在调用者的界面线程发布。
+        var user = await Task.Run(() =>
+        {
+            using var db = Open();
+            var candidate = db.Users.AsNoTracking().SingleOrDefault(x => x.Name == name.Trim());
+            return candidate is not null && Verify(password, candidate.PasswordHash) ? candidate : null;
+        }, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (user is null) return false;
+        CurrentUser = user;
+        Refresh();
+        return true;
+    }
+
+    /// <summary>同步验证账号，供非交互场景使用。</summary>
     public bool Login(string name, string password)
     {
         using var db = Open();

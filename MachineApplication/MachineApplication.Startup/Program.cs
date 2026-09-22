@@ -2,20 +2,21 @@
 using Machine.ModuleLoad.ModuleConfig;
 using MachineApplication.Entrance;
 using MachineApplication.Entrance.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MachineApplication.Startup;
 
 public static class Program
 {
-    /// <summary>应用程序入口：初始化 WPF 应用并启动消息循环。</summary>
+    /// <summary>以登录窗口启动应用，认证通过后才创建主窗口。</summary>
     [STAThread]
     public static void Main(string[] args)
     {
-        var wpfApplication = WpfApplication.Create<App>();
-        wpfApplication.LoadModuleConfig(AppDomain.CurrentDomain.BaseDirectory);
-        var wpfServiceProvider = wpfApplication.BuildWpfWithStartupWindow<MainWindow>();
-        wpfServiceProvider.LoadAndBuildModules();
-        wpfServiceProvider.InitializeModules();
-        wpfServiceProvider.RunWpf();
+        WpfApplication.Create<App>()
+            .LoadModuleConfig(AppDomain.CurrentDomain.BaseDirectory)
+            .BuildWpfWithLoginStartupWindow<LoginWindow, MainWindow>()
+            .LoadAndBuildModules()
+            .InitializeModules()
+            .RunWpfOfLogin();
     }
 }
