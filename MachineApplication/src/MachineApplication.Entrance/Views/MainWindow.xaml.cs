@@ -21,40 +21,19 @@ public partial class MainWindow : Window
 
     }
 
-    /// <summary>隐藏主页后居中登录，认证成功恢复主页，取消登录则退出。</summary>
+    /// <summary>通过框架隐藏主页、注销并显示居中的登录窗口。</summary>
     private void SwitchAccountClick(object sender, RoutedEventArgs args)
     {
-        var permissions = MainProvider.ServiceProvider?.GetRequiredService<PermissionService>();
-        if (permissions is null) return;
-        // 先隐藏主页，避免登录界面后方继续显示业务内容。
-        Hide();
         try
         {
-            permissions.Logout();
-            var login = new LoginWindow(permissions, allowAutoLogin: false)
-            {
-                Owner = this,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen
-            };
-            if (login.ShowDialog() == true && !_isClosed)
-            {
-                // 复用原主窗口，保留切换前的位置和窗口状态。
-                Show();
-                Activate();
-            }
-            else if (!_isClosed)
-            {
-                Close();
-            }
+            MainProvider.ServiceProvider!.GetRequiredService<LoginWindowFlow>().SwitchAccount();
         }
-        catch
+        catch (Exception ex)
         {
-            // 隐藏后若登录窗口创建失败，关闭主窗口，避免进程无窗口驻留。
-            if (!_isClosed) Close();
-            throw;
+            // 流程服务已处理退出，记录异常但不继续向 WPF 消息循环抛出。
+            Machine.ModuleLoad.Logger.GlobalLogger.Error(ex.ToString());
         }
     }
-
     private HwndSource? _windowSource;
     private bool _isClosed;
 

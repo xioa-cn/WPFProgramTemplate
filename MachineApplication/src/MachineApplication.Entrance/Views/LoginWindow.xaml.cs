@@ -10,20 +10,23 @@ using MachineApplication.Entrance.Utils;
 namespace MachineApplication.Entrance.Views;
 
 /// <summary>登录窗口，负责交互动画、一次性密码传递及登录偏好。</summary>
-public partial class LoginWindow : Window
+public partial class LoginWindow : Window, ILoginWindow
 {
     private readonly PermissionService _permissions;
-    private readonly bool _allowAutoLogin;
+    /// <summary>由框架在显示前设置，切换账号时禁用自动登录。</summary>
+    public bool AllowAutoLogin { get; set; } = true;
+    /// <summary>认证通过后交由框架切换窗口。</summary>
+    public event EventHandler? LoginSucceeded;
     private readonly CancellationTokenSource _closing = new();
     private bool _busy;
     private bool _restoring;
     private Func<string> _errorText = () => "";
 
-    public LoginWindow(PermissionService permissions, bool allowAutoLogin = true)
+    public LoginWindow(PermissionService permissions)
     {
         InitializeComponent();
         _permissions = permissions;
-        _allowAutoLogin = allowAutoLogin;
+
         System.ComponentModel.PropertyChangedEventManager.AddHandler(ViewModelLocator.EntranceLang, OnLanguageChanged, string.Empty);
         Loaded += OnLoaded;
         Closed += (_, _) => { _closing.Cancel(); Password.Clear(); };
@@ -41,7 +44,7 @@ public partial class LoginWindow : Window
         Automatic.IsChecked = Remember.IsChecked == true && settings.AutoLogin;
         _restoring = false;
         Account.Focus();
-        if (_allowAutoLogin && Automatic.IsChecked == true) await SignInAsync();
+        if (AllowAutoLogin && Automatic.IsChecked == true) await SignInAsync();
     }
 
     private async void LoginClick(object sender, RoutedEventArgs args) => await SignInAsync();
@@ -90,32 +93,12 @@ public partial class LoginWindow : Window
         }
     }
 
-    /// <summary>启动登录转入主页；切换账号的模态登录只返回结果，不重复创建主页。</summary>
+    /// <summary>仅报告认证结果，窗口创建、恢复和退出由框架统一控制。</summary>
     private void CompleteLogin()
     {
-        if (Owner is not null)
-        {
-            DialogResult = true;
-            return;
-        }
-
-        var app = Application.Current;
-        Window main = app.MainWindow ?? throw new KeyNotFoundException();
-        var previousShutdownMode = app.ShutdownMode;
-        try
-        {
-            app.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            main.Show();
-        }
-        catch
-        {
-            app.MainWindow = this;
-            app.ShutdownMode = previousShutdownMode;
-            main?.Close();
-            _permissions.Logout();
-            throw;
-        }
-        Close();
+        var handler = LoginSucceeded
+            ?? throw new InvalidOperationException("The login window is not attached to a window flow.");
+        handler(this, EventArgs.Empty);
     }
     /// <summary>取消记住密码时立即清除磁盘凭据，自动登录依赖记住密码。</summary>
     private void PreferencesChanged(object sender, RoutedEventArgs args)

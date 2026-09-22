@@ -2,7 +2,6 @@
 using Machine.ModuleLoad.ModuleConfig;
 using MachineApplication.Entrance;
 using MachineApplication.Entrance.Views;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MachineApplication.Startup;
 

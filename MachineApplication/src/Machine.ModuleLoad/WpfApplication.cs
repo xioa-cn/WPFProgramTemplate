@@ -59,13 +59,19 @@ public static class WpfApplication
             return serviceCollection.BuildWpfServiceProvider();
         }
 
-        public IServiceProvider BuildWpfWithLoginStartupWindow<TL, TM>() where TL : Window where TM : Window
+        /// <summary>注册登录与主窗口，由窗口流程服务在认证成功后创建主页。</summary>
+        /// <typeparam name="TLoginWindow">实现登录成功通知契约的窗口。</typeparam>
+        /// <typeparam name="TMainWindow">认证后显示的主窗口。</typeparam>
+        public IServiceProvider BuildWpfWithLoginStartupWindow<TLoginWindow, TMainWindow>()
+            where TLoginWindow : Window, ILoginWindow
+            where TMainWindow : Window
         {
-            serviceCollection.AddKeyedSingleton<Window, TM>(Config.StartupWindow);
-            serviceCollection.AddKeyedSingleton<Window, TL>(Config.LoginWindow);
+            // Window 关闭后不可再次显示，使用瞬态注册，由流程服务持有当前窗口。
+            serviceCollection.AddKeyedTransient<Window, TMainWindow>(Config.StartupWindow);
+            serviceCollection.AddKeyedTransient<Window, TLoginWindow>(Config.LoginWindow);
+            serviceCollection.AddSingleton<LoginWindowFlow>();
             return serviceCollection.BuildWpfServiceProvider();
         }
-
         /// <summary>
         /// 构建Wpf容器 
         /// </summary>
@@ -105,19 +111,14 @@ public static class WpfApplication
         app.Run(window);
     }
 
+    /// <summary>启动登录消息循环，主窗口仅在认证成功时解析和组装。</summary>
     public static void RunWpfOfLogin(this IServiceProvider serviceProvider)
     {
         var app = serviceProvider.GetRequiredService<Application>();
         (app as IWpfApp)?.InitializeWpfComponent();
-        var window = serviceProvider.GetRequiredKeyedService<Window>(
-            Config.LoginWindow);
-        window.AssemblyUI();
-        var mainWindow = serviceProvider.GetRequiredKeyedService<Window>(
-            Config.StartupWindow);
-        mainWindow.AssemblyUI();
-        app.MainWindow = mainWindow;
-        GlobalLogger.DebuggerLogger?.Success("The WPF desktop program has started successfully.");
-        GlobalLogger.DebuggerLogger?.Warn("Start monitoring the desktop program....");
-        app.Run(window);
+        var flow = serviceProvider.GetRequiredService<LoginWindowFlow>();
+        var login = flow.CreateStartupWindow();
+        GlobalLogger.DebuggerLogger?.Info("The login window is ready.");
+        app.Run(login);
     }
 }
