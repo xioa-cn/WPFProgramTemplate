@@ -1,5 +1,6 @@
 <UserControl x:Class="MachineApplication.Entrance.Views.PermissionSettings"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:loc="clr-namespace:MachineApplication.Entrance.ViewModels"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:MachineApplication.Entrance.Views"
              xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -8,9 +9,11 @@
              d:DataContext="{d:DesignInstance Type=viewModels:PermissionSettingsViewModel}" mc:Ignorable="d"
              xmlns:design="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
              xmlns:viewModels="clr-namespace:MachineApplication.Entrance.ViewModels"
+             xmlns:utils="clr-namespace:MachineApplication.Entrance.Utils"
              design:ViewDesignInclude.Source="/MachineApplication.Entrance;component/AppResources.xaml"
              Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
     <UserControl.Resources>
+        <utils:ManagementFormatConverter x:Key="ManagementFormat" />
         <Style x:Key="PermissionCellText" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Margin" Value="16,0" />
@@ -27,16 +30,24 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <DockPanel Margin="0,0,0,24">
-                <Button DockPanel.Dock="Right" Content="＋ 新增等级" Command="{Binding NewLevelCommand}"
+                <Button DockPanel.Dock="Right"
+                        Content="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_NewLevel}"
+                        Command="{Binding NewLevelCommand}"
                         VerticalAlignment="Center" />
                 <StackPanel>
-                    <TextBlock Text="权限等级" FontSize="26" FontWeight="SemiBold" />
-                    <TextBlock Text="统一维护账号可分配的权限等级" Margin="0,8,0,0" Opacity=".65" />
+                    <TextBlock
+                        Text="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_LevelTitle}"
+                        FontSize="26" FontWeight="SemiBold" />
+                    <TextBlock
+                        Text="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_LevelSubtitle}"
+                        Margin="0,8,0,0" Opacity=".65" />
                 </StackPanel>
             </DockPanel>
             <Border Grid.Row="1" Padding="16" CornerRadius="8"
                     Background="{DynamicResource MaterialDesign.Brush.Card.Background}" Margin="0,0,0,16">
-                <TextBlock Text="等级仅用于身份分类，页面访问范围请在「路由配置」中设置。已关联账号的等级无法删除。" TextWrapping="Wrap" Opacity=".75" />
+                <TextBlock
+                    Text="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_LevelHint}"
+                    TextWrapping="Wrap" Opacity=".75" />
             </Border>
             <Border Grid.Row="2" BorderThickness="1"
                     BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" CornerRadius="8"
@@ -46,10 +57,20 @@
                         <RowDefinition Height="Auto" /><RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <DockPanel Margin="0,0,0,12">
-                        <Button DockPanel.Dock="Right" Content="刷新" Command="{Binding ReloadCommand}"
+                        <Button DockPanel.Dock="Right"
+                                Content="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_Refresh}"
+                                Command="{Binding ReloadCommand}"
                                 Style="{StaticResource MaterialDesignFlatButton}" />
-                        <TextBlock Text="{Binding Levels.Count, StringFormat=已配置 {0} 个等级}" FontSize="16"
-                                   FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <TextBlock FontSize="16"
+                                   FontWeight="SemiBold" VerticalAlignment="Center">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{StaticResource ManagementFormat}">
+                                    <Binding Source="{x:Static loc:ViewModelLocator.EntranceLang}"
+                                             Path="Management_LevelCount" />
+                                    <Binding Path="Levels.Count" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
                     </DockPanel>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding Levels}" SelectedItem="{Binding SelectedLevel}"
                               AutoGenerateColumns="False"
@@ -57,20 +78,30 @@
                               HeadersVisibility="Column"
                               GridLinesVisibility="None" RowHeight="60" SelectionMode="Single" SelectionUnit="FullRow">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="等级名称" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource PermissionCellText}" />
-                            <DataGridTextColumn Header="排序值" Binding="{Binding Rank}" Width="100" ElementStyle="{StaticResource PermissionCellText}" />
-                            <!-- <DataGridTextColumn Header="等级 ID" Binding="{Binding Id}" Width="100" ElementStyle="{StaticResource PermissionCellText}" /> -->
-                            <DataGridTemplateColumn Header="操作" Width="180">
+                            <DataGridTextColumn
+                                Header="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_LevelName}"
+                                Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource PermissionCellText}" />
+                            <DataGridTextColumn
+                                Header="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_Rank}"
+                                Binding="{Binding Rank}" Width="100" ElementStyle="{StaticResource PermissionCellText}" />
+                            <!-- <DataGridTextColumn Header="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_LevelId}" Binding="{Binding Id}" Width="100" ElementStyle="{StaticResource PermissionCellText}" /> -->
+                            <DataGridTemplateColumn
+                                Header="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_Actions}"
+                                Width="180">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="编辑" Style="{StaticResource MaterialDesignFlatButton}"
-                                                    Command="{Binding DataContext.EditLevelCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}" />
-                                            <Button Content="删除" Style="{StaticResource MaterialDesignFlatButton}"
-                                                    Command="{Binding DataContext.DeleteLevelCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}"
-                                                    Foreground="{DynamicResource MaterialDesign.Brush.ValidationError}" />
+                                            <Button
+                                                Content="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_Edit}"
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                Command="{Binding DataContext.EditLevelCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}" />
+                                            <Button
+                                                Content="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_Delete}"
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                Command="{Binding DataContext.DeleteLevelCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.ValidationError}" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -89,8 +120,12 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <TextBlock Text="尚未配置权限等级" FontSize="20" HorizontalAlignment="Center" />
-                        <TextBlock Text="点击右上角「新增等级」开始配置" Margin="0,12,0,0" Opacity=".65" />
+                        <TextBlock
+                            Text="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_NoLevels}"
+                            FontSize="20" HorizontalAlignment="Center" />
+                        <TextBlock
+                            Text="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_NoLevelsHint}"
+                            Margin="0,12,0,0" Opacity=".65" />
                     </StackPanel>
                 </Grid>
             </Border>

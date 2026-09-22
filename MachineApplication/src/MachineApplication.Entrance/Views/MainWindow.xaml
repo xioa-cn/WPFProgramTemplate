@@ -1,7 +1,7 @@
 <Window
     x:Class="MachineApplication.Entrance.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:MachineApplication.Entrance.ViewModels" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:design="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
     design:ViewDesignInclude.Source="/MachineApplication.Entrance;component/AppResources.xaml"
     xmlns:components="clr-namespace:MachineApplication.Entrance.Components"
@@ -235,7 +235,7 @@
                                     BorderThickness="0,1,0,0"
                                     BorderBrush="{DynamicResource MaterialDesign.Brush.Divider}">
                                 <DockPanel>
-                                <Button DockPanel.Dock="Right" Content="切换账号" Click="SwitchAccountClick" Style="{StaticResource MaterialDesignFlatButton}" Height="24" FontSize="11" Padding="8,0"/>
+                                <Button DockPanel.Dock="Right" Content="{Binding Source={x:Static loc:ViewModelLocator.EntranceLang}, Path=Management_SwitchAccount}" Click="SwitchAccountClick" Style="{StaticResource MaterialDesignFlatButton}" Height="24" FontSize="11" Padding="8,0"/>
                                 <TextBlock x:Name="FooterTextBlock"
                                            Text="{Binding FooterText}"
                                            FontSize="8" Opacity="0.65"

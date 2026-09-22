@@ -7,6 +7,7 @@ using System.ComponentModel;
 
 namespace MachineApplication.Entrance.ViewModels;
 
+/// <summary>主窗口视图模型，负责菜单加载、区域导航与语言切换。</summary>
 public partial class MainWindowViewModel : MachineViewModelBase
 {
     private readonly INavigationService _navigation;
@@ -24,6 +25,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
     }
     public IReadOnlyList<NavModel> NavigationItems { get; private set; }
 
+    /// <summary>重新读取路由菜单并通知界面替换导航集合。</summary>
     public void ReloadNavigation()
     {
         NavigationItems = RouterConfiguration.Load();
@@ -48,6 +50,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
             System.Windows.MessageBox.Show(ex.Message, "权限不足");
             return;
         }
+        // 只有导航成功后才更新菜单高亮，拒绝访问时保留原选择。
         foreach (var item in NavigationItems) item.SelectRoute(url);
     }
 
@@ -56,15 +59,19 @@ public partial class MainWindowViewModel : MachineViewModelBase
     {
         foreach (var item in NavigationItems) item.RefreshLanguage();
     }
+    /// <summary>通过统一导航入口切换到主页。</summary>
     [RelayCommand]
     private void ShowHome() => NavigateTo("home");
 
+    /// <summary>通过统一导航入口切换到设置页。</summary>
     [RelayCommand]
     private void ShowSettings() => NavigateTo("settings");
 
+    /// <summary>通过统一导航入口切换到主题配色页。</summary>
     [RelayCommand]
     private void ShowThemeColors() => NavigateTo("theme/colors");
 
+    /// <summary>在中文与英文之间切换，并由语言管理器广播属性刷新。</summary>
     [RelayCommand]
     private void ChangeLanguage()
     {

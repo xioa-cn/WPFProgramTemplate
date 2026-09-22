@@ -27,6 +27,7 @@ public sealed partial class ThemeColorsViewModel : MachineViewModelBase
         DesiredContrastRatio = adjustment.DesiredContrastRatio;
         SelectedContrast = adjustment.Contrast;
         SelectedColorSelection = adjustment.Colors;
+        // 初始化期间仅回填绑定值；完成后才允许属性回调触发主题保存。
         _initializingAdjustment = false;
         var currentColor = currentTheme.PrimaryMid.Color;
         foreach (var color in Palettes.SelectMany(palette => palette.Colors))
@@ -61,12 +62,15 @@ public sealed partial class ThemeColorsViewModel : MachineViewModelBase
 
     /// <summary>对比度、等级或调整范围改变后，统一校验、应用并保存。</summary>
     partial void OnDesiredContrastRatioChanged(double value) => ApplyAdjustmentSettings();
+    /// <summary>对比度等级变化时重新应用调整参数。</summary>
     partial void OnSelectedContrastChanged(Contrast value) => ApplyAdjustmentSettings();
+    /// <summary>参与调整的颜色范围变化时重新应用参数。</summary>
     partial void OnSelectedColorSelectionChanged(ColorSelection value) => ApplyAdjustmentSettings();
 
     /// <summary>关闭颜色调整时仍保存参数；初始化及回填绑定时避免递归写入。</summary>
     private void ApplyAdjustmentSettings()
     {
+        // 避免初始化和同步属性时，属性通知递归触发应用与保存。
         if (_initializingAdjustment) return;
         UpdateTheme(_themeSettings.Current with
         {
@@ -119,9 +123,11 @@ public sealed partial class ThemeColorsViewModel : MachineViewModelBase
                 if (color.IsSelected) SelectedColorLabel = color.Label;
             }
         }
+        // 即使同步过程出现异常，也必须解除回填标记。
         finally
         {
-            _initializingAdjustment = false;
+            // 初始化期间仅回填绑定值；完成后才允许属性回调触发主题保存。
+        _initializingAdjustment = false;
         }
     }
 
@@ -130,8 +136,10 @@ public sealed partial class ThemeColorsViewModel : MachineViewModelBase
         ? ViewModelLocator.EntranceLang.ThemeColorsView_DarkTheme
         : ViewModelLocator.EntranceLang.ThemeColorsView_LightTheme;
 
+    /// <summary>明暗主题状态变化时通知模式说明文本刷新。</summary>
     partial void OnIsDarkThemeChanged(bool value) => OnPropertyChanged(nameof(ThemeModeLabel));
 
+    /// <summary>语言变化时刷新派生显示文本，保留当前选择。</summary>
     private void OnLanguageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
     {
         OnPropertyChanged(nameof(ThemeModeLabel));

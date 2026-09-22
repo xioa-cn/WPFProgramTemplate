@@ -7,24 +7,29 @@ using Machine.ModuleLoad;
 using Machine.ModuleLoad.Mapper.Entity;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Models;
+using MachineApplication.Entrance.Utils;
 using MaterialDesignThemes.Wpf;
 
 namespace MachineApplication.Entrance.ViewModels;
 
+/// <summary>单条菜单翻译的编辑模型，保存语言代码与对应标题。</summary>
 public partial class RouteTitleEditor : ObservableObject
 {
     [ObservableProperty] private string _culture = "";
     [ObservableProperty] private string _title = "";
 }
 
+/// <summary>菜单树节点的编辑模型，维护子节点、翻译、目标页面和访问等级。</summary>
 public partial class RouteEditorNode : ObservableObject
 {
     [ObservableProperty] private string _languageKey = "Menu_New";
     public ObservableCollection<RouteTitleEditor> Titles { get; } = [];
 
+    /// <summary>追加一条空翻译，由用户填写语言代码与菜单标题。</summary>
     [RelayCommand]
     private void AddLanguage() => Titles.Add(new RouteTitleEditor());
 
+    /// <summary>移除指定翻译项，忽略空参数。</summary>
     [RelayCommand]
     private void RemoveLanguage(RouteTitleEditor? title)
     {
@@ -33,14 +38,15 @@ public partial class RouteEditorNode : ObservableObject
 
     private Dictionary<string, string> BuildTitles()
     {
+        // 语言代码忽略大小写，避免 ja 与 JA 被保存为重复语言。
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var translation in Titles)
         {
             var culture = translation.Culture.Trim();
             if (string.IsNullOrWhiteSpace(culture))
-                throw new InvalidOperationException($"菜单 {LanguageKey} 的语言代码不能为空。");
+                throw new InvalidOperationException(string.Format(ViewModelLocator.EntranceLang.Management_MissingCulture, LanguageKey));
             if (!result.TryAdd(culture, translation.Title.Trim()))
-                throw new InvalidOperationException($"菜单 {LanguageKey} 的语言代码 {culture} 重复。");
+                throw new InvalidOperationException(string.Format(ViewModelLocator.EntranceLang.Management_DuplicateCulture, LanguageKey, culture));
         }
 
         return result;
@@ -69,6 +75,7 @@ public partial class RouteEditorNode : ObservableObject
         if (existing is not null) RequiredLevels.Remove(existing);
     }
 
+    /// <summary>递归将持久化菜单配置复制为可绑定的编辑节点。</summary>
     public static RouteEditorNode From(NavigationItemConfiguration item)
     {
         var node = new RouteEditorNode { LanguageKey = item.LanguageKey, Icon = item.Icon, Url = item.Url };
@@ -79,6 +86,7 @@ public partial class RouteEditorNode : ObservableObject
         return node;
     }
 
+    /// <summary>将编辑树转换为保存模型；含子项的分组不保存目标页面。</summary>
     public NavigationItemConfiguration ToConfiguration() => new()
     {
         LanguageKey = LanguageKey.Trim(), Icon = Icon, Url = Children.Count > 0 ? null : Url,
@@ -87,6 +95,7 @@ public partial class RouteEditorNode : ObservableObject
     };
 }
 
+/// <summary>路由配置视图模型，管理菜单树编辑、权限目录同步及配置保存。</summary>
 public partial class RouterSettingViewModel : ObservableObject
 {
     private readonly INavigationService _navigation;
@@ -101,15 +110,18 @@ public partial class RouterSettingViewModel : ObservableObject
     [ObservableProperty] private RouteEditorNode? _selectedItem;
     [ObservableProperty] private string _status = "";
 
+    /// <summary>关联导航、主窗口和权限服务，订阅等级目录变化并加载路由。</summary>
     public RouterSettingViewModel(INavigationService navigation, MainWindowViewModel main, PermissionService permissions)
     {
         _navigation = navigation;
         _main = main;
         _permissions = permissions;
+        System.ComponentModel.PropertyChangedEventManager.AddHandler(ViewModelLocator.EntranceLang, OnDisplayLanguageChanged, string.Empty);
         _permissions.CatalogChanged += OnCatalogChanged;
         Reload();
     }
 
+    /// <summary>响应权限等级目录变化，更新当前页面的可分配等级。</summary>
     private void OnCatalogChanged(object? sender, EventArgs args) => RefreshLevels();
 
     /// <summary>同步最新权限等级，不丢弃尚未保存的菜单编辑。</summary>
@@ -121,18 +133,21 @@ public partial class RouterSettingViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Status = "刷新权限等级失败：" + ex.Message;
+            SetStatus(() => ViewModelLocator.EntranceLang.Management_LevelRefreshFailed + ManagementMessages.Error(ex));
         }
     }
 
+    /// <summary>读取当前可用等级；读取失败时返回空目录供编辑界面展示。</summary>
     private IReadOnlyList<PermissionLevel> CurrentLevels()
     {
         try { return _permissions.Levels(); }
         catch { return []; }
     }
 
+    /// <summary>递归同步菜单节点的等级选项，保留已配置的访问等级编号。</summary>
     private void ApplyLevels(IReadOnlyList<PermissionLevel> levels)
     {
+        // 递归同步整个菜单树，保留各节点的页面编辑和授权编号。
         void Sync(IEnumerable<RouteEditorNode> nodes)
         {
             foreach (var node in nodes)
@@ -146,8 +161,9 @@ public partial class RouterSettingViewModel : ObservableObject
                 foreach (var id in requiredIds)
                 {
                     var match = levels.FirstOrDefault(item => item.Id == id);
+                    // 已删除等级保留占位编号，避免刷新目录时悄悄丢失已有授权配置。
                     node.RequiredLevels.Add(match is null
-                        ? new PermissionLevel { Id = id, Name = $"已删除等级 {id}" }
+                        ? new PermissionLevel { Id = id, Name = string.Format(ViewModelLocator.EntranceLang.Management_DeletedLevel, id) }
                         : new PermissionLevel { Id = match.Id, Name = match.Name, Rank = match.Rank });
                 }
                 node.LevelToAdd = node.Levels.FirstOrDefault(item => item.Id == selectedId) ?? node.Levels.FirstOrDefault();
@@ -157,6 +173,7 @@ public partial class RouterSettingViewModel : ObservableObject
         Sync(Items);
     }
 
+    /// <summary>从导航注册表重新获取页面列表，供目标页面下拉框选择。</summary>
     [RelayCommand]
     private void RefreshPages()
     {
@@ -164,6 +181,7 @@ public partial class RouterSettingViewModel : ObservableObject
         foreach (var route in _navigation.GetRegisteredRoutes()) Pages.Add(route);
     }
 
+    /// <summary>重新读取当前页面的数据；读取失败时在状态区域显示错误。</summary>
     [RelayCommand]
     private void Reload()
     {
@@ -175,14 +193,15 @@ public partial class RouterSettingViewModel : ObservableObject
             ApplyLevels(CurrentLevels());
             SelectedItem = Items.FirstOrDefault();
             RefreshPages();
-            Status = "已加载配置。留空的语言标题使用语言键对应的现有翻译。";
+            SetStatus(() => ViewModelLocator.EntranceLang.Management_RoutesLoaded);
         }
         catch (Exception ex)
         {
-            Status = "加载失败：" + ex.Message;
+            SetStatus(() => ViewModelLocator.EntranceLang.Management_LoadFailed + ManagementMessages.Error(ex));
         }
     }
 
+    /// <summary>创建顶层菜单节点，初始化等级选项并选中新节点。</summary>
     [RelayCommand]
     private void AddRoot()
     {
@@ -193,6 +212,7 @@ public partial class RouterSettingViewModel : ObservableObject
         SelectedItem = node;
     }
 
+    /// <summary>为当前菜单添加子项，并清空父级目标页面使其成为分组。</summary>
     [RelayCommand]
     private void AddChild()
     {
@@ -201,10 +221,12 @@ public partial class RouterSettingViewModel : ObservableObject
         foreach (var level in CurrentLevels()) node.Levels.Add(new PermissionLevel { Id = level.Id, Name = level.Name, Rank = level.Rank });
         node.LevelToAdd = node.Levels.FirstOrDefault();
         SelectedItem.Children.Add(node);
+        // 包含子菜单后父节点作为分组显示，不再直接导航到页面。
         SelectedItem.Url = null;
         SelectedItem = node;
     }
 
+    /// <summary>递归定位包含指定节点的集合，供删除和同级排序使用。</summary>
     private ObservableCollection<RouteEditorNode>? FindParent(ObservableCollection<RouteEditorNode> items,
         RouteEditorNode node)
     {
@@ -215,6 +237,7 @@ public partial class RouterSettingViewModel : ObservableObject
         return null;
     }
 
+    /// <summary>从所属集合移除当前节点，并将选择移回首个顶层菜单。</summary>
     [RelayCommand]
     private void Delete()
     {
@@ -223,12 +246,15 @@ public partial class RouterSettingViewModel : ObservableObject
         SelectedItem = Items.FirstOrDefault();
     }
 
+    /// <summary>将当前节点在同级菜单中向前移动一位。</summary>
     [RelayCommand]
     private void MoveUp() => Move(-1);
 
+    /// <summary>将当前节点在同级菜单中向后移动一位。</summary>
     [RelayCommand]
     private void MoveDown() => Move(1);
 
+    /// <summary>按偏移量调整同级顺序，越界时保持原位置。</summary>
     private void Move(int offset)
     {
         if (SelectedItem is not { } node || FindParent(Items, node) is not { } parent) return;
@@ -236,6 +262,7 @@ public partial class RouterSettingViewModel : ObservableObject
         if (index + offset >= 0 && index + offset < parent.Count) parent.Move(index, index + offset);
     }
 
+    /// <summary>校验菜单树与操作权限，保存配置后通知主窗口重建导航。</summary>
     [RelayCommand]
     private void Save()
     {
@@ -244,13 +271,14 @@ public partial class RouterSettingViewModel : ObservableObject
             var config = new RouterConfiguration
                 { NavigationItems = Items.Select(item => item.ToConfiguration()).ToList() };
 
+            // 保存前递归校验所有叶子节点，防止配置未注册或空白的页面地址。
             void Validate(IEnumerable<NavigationItemConfiguration> nodes)
             {
                 foreach (var node in nodes)
                 {
                     if (node.Children.Count == 0 &&
                         (string.IsNullOrWhiteSpace(node.Url) || !_navigation.GetRegisteredRoutes().Any(route => string.Equals(route.Url, node.Url, StringComparison.OrdinalIgnoreCase))))
-                        throw new InvalidOperationException($"菜单 {node.LanguageKey} 请选择已注册页面。");
+                        throw new InvalidOperationException(string.Format(ViewModelLocator.EntranceLang.Management_SelectPage, node.LanguageKey));
                     Validate(node.Children);
                 }
             }
@@ -260,11 +288,20 @@ public partial class RouterSettingViewModel : ObservableObject
             MainProvider.ServiceProvider!.GetRequiredService<Machine.ModuleLoad.Mapper.PermissionService>().Demand("page:settings/routes");
             RouterConfiguration.Save(config);
             _main.ReloadNavigation();
-            Status = "已保存 Router.json，导航菜单已更新。";
+            SetStatus(() => ViewModelLocator.EntranceLang.Management_RoutesSaved);
         }
         catch (Exception ex)
         {
-            Status = "保存失败：" + ex.Message;
+            SetStatus(() => ViewModelLocator.EntranceLang.Management_SaveFailed + ManagementMessages.Error(ex));
         }
+    }
+    // 保存状态的生成函数，让切换语言也能更新最近一次操作结果。
+    private Func<string> _statusText = () => string.Empty;
+    /// <summary>保存状态文本的计算函数，立即显示并支持之后重新翻译。</summary>
+    private void SetStatus(Func<string> text) { _statusText = text; Status = text(); }
+    /// <summary>重新计算已显示的本地化文案，保留编辑数据及对话框状态。</summary>
+    private void OnDisplayLanguageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
+    {
+        Status = _statusText();
     }
 }
