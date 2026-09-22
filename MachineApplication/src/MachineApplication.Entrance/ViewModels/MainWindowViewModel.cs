@@ -14,6 +14,12 @@ public partial class MainWindowViewModel : MachineViewModelBase
 {
     private readonly INavigationService _navigation;
 
+    [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+    private bool _isNavigationCollapsed;
+
+    [RelayCommand]
+    private void ToggleNavigation() => IsNavigationCollapsed = !IsNavigationCollapsed;
+
     /// <summary>底部作者、版权或联系信息，可按项目需要修改。</summary>
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private string _footerText = "© 2026 MachineApplication. Designed & Developed by XIOA";
@@ -50,7 +56,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
     private void ActivateNavigation(NavModel? item)
     {
         if (item is null) return;
-        if (item.HasChildren) item.IsExpanded = !item.IsExpanded;
+        if (item.HasChildren) { if (!IsNavigationCollapsed) item.IsExpanded = !item.IsExpanded; }
         else if (item.Url is not null) NavigateTo(item.Url);
     }
 

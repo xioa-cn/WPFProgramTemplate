@@ -1,8 +1,10 @@
-﻿{
+{
   "Global": {
     "AppName": "WPF_桌面程序"
   },
   "MainWindow": {
+    "CollapseNavigation": "折叠导航栏",
+    "ExpandNavigation": "展开导航栏",
     "Navigation": "工作空间",
     "General": "常规设置",
     "Appearance": "外观",

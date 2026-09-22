@@ -18,9 +18,17 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Loaded += MainWindowLoaded;
 
     }
 
+    private void MainWindowLoaded(object sender, RoutedEventArgs e)
+    {
+        // 空内容占位独立于路由和页签，不触发导航。
+        var navigation = MainProvider.ServiceProvider!.GetRequiredService<Machine.ModuleLoad.Region.INavigationService>();
+        EmptyWorkspaceWelcome.DataContext = new WelcomeViewModel(navigation);
+        Loaded -= MainWindowLoaded;
+    }
     /// <summary>通过框架隐藏主页、注销并显示居中的登录窗口。</summary>
     private void SwitchAccountClick(object sender, RoutedEventArgs args)
     {

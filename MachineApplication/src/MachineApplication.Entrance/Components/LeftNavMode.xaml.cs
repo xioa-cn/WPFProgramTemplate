@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 
 namespace MachineApplication.Entrance.Components;
 
@@ -10,11 +10,44 @@ using MachineApplication.Entrance.Models;
 /// <summary>左侧导航组件，继承窗口 VM，通过命令展开菜单和导航。</summary>
 public partial class LeftNavMode : UserControl
 {
+    // 使用可交互菜单浮层，支持任意层级、键盘导航、Esc 和点击外部关闭。
+    private void OpenCollapsedMenu(object sender, RoutedEventArgs args)
+    {
+        if (DataContext is not MachineApplication.Entrance.ViewModels.MainWindowViewModel { IsNavigationCollapsed: true } viewModel ||
+            args.OriginalSource is not Button { DataContext: NavModel { HasChildren: true } node } button)
+            return;
+
+        var menu = new ContextMenu
+        {
+            PlacementTarget = button,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Right,
+            MinWidth = 200,
+            MaxWidth = 320
+        };
+        MenuItem CreateItem(NavModel item)
+        {
+            var entry = new MenuItem();
+            entry.SetBinding(HeaderedItemsControl.HeaderProperty, new System.Windows.Data.Binding(nameof(NavModel.Title)) { Source = item });
+            entry.SetBinding(System.Windows.Automation.AutomationProperties.NameProperty, new System.Windows.Data.Binding(nameof(NavModel.Title)) { Source = item });
+            entry.Icon = new MaterialDesignThemes.Wpf.PackIcon { Kind = item.Icon, Width = 18, Height = 18 };
+            if (item.HasChildren)
+                foreach (var child in item.Children) entry.Items.Add(CreateItem(child));
+            else
+            {
+                entry.Command = viewModel.ActivateNavigationCommand;
+                entry.CommandParameter = item;
+            }
+            return entry;
+        }
+        foreach (var child in node.Children) menu.Items.Add(CreateItem(child));
+        menu.IsOpen = true;
+    }
     private Button? _visibleSelection;
     /// <summary>初始化视图，运行时 DataContext 由父窗口提供。</summary>
     public LeftNavMode()
     {
         InitializeComponent();
+        AddHandler(Button.ClickEvent, new RoutedEventHandler(OpenCollapsedMenu));
         // 这里只同步视觉坐标，导航与选中状态仍由 VM 的 Command 管理。
         LayoutUpdated += UpdateSelectionArrow;
         MouseMove += (_, _) => UpdateHoverBackground();
@@ -48,15 +81,16 @@ public partial class LeftNavMode : UserControl
         }
         var shouldAnimate = !ReferenceEquals(_visibleSelection, selected);
         _visibleSelection = selected;
-        SelectionArrow.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-        SelectionBackground.Visibility = SelectionArrow.Visibility;
+        var collapsed = DataContext is MachineApplication.Entrance.ViewModels.MainWindowViewModel { IsNavigationCollapsed: true };
+        SelectionArrow.Visibility = visible && !collapsed ? Visibility.Visible : Visibility.Collapsed;
+        SelectionBackground.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         if (visible)
         {
             // 背景比箭头右边缘再多留 4 像素，将圆形按钮完整包在圆角末端中。
             // 背景始终从侧栏左边缘铺满，菜单层级缩进只影响文字和图标。
             Canvas.SetLeft(SelectionBackground, 0);
             Canvas.SetTop(SelectionBackground, origin.Y);
-            SelectionBackground.Width = ActualWidth + 20;
+            SelectionBackground.Width = collapsed ? Math.Max(0, ActualWidth - 8) : ActualWidth + 20;
             SelectionBackground.Height = selected.ActualHeight;
         }
         if (visible && Math.Abs(SelectionArrowPosition.Y - (center - radius)) > 0.1)

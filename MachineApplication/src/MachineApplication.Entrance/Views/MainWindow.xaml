@@ -93,6 +93,13 @@
                             Grid.Column="1"
                             VerticalAlignment="Center"
                             Orientation="Horizontal">
+                            <Button x:Name="ChangeLanguageButton"
+                                    Command="{Binding ChangeLanguageCommand}"
+                                    Style="{StaticResource CaptionButton}"
+                                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_ChangeLanguage}"
+                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
+                                <materialDesign:PackIcon Kind="Translate" Width="20" Height="20" />
+                            </Button>
                             <Button
                                 x:Name="ThemeButton"
                                 AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_ThemeColor}"
@@ -207,7 +214,18 @@
                 <!--  左侧菜单与页面区域共用窗口 VM；只保留一个 MainRegion 宿主。  -->
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition>
+                            <ColumnDefinition.Style>
+                                <Style TargetType="ColumnDefinition">
+                                    <Setter Property="Width" Value="240" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsNavigationCollapsed}" Value="True">
+                                            <Setter Property="Width" Value="64" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ColumnDefinition.Style>
+                        </ColumnDefinition>
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <components:LeftNavMode x:Name="LeftNavigation" Panel.ZIndex="1" />
@@ -372,7 +390,31 @@
                                      become part of the bitmap processed by DropShadowEffect. -->
                                 <Border Style="{StaticResource WorkspaceCard}" IsHitTestVisible="False" />
                                 <Border Padding="20">
-                                    <ContentControl region:RegionManager.RegionName="MainRegion" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                                    <Grid>
+                                        <Frame x:Name="EmptyWorkspaceFrame" NavigationUIVisibility="Hidden" JournalOwnership="OwnsJournal" Focusable="False">
+                                            <Frame.Style>
+                                                <Style TargetType="Frame">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Content, ElementName=MainPageHost}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Frame.Style>
+                                            <Frame.Content><local:Welcome x:Name="EmptyWorkspaceWelcome" /></Frame.Content>
+                                        </Frame>                                        <ContentControl x:Name="MainPageHost" region:RegionManager.RegionName="MainRegion" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="Content" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </Grid>
                                 </Border>
                             </Grid>
                             </DockPanel>

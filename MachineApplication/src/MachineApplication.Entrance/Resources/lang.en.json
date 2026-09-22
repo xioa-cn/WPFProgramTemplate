@@ -1,8 +1,9 @@
-﻿{
+{
     "Global":  {
                    "AppName":  "WPF_Application"
                },
     "MainWindow":  {
+                       "CollapseNavigation": "Collapse navigation", "ExpandNavigation": "Expand navigation",
                        "Navigation":  "Workspace",
                        "General":  "General",
                        "Appearance":  "Appearance",
