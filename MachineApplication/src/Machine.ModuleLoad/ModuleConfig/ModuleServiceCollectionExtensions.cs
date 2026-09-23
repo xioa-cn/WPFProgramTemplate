@@ -14,8 +14,10 @@ public static class ModuleServiceCollectionExtensions
         typeof(StartupCommand),
         typeof(Application),
         typeof(RegionManager),
+        typeof(IRegionManager),
         typeof(NavigationService),
-        typeof(INavigationService)
+        typeof(INavigationService),
+        typeof(INavigateAsync)
     ];
 
     /// <summary>将主容器已注册的基础单例实例共享给模块子容器。</summary>

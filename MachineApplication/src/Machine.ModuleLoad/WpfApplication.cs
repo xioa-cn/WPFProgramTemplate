@@ -34,6 +34,8 @@ public static class WpfApplication
         serviceCollection.AddSingleton<Mapper.PermissionService>();
         serviceCollection.AddSingleton<RegionManager>();
         GlobalLogger.DebuggerLogger?.Debug("Registered region manager RegionManager.");
+        serviceCollection.AddSingleton<IRegionManager>(sp => sp.GetRequiredService<RegionManager>());
+        serviceCollection.AddSingleton<INavigateAsync>(sp => sp.GetRequiredService<NavigationService>());
         serviceCollection.AddSingleton<NavigationService>();
         GlobalLogger.DebuggerLogger?.Debug("Registered navigation service NavigationService.");
         serviceCollection.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());

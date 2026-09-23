@@ -1,30 +1,41 @@
 namespace Machine.ModuleLoad.Region;
-/// <summary>导航上下文。</summary>
-public sealed record RegionNavigationContext(string RegionName);
-/// <summary>
-/// 导航感知生命周期。该接口既可由视图实现，也可由视图的 DataContext（通常是 ViewModel）实现。
-/// </summary>
+
+/// <summary>确认导航、复用判断与导航生命周期共用的请求上下文。</summary>
+public sealed class RegionNavigationContext
+{
+    /// <summary>获取本次导航对应的区域导航服务。</summary>
+    public IRegionNavigationService NavigationService { get; }
+    /// <summary>获取完整导航目标 URI，包含查询字符串。</summary>
+    public Uri Uri { get; }
+    /// <summary>获取 URI 查询参数和 RequestNavigate 传入的对象参数；同名对象参数覆盖查询参数。</summary>
+    public NavigationParameters Parameters { get; }
+    /// <summary>获取正在执行导航的真实区域实例。</summary>
+    public IRegion Region => NavigationService.Region;
+    public string RegionName => Region.Name;
+
+    public RegionNavigationContext(IRegionNavigationService navigationService, Uri uri,
+        NavigationParameters? parameters = null)
+    {
+        NavigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        Uri = uri ?? throw new ArgumentNullException(nameof(uri));
+        Parameters = NavigationParameters.Merge(uri, parameters);
+    }
+}
+
+/// <summary>视图与 DataContext 均可实现；同一对象只通知一次。</summary>
 public interface INavigationAware
 {
-    /// <summary>
-    /// 判断当前对象是否可以复用来承载本次导航。
-    /// </summary>
-    /// <param name="context">包含目标区域名称的导航上下文。</param>
-    /// <returns>返回 <see langword="true" /> 表示允许继续导航；返回 <see langword="false" /> 表示拒绝本次导航。</returns>
+    /// <summary>是否复用该实例；返回 false 时由导航服务创建新实例。</summary>
     bool IsNavigationTarget(RegionNavigationContext context);
-
-    /// <summary>
-    /// 页面或 ViewModel 成为目标区域的当前内容后调用。
-    /// </summary>
-    /// <param name="context">包含目标区域名称的导航上下文。</param>
     void OnNavigatedTo(RegionNavigationContext context);
 
-    /// <summary>
-    /// 页面或 ViewModel 即将离开当前区域时调用，可用于停止任务、取消订阅或保存临时状态。
-    /// </summary>
-    void OnNavigatedFrom();
+    /// <summary>兼容原有无参数的离开通知。</summary>
+    void OnNavigatedFrom() { }
+
+    /// <summary>在确认通过后通知即将离开，context 描述本次导航的目标。</summary>
+    void OnNavigatedFrom(RegionNavigationContext context) => OnNavigatedFrom();
 }
-/// <summary>可选的区域激活生命周期。</summary>
+
 public interface IRegionView
 {
     void OnActivated();

@@ -3,7 +3,7 @@ using Machine.ModuleLoad.Region;
 
 namespace Machine.ModuleLoad.Mvvm;
 
-public abstract class NavigationObservableObject : ObservableObject, INavigationAware
+public abstract class NavigationObservableObject : ObservableObject, IConfirmNavigationRequest
 {
     public virtual bool IsNavigationTarget(RegionNavigationContext context)
     {
@@ -16,5 +16,15 @@ public abstract class NavigationObservableObject : ObservableObject, INavigation
 
     public virtual void OnNavigatedFrom()
     {
+    }
+
+    public virtual void OnNavigatedFrom(RegionNavigationContext context) => OnNavigatedFrom();
+
+    public virtual void ConfirmNavigationRequest(
+        RegionNavigationContext navigationContext,
+        Action<bool> continuationCallback)
+    {
+        ArgumentNullException.ThrowIfNull(continuationCallback);
+        continuationCallback(true);
     }
 }
