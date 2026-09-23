@@ -17,6 +17,8 @@ public interface IRegion : INavigateAsync
     IRegionManager RegionManager { get; }
     /// <summary>此区域专属的导航服务。</summary>
     IRegionNavigationService NavigationService { get; }
+    /// <summary>此区域的视图切换动画策略，可以按区域自定义。</summary>
+    IRegionAnimation Animation { get; set; }
     /// <summary>区域中保留的视图。</summary>
     ReadOnlyObservableCollection<UIElement> Views { get; }
     /// <summary>当前活动视图集合；此适配器最多包含一个视图。</summary>

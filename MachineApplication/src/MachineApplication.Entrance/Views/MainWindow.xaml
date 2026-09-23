@@ -564,6 +564,16 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </ContentControl.Style>
+                                                <!-- 设置区域切换动画 -->
+                                                <!-- <region:RegionAnimation.Animation> -->
+                                                <!--     <region:RegionAnimation -->
+                                                <!--         Duration="0:0:5.25" -->
+                                                <!--         IsEnabled="True"> -->
+                                                <!--         <region:RegionAnimation.EasingFunction> -->
+                                                <!--             <CubicEase EasingMode="EaseOut"/> -->
+                                                <!--         </region:RegionAnimation.EasingFunction> -->
+                                                <!--     </region:RegionAnimation> -->
+                                                <!-- </region:RegionAnimation.Animation> -->
                                             </ContentControl>
                                         </Grid>
                                     </Border>

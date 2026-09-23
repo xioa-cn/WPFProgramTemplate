@@ -13,8 +13,9 @@ public sealed class RegionInfo : IRegion
     private readonly ObservableCollection<UIElement> _activeViews = [];
     private readonly Dictionary<string, UIElement> _namedViews = new(StringComparer.Ordinal);
     private readonly Dictionary<UIElement, (Uri Uri, bool KeepAlive)> _metadata = new(ReferenceEqualityComparer.Instance);
+    private IRegionAnimation _animation = new RegionAnimation();
 
-    internal RegionInfo(RegionManager manager, string name, ContentControl host)
+    internal RegionInfo(RegionManager manager, string name, ContentControl host, IRegionAnimation? animation = null)
     {
         _manager = manager;
         Name = name;
@@ -22,6 +23,7 @@ public sealed class RegionInfo : IRegion
         Views = new(_views);
         ActiveViews = new(_activeViews);
         NavigationService = new RegionNavigationService(manager, this);
+        Animation = animation ?? new RegionAnimation();
     }
 
     public string Name { get; }
@@ -29,6 +31,11 @@ public sealed class RegionInfo : IRegion
     public object? Context { get; set; }
     public IRegionManager RegionManager => _manager;
     public IRegionNavigationService NavigationService { get; }
+    public IRegionAnimation Animation
+    {
+        get => _animation;
+        set => _animation = value ?? throw new ArgumentNullException(nameof(value));
+    }
     internal RegionNavigationService Service => (RegionNavigationService)NavigationService;
     public ReadOnlyObservableCollection<UIElement> Views { get; }
     public ReadOnlyObservableCollection<UIElement> ActiveViews { get; }
@@ -83,8 +90,11 @@ public sealed class RegionInfo : IRegion
     {
         if (ReferenceEquals(ActiveView, view)) return;
         var old = ActiveView;
+        var previousContent = Host.Content;
+        _animationContext?.Cancel();
         if (old is IRegionView oldRegion) oldRegion.OnDeactivated();
-        Host.Content = view is null ? null : _manager.GetPresentation(view);
+        var currentContent = view is null ? null : _manager.GetPresentation(view);
+        Host.Content = currentContent;
         _activeViews.Clear();
         if (view is not null)
         {
@@ -92,6 +102,28 @@ public sealed class RegionInfo : IRegion
             _activeViews.Add(view);
             if (view is IRegionView active) active.OnActivated();
         }
+
+        var animationContext = new RegionAnimationContext(
+            Host, old, view, previousContent, currentContent);
+        _animationContext = animationContext;
+        try
+        {
+            Animation.Animate(animationContext);
+        }
+        catch
+        {
+            animationContext.Cancel();
+            if (ReferenceEquals(_animationContext, animationContext)) _animationContext = null;
+            throw;
+        }
+    }
+
+    private RegionAnimationContext? _animationContext;
+
+    internal void CancelAnimation()
+    {
+        _animationContext?.Cancel();
+        _animationContext = null;
     }
 
     internal void ReleaseIfNeeded(UIElement view)

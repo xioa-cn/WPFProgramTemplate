@@ -110,6 +110,7 @@ public static class WpfApplication
         app.MainWindow = window;
         GlobalLogger.DebuggerLogger?.Success("The WPF desktop program has started successfully.");
         GlobalLogger.DebuggerLogger?.Warn("Start monitoring the desktop program....");
+        ModuleProvider.RootProvider = serviceProvider;
         app.Run(window);
     }
 
@@ -121,6 +122,7 @@ public static class WpfApplication
         var flow = serviceProvider.GetRequiredService<LoginWindowFlow>();
         var login = flow.CreateStartupWindow();
         GlobalLogger.DebuggerLogger?.Info("The login window is ready.");
+        ModuleProvider.RootProvider = serviceProvider;
         app.Run(login);
     }
 }

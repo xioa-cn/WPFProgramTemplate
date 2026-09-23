@@ -10,6 +10,8 @@ public static class ModuleProvider
     private static readonly object SyncRoot = new();
     private static Dictionary<string, IServiceProvider> _providers =
         new(StringComparer.OrdinalIgnoreCase);
+    
+    public static IServiceProvider? RootProvider { get; internal set; }
 
     /// <summary>从根容器收集已构建的模块子容器并建立名称索引。</summary>
     /// <param name="rootProvider">应用根服务提供程序。</param>

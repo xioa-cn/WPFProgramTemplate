@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Machine.ModuleLoad.Logger;
@@ -14,6 +15,8 @@ public static class JsonFileUtils
     {
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip, // 新增：忽略JSON中的注释
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // 防止 序列化中文乱码
         Converters = { new JsonStringEnumConverter() }
     };
 

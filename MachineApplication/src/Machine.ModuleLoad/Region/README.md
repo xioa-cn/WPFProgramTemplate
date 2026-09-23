@@ -46,6 +46,38 @@ region.Remove(preloadedView);
 
 `IRegion.Views` 和 `IRegion.ActiveViews` 是只读集合。当前 `ContentControl` 适配器最多有一个活动视图。
 
+### 自定义区域切换动画
+
+区域动画由 `IRegionAnimation` 控制。默认使用短时淡入，也可以在注册区域时传入策略，或直接修改区域的 `Animation` 属性：
+
+```csharp
+public sealed class SlideAnimation : IRegionAnimation
+{
+    public void Animate(RegionAnimationContext context)
+    {
+        var transform = new TranslateTransform { X = 40 };
+        context.Host.RenderTransform = transform;
+
+        var animation = new DoubleAnimation(40, 0, TimeSpan.FromMilliseconds(240));
+        animation.Completed += (_, _) => context.Host.RenderTransform = null;
+        transform.BeginAnimation(TranslateTransform.XProperty, animation);
+
+        // 连续导航时取消当前动画并恢复宿主状态。
+        context.RegisterCleanup(() =>
+        {
+            transform.BeginAnimation(TranslateTransform.XProperty, null);
+            context.Host.RenderTransform = null;
+        });
+    }
+}
+
+regions.Register("MainRegion", mainContentControl, new SlideAnimation());
+// 已注册区域也可以替换策略：
+regions.Regions["MainRegion"].Animation = RegionAnimation.None;
+```
+
+`RegionAnimation` 可直接配置默认淡入的持续时间和缓动函数，也可以继承并重写 `Animate`，或使用 `new RegionAnimation(context => { ... })` 传入委托。XAML 宿主可以使用 `RegionAnimation.SetAnimation(host, strategy)` 设置附加策略。动画执行期间区域内容已经同步更新；`RegionAnimationContext.CancellationToken` 和 `RegisterCleanup` 用于清理被下一次导航替代的动画。
+
 如果模块需要自己的区域集合，可以从模块服务容器解析 `IRegionManager`。模块加载桥接会使用单元模块名称绑定它：
 
 ```csharp

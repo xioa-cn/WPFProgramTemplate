@@ -9,8 +9,8 @@ public interface IRegionManager
     string? ServiceContainerName { get; }
     /// <summary>获取此管理器当前注册的实时区域集合。</summary>
     IRegionCollection Regions { get; }
-    /// <summary>将 ContentControl 注册为区域。</summary>
-    void Register(string regionName, ContentControl host);
+    /// <summary>将 ContentControl 注册为区域，并可指定视图切换动画策略。</summary>
+    void Register(string regionName, ContentControl host, IRegionAnimation? animation = null);
     /// <summary>获取已注册区域。</summary>
     IRegion GetRegion(string regionName);
     /// <summary>向区域添加视图。</summary>

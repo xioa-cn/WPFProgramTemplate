@@ -109,18 +109,22 @@ public sealed class RegionManager : IRegionManager, IDisposable
             var provider = MainProvider.ServiceProvider ?? throw new InvalidOperationException("主服务容器尚未初始化。");
             manager = provider.GetService<IRegionManager>() ?? provider.GetService<RegionManager>()
                 ?? Instances.GetValue(provider, p => new RegionManager(p));
+            // RegionName 使用全局容器自动发现管理器时，也要把管理器写回宿主。
+            // 后续的 RegionAnimation 等附加属性才能通过继承属性找到所属区域。
+            SetRegionManager(host, manager);
         }
         if (args.OldValue is string oldName && manager.Regions.ContainsRegionWithName(oldName) &&
             ReferenceEquals(manager.Regions[oldName].Host, host)) manager.Regions.Remove(oldName);
         manager.Register(name, host);
     }
 
-    public void Register(string regionName, ContentControl host)
+    public void Register(string regionName, ContentControl host, IRegionAnimation? animation = null)
     {
         ArgumentNullException.ThrowIfNull(host);
         host.Dispatcher.VerifyAccess();
         regionName = RegionRoute.Normalize(regionName);
-        var region = new RegionInfo(this, regionName, host);
+        var region = new RegionInfo(this, regionName, host,
+            animation ?? RegionAnimation.GetAnimation(host));
         if (!_regions.TryAdd(regionName, region)) throw new InvalidOperationException($"区域 '{regionName}' 已注册。");
         region.Service.Navigated += (_, args) => Catalog?.OnRegionNavigated(this, region, args.NavigationContext);
         if (host.Content is UIElement initial) region.Add(initial);
@@ -128,12 +132,14 @@ public sealed class RegionManager : IRegionManager, IDisposable
             foreach (var registration in registrations) region.Add(registration.Factory());
     }
 
-    public void RegisterRegion(string regionName, ContentControl host) => Register(regionName, host);
+    public void RegisterRegion(string regionName, ContentControl host, IRegionAnimation? animation = null)
+        => Register(regionName, host, animation);
     public ContentControl GetRegion(string regionName) => Get(regionName);
     IRegion IRegionManager.GetRegion(string regionName) => GetRegionInfo(regionName);
     public ContentControl Get(string regionName) => GetRegionInfo(regionName).Host;
     internal RegionInfo GetRegionInfo(string name) => _regions.TryGetValue(RegionRoute.Normalize(name), out var region)
         ? region : throw new KeyNotFoundException($"区域 '{name}' 未注册。");
+
     public bool CanNavigate(string regionName) => _regions.ContainsKey(RegionRoute.Normalize(regionName));
     public void Show(string regionName, UIElement view) => Navigate(regionName, view);
 
@@ -302,6 +308,7 @@ public sealed class RegionManager : IRegionManager, IDisposable
     {
         if (!_regions.TryGetValue(RegionRoute.Normalize(name), out var region)) return false;
         Clear(name);
+        region.CancelAnimation();
         region.RemoveAll();
         return _regions.Remove(region.Name);
     }

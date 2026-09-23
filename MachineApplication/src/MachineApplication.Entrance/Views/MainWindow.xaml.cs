@@ -6,7 +6,10 @@ using System.Windows.Interop;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using Machine.ModuleLoad.ModuleConfig;
+using Machine.ModuleLoad.Region;
+using MachineApplication.Entrance.Models;
 using MachineApplication.Entrance.ViewModels;
 
 namespace MachineApplication.Entrance.Views;
@@ -21,6 +24,26 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Loaded += MainWindowLoaded;
+        var provider = ModuleProvider.RootProvider;
+        // 设置区域切换动画
+        var regionManager = provider?.GetRequiredService<IRegionManager>();
+        var region = regionManager?.GetRegion("MainRegion");
+        region?.Animation = new SlideRegionAnimation()
+        {
+            Duration = TimeSpan.FromMilliseconds(3500),
+            EasingFunction = new CubicEase()
+            {
+                EasingMode = EasingMode.EaseOut
+            }
+        };
+        // regionManager.Register("MainRegion",MainPageHost,new SlideRegionAnimation()
+        // {
+        //     Duration = TimeSpan.FromMilliseconds(350),
+        //     EasingFunction = new CubicEase()
+        //     {
+        //         EasingMode = EasingMode.EaseOut
+        //     }
+        // });
 
     }
 

@@ -1,6 +1,8 @@
+using System.Windows.Media.Animation;
 using Machine.ModuleLoad;
 using Machine.ModuleLoad.ModuleConfig;
 using Machine.ModuleLoad.Region;
+using MachineApplication.Entrance.Models;
 using MachineApplication.Entrance.ViewModels;
 using MachineApplication.Entrance.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +39,8 @@ public sealed class EntranceModule : IModule
         navigation.Register("home", typeof(HomeView), "Common");
         navigation.Register("settings", typeof(SettingsView), "Common");
         navigation.Register("theme/colors", typeof(ThemeColorsView), "Common");
+        
+       
     }
     public void OnShutdown() { }
 }
