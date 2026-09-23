@@ -60,7 +60,7 @@ public static class LoadModuleExtensions
             foreach (var module in collection.Modules.Values.Select(x => x.Module).OfType<IModule>())
                 module.RegisterTypes(childServices);
             // 保存子容器，供启动阶段和 ModuleProvider 查询。
-            childServices.AddRootInfrastructureServices(provider);
+            childServices.AddRootInfrastructureServices(provider, collection.UnitModuleName);
             collection.ChildServiceProvider = childServices.BuildServiceProvider();
         }
         ModuleProvider.Initialize(provider);

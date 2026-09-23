@@ -1,14 +1,16 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.Mapper;
 using Machine.ModuleLoad.Mapper.Entity;
+using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Utils;
 
 namespace MachineApplication.Entrance.ViewModels;
 
 /// <summary>用户管理视图模型，负责账号列表、等级分配及新增编辑对话框状态。</summary>
-public partial class UserManagementViewModel : ObservableObject
+public partial class UserManagementViewModel : NavigationObservableObject
 {
     private readonly PermissionService _service;
     private int? _editingId;
@@ -31,6 +33,11 @@ public partial class UserManagementViewModel : ObservableObject
         System.Windows.WeakEventManager<PermissionService, EventArgs>.AddHandler(service, nameof(service.CatalogChanged), OnCatalogChanged);
         Reload();
     }
+
+    public override bool IsNavigationTarget(RegionNavigationContext context) => true;
+
+    /// <summary>页面被缓存复用时刷新可分配的权限等级。</summary>
+    public override void OnNavigatedTo(RegionNavigationContext context) => RefreshLevels();
 
     /// <summary>响应权限等级目录变化，更新当前页面的可分配等级。</summary>
     private void OnCatalogChanged(object? sender, EventArgs args) => RefreshLevels();

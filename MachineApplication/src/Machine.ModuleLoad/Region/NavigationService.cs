@@ -30,7 +30,7 @@ public sealed class NavigationService : INavigationService, INavigateAsync
         _routes[path] = new(viewType, moduleName, () =>
         {
             var provider = string.IsNullOrWhiteSpace(moduleName) ? _provider : ModuleProvider.GetModuleProvider(moduleName);
-            return (UIElement)ActivatorUtilities.GetServiceOrCreateInstance(provider, viewType);
+            return (UIElement)provider.GetRequiredService(viewType);
         });
         _manager.RegisterPermission(viewType, "page:" + path);
     }

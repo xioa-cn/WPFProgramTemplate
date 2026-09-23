@@ -1,6 +1,6 @@
 # Region 导航
 
-`Machine.ModuleLoad.Region` 是一个面向 WPF 的区域导航实现，接口设计参考 Prism。区域以 `ContentControl` 作为宿主，每个区域同时只显示一个活动视图，并拥有自己的导航服务和导航历史。
+`Machine.ModuleLoad.Region` 是一个面向 WPF 的区域导航实现，接口设计参考 Prism。区域以 `ContentControl` 作为宿主，每个区域同时只显示一个活动视图，并拥有自己的导航服务和导航历史。视图和 ViewModel 必须显式注册到负责创建它们的服务容器。
 
 ## 1. 注册服务
 
@@ -46,6 +46,21 @@ region.Remove(preloadedView);
 
 `IRegion.Views` 和 `IRegion.ActiveViews` 是只读集合。当前 `ContentControl` 适配器最多有一个活动视图。
 
+如果模块需要自己的区域集合，可以从模块服务容器解析 `IRegionManager`。模块加载桥接会使用单元模块名称绑定它：
+
+```csharp
+var moduleRegions = moduleProvider.GetRequiredService<IRegionManager>();
+// moduleRegions.ServiceContainerName == 当前单元模块名称
+```
+
+也可以显式按名称创建：
+
+```csharp
+var moduleRegions = rootRegions.CreateRegionManager("Common");
+```
+
+按类型注册的视图和构造函数依赖必须注册在这个命名容器中。框架不会跨模块容器隐式查找或自动构造未注册服务。
+
 ## 3. 注册 URI 路由
 
 `NavigationService` 负责把 URI 路径映射到视图类型。视图应注册为瞬态，以便在导航目标不允许复用时创建新实例：
@@ -63,7 +78,7 @@ regions.RegisterViewWithRegion("ToolsRegion", typeof(ToolsView));
 regions.RegisterViewWithRegion("ToolsRegion", () => new HelpView());
 ```
 
-区域发现支持先注册视图再注册区域。区域创建后，已登记的视图工厂会立即执行并加入区域。
+区域发现支持先注册视图再注册区域。区域创建后，已登记的视图工厂会立即执行并加入区域。按类型注册时，视图及其构造函数依赖必须存在于当前模块服务容器，否则会立即抛出异常。
 
 ## 4. 发起导航
 
@@ -230,5 +245,6 @@ UIElement view = navigation.Navigate("MainRegion", "settings", keepAlive: true);
 - 区域宿主为 WPF `ContentControl`。
 - 每个区域只有一个活动视图。
 - 支持视图发现、URI 路由、异步确认、生命周期、子区域管理器和导航 Journal。
+- 模块通过 `ModuleProvider` 按容器名称解析视图；子区域管理器不会隐式回退到其他模块容器。
 - `Page` 会使用稳定的内部 `Frame` 宿主，避免 WPF 原生页面历史绕过区域历史。
 - 没有实现 Prism 针对 `ItemsControl` 的 RegionAdapter、完整行为集合和所有平台特定扩展。

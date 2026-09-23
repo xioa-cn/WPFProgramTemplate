@@ -20,9 +20,10 @@ public static class ModuleServiceCollectionExtensions
         typeof(INavigateAsync)
     ];
 
-    /// <summary>将主容器已注册的基础单例实例共享给模块子容器。</summary>
+    /// <summary>将主容器基础服务桥接到模块子容器，并按模块名称绑定区域管理器。</summary>
     /// <param name="services">尚未构建的模块服务集合。</param>
     /// <param name="rootProvider">拥有基础服务的应用主容器。</param>
+    /// <param name="serviceContainerName">模块服务容器名称；提供后，模块区域管理器从该名称对应的容器解析视图。</param>
     /// <returns>传入的模块服务集合。</returns>
     /// <remarks>
     /// 在模块 RegisterTypes 之后、BuildServiceProvider 之前调用。
@@ -30,7 +31,7 @@ public static class ModuleServiceCollectionExtensions
     /// 基础服务列表仅包含应用单例，不自动共享 Scoped 或 Transient 服务。
     /// </remarks>
     public static IServiceCollection AddRootInfrastructureServices(
-        this IServiceCollection services, IServiceProvider rootProvider)
+        this IServiceCollection services, IServiceProvider rootProvider, string? serviceContainerName = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(rootProvider);
@@ -39,6 +40,19 @@ public static class ModuleServiceCollectionExtensions
         {
             if (services.Any(descriptor => !descriptor.IsKeyedService && descriptor.ServiceType == serviceType))
                 continue;
+
+            if (!string.IsNullOrWhiteSpace(serviceContainerName) && serviceType == typeof(RegionManager))
+            {
+                services.AddSingleton(serviceType, _ =>
+                    rootProvider.GetRequiredService<RegionManager>().CreateRegionManager(serviceContainerName));
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(serviceContainerName) && serviceType == typeof(IRegionManager))
+            {
+                services.AddSingleton(serviceType, provider => provider.GetRequiredService<RegionManager>());
+                continue;
+            }
 
             try
             {

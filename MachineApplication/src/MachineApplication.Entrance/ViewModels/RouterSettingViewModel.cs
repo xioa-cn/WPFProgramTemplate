@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Machine.ModuleLoad;
+using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.Mapper.Entity;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Models;
@@ -96,7 +97,7 @@ public partial class RouteEditorNode : ObservableObject
 }
 
 /// <summary>路由配置视图模型，管理菜单树编辑、权限目录同步及配置保存。</summary>
-public partial class RouterSettingViewModel : ObservableObject
+public partial class RouterSettingViewModel : NavigationObservableObject
 {
     private readonly INavigationService _navigation;
     private readonly MainWindowViewModel _main;
@@ -120,6 +121,11 @@ public partial class RouterSettingViewModel : ObservableObject
         _permissions.CatalogChanged += OnCatalogChanged;
         Reload();
     }
+
+    public override bool IsNavigationTarget(RegionNavigationContext context) => true;
+
+    /// <summary>页面被缓存复用时重新读取权限等级，避免沿用旧目录。</summary>
+    public override void OnNavigatedTo(RegionNavigationContext context) => RefreshLevels();
 
     /// <summary>响应权限等级目录变化，更新当前页面的可分配等级。</summary>
     private void OnCatalogChanged(object? sender, EventArgs args) => RefreshLevels();

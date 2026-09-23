@@ -18,23 +18,42 @@ public sealed class RegionManager : IRegionManager, IDisposable
     private readonly Dictionary<string, RegionInfo> _regions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Type, HashSet<string>> _pagePermissions;
     private readonly Dictionary<string, List<ViewRegistration>> _viewRegistrations;
-    private readonly IServiceProvider _rootProvider;
+    private readonly IServiceProvider _serviceProvider;
     private readonly RegionManager? _parent;
+    private readonly IServiceScope? _ownedScope;
+    private readonly string? _serviceContainerName;
     private readonly Mapper.PermissionService? _permissions;
     private NavigationService? _catalog;
-    internal NavigationService? Catalog => _catalog ?? _parent?.Catalog ?? _rootProvider.GetService<NavigationService>();
+    internal NavigationService? Catalog => _catalog ?? _parent?.Catalog ?? _serviceProvider.GetService<NavigationService>();
 
-    public RegionManager(IServiceProvider rootProvider) : this(rootProvider, null) { }
-    private RegionManager(IServiceProvider rootProvider, RegionManager? parent)
+    public RegionManager(IServiceProvider rootProvider) : this(rootProvider, null, null) { }
+    private RegionManager(IServiceProvider serviceProvider, RegionManager? parent, IServiceScope? ownedScope,
+        string? serviceContainerName = null)
     {
-        _rootProvider = rootProvider ?? throw new ArgumentNullException(nameof(rootProvider));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _parent = parent;
+        _ownedScope = ownedScope;
+        _serviceContainerName = serviceContainerName;
         _pagePermissions = parent?._pagePermissions ?? new();
-        _viewRegistrations = parent?._viewRegistrations ?? new(StringComparer.OrdinalIgnoreCase);
+        // 视图发现注册属于当前区域管理器，不能因为创建子管理器而泄漏到父管理器。
+        _viewRegistrations = new(StringComparer.OrdinalIgnoreCase);
         Regions = new RegionCollection(this);
-        _permissions = rootProvider.GetService<Mapper.PermissionService>();
+        _permissions = GetService<Mapper.PermissionService>();
         if (_permissions is not null) _permissions.Changed += OnPermissionsChanged;
     }
+
+    private object? GetService(Type serviceType)
+        => GetContainer().GetService(serviceType);
+
+    private T? GetService<T>() where T : class
+        => GetService(typeof(T)) as T;
+
+    private IServiceProvider GetContainer()
+        => _ownedScope is not null || string.IsNullOrWhiteSpace(_serviceContainerName)
+            ? _serviceProvider
+            : ModuleProvider.GetModuleProvider(_serviceContainerName);
+
+    public string? ServiceContainerName => _serviceContainerName;
 
     internal void AttachCatalog(NavigationService catalog) => _catalog = catalog;
     public IRegionCollection Regions { get; }
@@ -148,7 +167,24 @@ public sealed class RegionManager : IRegionManager, IDisposable
         return this;
     }
 
-    public IRegionManager CreateRegionManager() => new RegionManager(_rootProvider, this);
+    /// <summary>
+    /// 创建使用独立 DI Scope 的子区域管理器。子容器负责解析服务，区域和视图发现注册保持隔离。
+    /// </summary>
+    public IRegionManager CreateRegionManager()
+    {
+        var scopeFactory = GetContainer().GetService<IServiceScopeFactory>()
+            ?? throw new InvalidOperationException("当前服务容器不支持创建区域子容器。");
+        var scope = scopeFactory.CreateScope();
+        try { return new RegionManager(scope.ServiceProvider, this, scope, _serviceContainerName); }
+        catch { scope.Dispose(); throw; }
+    }
+
+    public IRegionManager CreateRegionManager(string serviceContainerName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serviceContainerName);
+        ModuleProvider.GetModuleProvider(serviceContainerName);
+        return new RegionManager(_serviceProvider, this, null, serviceContainerName);
+    }
 
     public void RequestNavigate(string regionName, Uri target, Action<NavigationResult>? callback = null,
         NavigationParameters? navigationParameters = null)
@@ -164,7 +200,15 @@ public sealed class RegionManager : IRegionManager, IDisposable
     public void RequestNavigate(string regionName, Uri target, NavigationParameters parameters,
         Action<NavigationResult>? callback = null) => RequestNavigate(regionName, target, callback, parameters);
 
-    internal UIElement CreateView(Type type) => (UIElement)ActivatorUtilities.GetServiceOrCreateInstance(_rootProvider, type);
+    /// <summary>
+    /// 从当前容器解析视图。视图必须显式注册，避免 DI 配置错误被隐式构造掩盖。
+    /// </summary>
+    internal UIElement CreateView(Type type)
+    {
+        var service = GetContainer().GetService(type);
+        return service as UIElement
+            ?? throw new InvalidOperationException($"服务容器未注册视图或视图类型不正确：{type.FullName}。");
+    }
 
     internal UIElement ResolveContent(RegionInfo region, RegionNavigationContext context, bool reuse = true)
     {
@@ -277,6 +321,7 @@ public sealed class RegionManager : IRegionManager, IDisposable
     {
         if (_permissions is not null) _permissions.Changed -= OnPermissionsChanged;
         foreach (var region in _regions.Values.ToArray()) region.Host.Dispatcher.Invoke(() => Unregister(region.Name));
+        _ownedScope?.Dispose();
     }
 
     internal UIElement GetPresentation(UIElement view) => view is Page page ? _pageHosts.GetValue(page, CreatePageHost) : view;

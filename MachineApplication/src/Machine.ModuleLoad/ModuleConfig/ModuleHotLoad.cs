@@ -25,7 +25,7 @@ public static class ModuleHotLoad
         var module = (IModule?)Activator.CreateInstance(type) ?? throw new InvalidOperationException($"无法创建模块: {type.FullName}");
         var childServices = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
         module.RegisterTypes(childServices);
-        childServices.AddRootInfrastructureServices(rootProvider);
+        childServices.AddRootInfrastructureServices(rootProvider, unitModuleName);
         var child = childServices.BuildServiceProvider();
         module.ModuleStartupCommand();
         module.OnInitialized(child);
