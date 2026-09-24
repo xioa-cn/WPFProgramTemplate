@@ -46,37 +46,183 @@ region.Remove(preloadedView);
 
 `IRegion.Views` 和 `IRegion.ActiveViews` 是只读集合。当前 `ContentControl` 适配器最多有一个活动视图。
 
-### 自定义区域切换动画
+### 区域切换动画（RegionAnimation）
 
-区域动画由 `IRegionAnimation` 控制。默认使用短时淡入，也可以在注册区域时传入策略，或直接修改区域的 `Animation` 属性：
+每个区域通过 `IRegion.Animation` 保存一个 `IRegionAnimation` 策略，默认使用 `new RegionAnimation()`。区域先更新宿主 `ContentControl.Content` 和活动视图，再调用 `Animate(RegionAnimationContext context)`。动画作用于已切换的内容，导航回调及 `RequestNavigateAsync` 不会等待视觉动画播放完毕。
+
+首次显示视图、切换到其他视图以及清空活动视图时都会调用策略；重复激活同一个视图实例不会重新播放动画。默认策略在新内容为空时只清理透明度动画。
+
+#### 默认淡入与 C# 配置
+
+`RegionAnimation` 对宿主的 `Opacity` 播放从 `0` 到宿主当前透明度的淡入动画，完成或取消后移除动画时钟，恢复属性基础值。
+
+| 属性 | 默认值 | 说明 |
+| --- | --- | --- |
+| `Duration` | `TimeSpan.FromMilliseconds(180)` | 默认淡入时长，小于或等于零时不播放。 |
+| `EasingFunction` | `CubicEase`，`EaseOut` | 默认淡入的缓动函数，设置为 `null` 使用线性变化。 |
+| `IsEnabled` | `true` | 设置为 `false` 时不播放默认淡入。 |
+
+注册区域时传入策略：
 
 ```csharp
+using System;
+using System.Windows.Media.Animation;
+using Machine.ModuleLoad.Region;
+
+regions.Register("MainRegion", mainContentControl, new RegionAnimation
+{
+    Duration = TimeSpan.FromMilliseconds(300),
+    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+    IsEnabled = true
+});
+```
+
+如果区域已通过 XAML 或代码注册，直接替换策略，无需再次注册同名区域：
+
+```csharp
+IRegion region = regions.Regions["MainRegion"];
+region.Animation = new RegionAnimation
+{
+    Duration = TimeSpan.FromMilliseconds(300)
+};
+
+// 禁用后续切换动画。
+region.Animation = RegionAnimation.None;
+
+// 恢复默认淡入。
+region.Animation = new RegionAnimation();
+```
+
+`RegionAnimation.None` 只应用切换结果并清理宿主的透明度动画。对于默认淡入，也可以设置 `IsEnabled = false` 或 `Duration = TimeSpan.Zero`。替换策略或修改其配置会在下一次实际切换时生效，不会立即重播或停止正在运行的动画；`IRegion.Animation` 不接受 `null`。
+
+#### XAML 附加属性
+
+通过 `RegionAnimation.Animation` 可以直接在宿主上配置策略：
+
+```xml
+<ContentControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:region="clr-namespace:Machine.ModuleLoad.Region;assembly=Machine.ModuleLoad"
+    region:RegionManager.RegionName="MainRegion">
+    <region:RegionAnimation.Animation>
+        <region:RegionAnimation Duration="0:0:0.3" IsEnabled="True">
+            <region:RegionAnimation.EasingFunction>
+                <CubicEase EasingMode="EaseOut" />
+            </region:RegionAnimation.EasingFunction>
+        </region:RegionAnimation>
+    </region:RegionAnimation.Animation>
+</ContentControl>
+```
+
+`Duration` 的类型是 `TimeSpan`，例如 `0:0:0.3` 表示 300 毫秒，`0:0:3.5` 表示 3.5 秒。禁用动画可以使用静态策略：
+
+```xml
+<ContentControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:region="clr-namespace:Machine.ModuleLoad.Region;assembly=Machine.ModuleLoad"
+    region:RegionManager.RegionName="MainRegion"
+    region:RegionAnimation.Animation="{x:Static region:RegionAnimation.None}" />
+```
+
+注册时按以下顺序选择策略：显式传入 `Register(..., animation)` 的非空参数、宿主的 `RegionAnimation.Animation` 附加值、新的默认 `RegionAnimation`。
+
+附加属性也可以在注册后修改。通过 `RegionManager.RegionName` 注册时，宿主能够找到所属管理器；纯代码注册后若需要使用 `SetAnimation` 动态更新，应先通过 `RegionManager.SetRegionManager` 关联管理器，或直接修改 `region.Animation`：
+
+```csharp
+RegionManager.SetRegionManager(mainContentControl, regions);
+RegionAnimation.SetAnimation(mainContentControl, new RegionAnimation
+{
+    Duration = TimeSpan.FromMilliseconds(300)
+});
+```
+
+在已关联管理器且区域已注册的情况下，附加属性变更会替换该区域的策略，改为 `null` 会恢复新的默认策略。直接设置 `region.Animation` 不会反向更新宿主的附加属性。
+
+#### 自定义策略
+
+可以实现 `IRegionAnimation`、继承 `RegionAnimation` 并重写 `Animate`，或通过 `new RegionAnimation(context => { ... })` 传入委托。委托会直接执行，不受默认淡入的 `Duration`、`EasingFunction` 和 `IsEnabled` 控制；自定义实现需要自行处理这些配置。
+
+下面的滑入示例在完成和取消时共用清理逻辑，并恢复宿主原有变换：
+
+```csharp
+using System;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using Machine.ModuleLoad.Region;
+
 public sealed class SlideAnimation : IRegionAnimation
 {
     public void Animate(RegionAnimationContext context)
     {
-        var transform = new TranslateTransform { X = 40 };
-        context.Host.RenderTransform = transform;
+        if (context.CurrentContent is null) return;
 
-        var animation = new DoubleAnimation(40, 0, TimeSpan.FromMilliseconds(240));
-        animation.Completed += (_, _) => context.Host.RenderTransform = null;
-        transform.BeginAnimation(TranslateTransform.XProperty, animation);
+        var host = context.Host;
+        var previousTransform = host.RenderTransform;
+        var transform = new TranslateTransform();
+        var cleanedUp = false;
 
-        // 连续导航时取消当前动画并恢复宿主状态。
-        context.RegisterCleanup(() =>
+        void Cleanup()
         {
+            if (cleanedUp) return;
+            cleanedUp = true;
             transform.BeginAnimation(TranslateTransform.XProperty, null);
-            context.Host.RenderTransform = null;
-        });
+
+            // 保留原有属性绑定，并避免覆盖动画期间外部设置的新变换。
+            if (ReferenceEquals(host.RenderTransform, transform))
+                host.SetCurrentValue(UIElement.RenderTransformProperty, previousTransform);
+        }
+
+        context.RegisterCleanup(Cleanup);
+        host.SetCurrentValue(UIElement.RenderTransformProperty, transform);
+
+        var animation = new DoubleAnimation(40, 0, TimeSpan.FromMilliseconds(240))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            FillBehavior = FillBehavior.Stop
+        };
+        animation.Completed += (_, _) => Cleanup();
+        transform.BeginAnimation(TranslateTransform.XProperty, animation);
     }
 }
-
-regions.Register("MainRegion", mainContentControl, new SlideAnimation());
-// 已注册区域也可以替换策略：
-regions.Regions["MainRegion"].Animation = RegionAnimation.None;
 ```
 
-`RegionAnimation` 可直接配置默认淡入的持续时间和缓动函数，也可以继承并重写 `Animate`，或使用 `new RegionAnimation(context => { ... })` 传入委托。XAML 宿主可以使用 `RegionAnimation.SetAnimation(host, strategy)` 设置附加策略。动画执行期间区域内容已经同步更新；`RegionAnimationContext.CancellationToken` 和 `RegisterCleanup` 用于清理被下一次导航替代的动画。
+将策略应用到已注册的区域：
+
+```csharp
+regions.Regions["MainRegion"].Animation = new SlideAnimation();
+```
+
+项目中已有可配置的 [SlideRegionAnimation](../../MachineApplication.Entrance/Models/SlideRegionAnimation.cs)，位于 `MachineApplication.Entrance.Models`，可以作为完整示例。它支持 `Duration`（默认 350 毫秒）、`FromX`（默认 40）、`FromY`（默认 0）、`IsEnabled` 和 `EasingFunction`。`FromX` 正值表示从右侧滑入，负值表示从左侧滑入；`FromY` 正值表示从下方滑入，负值表示从上方滑入，偏移量单位为 WPF 设备无关像素。在 Entrance 项目的 XAML 中可这样配置：
+
+```xml
+<ContentControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:region="clr-namespace:Machine.ModuleLoad.Region;assembly=Machine.ModuleLoad"
+    xmlns:models="clr-namespace:MachineApplication.Entrance.Models"
+    region:RegionManager.RegionName="MainRegion">
+    <region:RegionAnimation.Animation>
+        <models:SlideRegionAnimation FromX="0" FromY="24" Duration="0:0:0.35" />
+    </region:RegionAnimation.Animation>
+</ContentControl>
+```
+
+#### 上下文与取消清理
+
+| `RegionAnimationContext` 成员 | 用途 |
+| --- | --- |
+| `Host` | 本次切换的 `ContentControl` 宿主。 |
+| `PreviousView` / `CurrentView` | 切换前后的实际视图；首次显示时前者可为空，清空区域时后者为空。 |
+| `PreviousContent` / `CurrentContent` | 切换前后分配给宿主的内容；`Page` 对应内部 `Frame`，不一定等于实际视图。 |
+| `CancellationToken` | 本次动画被后续切换替代或区域注销等清理操作取消时收到通知。 |
+| `RegisterCleanup(Action)` | 注册停止动画、移除覆盖层、恢复属性等清理操作。返回的 `IDisposable` 用于撤销注册，调用 `Dispose()` 不会执行清理动作。 |
+
+`Animate` 在宿主 UI 线程调用，应快速返回，通过 WPF 动画时钟或异步操作继续播放。后续实际切换会先取消上一动画上下文并执行已注册的清理，再更新内容和启动新动画。清理应可重复调用：动画正常完成时也要主动清理，框架不会因为视觉动画结束而自动调用 `RegisterCleanup` 注册的操作。若通过异步任务实现动画，应观察 `CancellationToken`，并通过宿主 `Dispatcher` 更新 WPF 对象。
+
+框架只提供切换前后内容的引用，不会保留旧内容的可视快照或自动创建离场覆盖层。需要交叉淡入淡出等效果时，应自行管理覆盖层及其清理。
+
+### 模块区域管理器
 
 如果模块需要自己的区域集合，可以从模块服务容器解析 `IRegionManager`。模块加载桥接会使用单元模块名称绑定它：
 
