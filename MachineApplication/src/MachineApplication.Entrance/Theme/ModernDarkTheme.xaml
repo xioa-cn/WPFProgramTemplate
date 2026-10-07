@@ -1,0 +1,31 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Background" Color="#121419" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Card.Background" Color="#1C1F26" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Foreground" Color="#E5E7EB" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ForegroundLight" Color="#9CA3AF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Header.Foreground" Color="#F3F4F6" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Separator.Background" Color="#2D323C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Divider" Color="#2D323C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TabControl.Divider" Color="#2D323C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ListView.Separator" Color="#2D323C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ToolBar.Background" Color="#191C22" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ToolBar.Separator" Color="#2D323C" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.StatusBar.Background" Color="#191C22" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.StatusBar.Foreground" Color="#9CA3AF" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ToolTip.Background" Color="#2A2F39" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.Chip.Background" Color="#2A2F39" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Popup.DarkBackground" Color="#242831" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.Popup.DarkForeground" Color="#E5E7EB" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.FilledBackground" Color="#242831" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ComboBox.HoverBackground" Color="#303641" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.FilledBackground" Color="#242831" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.HoverBackground" Color="#303641" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.DisabledBackground" Color="#191C22" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.PasswordBox.FilledBackground" Color="#242831" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.PasswordBox.HoverBackground" Color="#303641" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.DataGrid.RowHoverBackground" Color="#303641" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.DataGrid.ColumnHeaderForeground" Color="#B8C0CC" />
+    <SolidColorBrush x:Key="MaterialDesign.Brush.ScrollBar.Foreground" Color="#4A5260" />
+    <SolidColorBrush x:Key="Growl.Brush.Success" Color="#4CC38A" />
+</ResourceDictionary>

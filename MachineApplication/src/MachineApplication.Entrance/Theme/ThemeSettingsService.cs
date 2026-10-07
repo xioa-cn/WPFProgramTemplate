@@ -1,5 +1,7 @@
 using System.IO;
 using Machine.ModuleLoad.Logger;
+using System.Windows;
+using System.Windows.Media;
 using Machine.ModuleLoad.Utils;
 using MaterialDesignThemes.Wpf;
 using RestSharp;
@@ -10,6 +12,8 @@ namespace MachineApplication.Entrance.Theme;
 public sealed class ThemeSettingsService
 {
     private readonly PaletteHelper _paletteHelper = new();
+    private ResourceDictionary? _darkSurfaceResources;
+    private readonly Dictionary<object, (bool HasLocalValue, object? Value)> _surfaceOriginals = new();
 
     /// <summary>默认使用 exe 同级的 Theme.json；测试可传入独立路径，避免污染实际配置。</summary>
     public ThemeSettingsService(string? filePath = null) => FilePath = filePath ?? Path.Combine(AppContext.BaseDirectory, "Theme.json");
@@ -40,12 +44,33 @@ public sealed class ThemeSettingsService
             {
                 try
                 {
-                    var theme = _paletteHelper.GetTheme();
-                    theme.SetBaseTheme(valid.BaseTheme);
-                    theme.SetPrimaryColor(primary);
-                    theme.SetSecondaryColor(secondary);
-                    theme.ColorAdjustment = valid.IsColorAdjustmentEnabled ? valid.CreateColorAdjustment() : null;
-                    _paletteHelper.SetTheme(theme);
+                    var resources = Application.Current.Resources;
+                    if (valid.BaseTheme == BaseTheme.Dark)
+                    {
+                        _darkSurfaceResources ??= new ResourceDictionary
+                        {
+                            Source = new Uri("pack://application:,,,/MachineApplication.Entrance;component/Theme/ModernDarkTheme.xaml",
+                                UriKind.Absolute)
+                        };
+                    }
+                    var hadDarkSurfaces = _surfaceOriginals.Count > 0;
+                    RestoreSurfaceResources(resources);
+                    try
+                    {
+                        var theme = _paletteHelper.GetTheme();
+                        theme.SetBaseTheme(valid.BaseTheme);
+                        theme.SetPrimaryColor(primary);
+                        theme.SetSecondaryColor(secondary);
+                        theme.ColorAdjustment = valid.IsColorAdjustmentEnabled ? valid.CreateColorAdjustment() : null;
+                        _paletteHelper.SetTheme(theme);
+                        if (valid.BaseTheme == BaseTheme.Dark) ApplyDarkSurfaceResources(resources);
+                    }
+                    catch
+                    {
+                        RestoreSurfaceResources(resources);
+                        if (hadDarkSurfaces) ApplyDarkSurfaceResources(resources);
+                        throw;
+                    }
                     Current = valid;
                     GlobalLogger.DebuggerLogger?.Debug($"Applied theme settings: base={valid.BaseTheme}, primary={valid.PrimaryColor}, adjustment={valid.IsColorAdjustmentEnabled}.");
                     return Result<ThemeSettings, string>.Ok(valid);
@@ -57,6 +82,29 @@ public sealed class ThemeSettingsService
                     return Result<ThemeSettings, string>.Err(error);
                 }
             })));
+
+    private void ApplyDarkSurfaceResources(ResourceDictionary resources)
+    {
+        var localKeys = resources.Keys.Cast<object>().ToHashSet();
+        foreach (var key in _darkSurfaceResources!.Keys.Cast<object>())
+        {
+            var brush = ((SolidColorBrush)_darkSurfaceResources[key]).CloneCurrentValue();
+            brush.Freeze();
+            var hasLocalValue = localKeys.Contains(key);
+            _surfaceOriginals.Add(key, (hasLocalValue, hasLocalValue ? resources[key] : null));
+            resources[key] = brush;
+        }
+    }
+
+    private void RestoreSurfaceResources(ResourceDictionary resources)
+    {
+        foreach (var (key, original) in _surfaceOriginals)
+        {
+            if (original.HasLocalValue) resources[key] = original.Value!;
+            else resources.Remove(key);
+        }
+        _surfaceOriginals.Clear();
+    }
 
     /// <summary>保存当前已应用的参数；失败返回错误，保留内存主题和上次有效的磁盘文件。</summary>
     public Result<string, string> Save() => Current.Validate()
