@@ -1,0 +1,156 @@
+<UserControl x:Class="MachineApplication.Entrance.Views.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:MachineApplication.Entrance.ViewModels"
+             xmlns:utils="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
+             utils:ViewDesignInclude.Source="/MachineApplication.Entrance;component/AppResources.xaml"
+             d:DataContext="{d:DesignInstance Type=vm:HomeViewModel}"
+             d:DesignWidth="960" d:DesignHeight="850" mc:Ignorable="d"
+             Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+    <UserControl.Resources>
+        <Style x:Key="DemoCard" TargetType="Border">
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="0,0,0,16" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+            <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
+        </Style>
+        <Style x:Key="DemoButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+            <Setter Property="Margin" Value="0,4,10,4" />
+            <Setter Property="MinWidth" Value="80" />
+        </Style>
+        <Style x:Key="DemoHeading" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style x:Key="DemoHint" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Opacity" Value="0.65" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24" MaxWidth="1000">
+            <TextBlock Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Title}"
+                       FontSize="24" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Subtitle}"
+                       Style="{StaticResource DemoHint}" Margin="0,8,0,24" />
+            <Border Style="{StaticResource DemoCard}">
+                <StackPanel>
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Message}"
+                        Margin="0,0,0,8" />
+                    <TextBox Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}" MinHeight="40"
+                             TextWrapping="Wrap" AcceptsReturn="True" MaxHeight="100"
+                             VerticalScrollBarVisibility="Auto"
+                             AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Message}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource DemoCard}">
+                <StackPanel>
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_GrowlTitle}"
+                        Style="{StaticResource DemoHeading}" />
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_GrowlHint}"
+                        Style="{StaticResource DemoHint}" />
+                    <CheckBox
+                        Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Global}"
+                        IsChecked="{Binding UseGlobal}" Margin="0,0,0,12" />
+                    <WrapPanel>
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Info}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Info}" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Success}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Success}" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Warning}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Warning}" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Error}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Error}" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Fatal}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Fatal}" />
+                    </WrapPanel>
+                    <WrapPanel Margin="0,8,0,0">
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_ClearLocal}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding ClearGrowlCommand}" CommandParameter="Local" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_ClearGlobal}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding ClearGrowlCommand}" CommandParameter="Global" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource DemoCard}">
+                <StackPanel>
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_LoadingTitle}"
+                        Style="{StaticResource DemoHeading}" />
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_LoadingHint}"
+                        Style="{StaticResource DemoHint}" />
+                    <WrapPanel>
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_LoadingSuccess}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding RunLoadingCommand}" CommandParameter="Success" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_LoadingError}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding RunLoadingCommand}" CommandParameter="Error" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Combined}"
+                            Style="{StaticResource DemoButton}"
+                            Command="{Binding RunLoadingCommand}" CommandParameter="Notify" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource DemoCard}">
+                <StackPanel>
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_SnackTitle}"
+                        Style="{StaticResource DemoHeading}" />
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_SnackHint}"
+                        Style="{StaticResource DemoHint}" />
+                    <WrapPanel>
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_SendSnack}"
+                            Style="{StaticResource DemoButton}" Command="{Binding ShowSnackCommand}" />
+                        <Button
+                            Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_QueueSnack}"
+                            Style="{StaticResource DemoButton}" Command="{Binding QueueSnackCommand}" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="4,0,4,16"
+                       AutomationProperties.LiveSetting="Polite">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                <Setter Property="Foreground"
+                                        Value="{DynamicResource MaterialDesign.Brush.ValidationError}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

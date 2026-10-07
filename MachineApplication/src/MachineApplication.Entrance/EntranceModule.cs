@@ -25,6 +25,7 @@ public sealed class EntranceModule : IModule
         services.AddTransient<RouterSetting>();
         services.AddTransient<WelcomeViewModel>();
         services.AddTransient<Welcome>();
+        services.AddTransient<HomeViewModel>();
         services.AddTransient<HomeView>();
         services.AddTransient<SettingsView>();
         services.AddSingleton<ThemeColorsViewModel>();

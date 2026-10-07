@@ -8,6 +8,7 @@
                                      SecondaryColor="Orange" />
         <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
     </ResourceDictionary.MergedDictionaries>
+    <SolidColorBrush x:Key="Growl.Brush.Success" Color="#22A06B" />
     <!-- 内容表面使用主题卡片色，细边和柔和投影营造层次；明暗切换仍由 MaterialDesign 管理。 -->
     <Style x:Key="WorkspaceCard" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />

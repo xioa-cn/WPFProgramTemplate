@@ -611,6 +611,13 @@
                     </Border>
                 </Grid>
                 
+                <design:Growl Grid.Row="1"
+                              Width="360"
+                              Margin="16"
+                              MaxCount="5"
+                              DefaultDuration="0:0:4"
+                              Panel.ZIndex="6001"
+                              CloseText="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Close}" />
                 <ContentControl x:Name="LoadingBarHost"
                                Grid.Row="1"
                                 Panel.ZIndex="5999"
