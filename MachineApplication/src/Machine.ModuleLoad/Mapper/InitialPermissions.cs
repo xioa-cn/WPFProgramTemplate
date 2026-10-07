@@ -7,7 +7,7 @@ namespace Machine.ModuleLoad.Mapper;
 /// <summary>首次创建权限表结构，不包含明文密码种子。</summary>
 [DbContext(typeof(PermissionDbContext))]
 [Migration("202609210001_InitialPermissions")]
-public sealed class InitialPermissions : Migration
+public sealed partial class InitialPermissions : Migration
 {
     /// <summary>创建权限等级、账号、权限目录及授权关系。</summary>
     protected override void Up(MigrationBuilder migration) => migration.Sql("""
