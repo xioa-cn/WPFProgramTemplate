@@ -3,10 +3,197 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:local="clr-namespace:MachineApplication.Entrance.Views"
+      xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:vm="clr-namespace:MachineApplication.Entrance.ViewModels"
+      xmlns:design="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
+      design:ViewDesignInclude.Source="/MachineApplication.Entrance;component/AppResources.xaml"
+      d:DataContext="{d:DesignInstance Type=vm:SuperViewModel}"
       mc:Ignorable="d"
-      Title="SuperPage" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+      Title="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_Title}" 
+      d:DesignHeight="1260"
+      d:DesignWidth="960"
+      Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+    <Page.Resources>
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="24" />
+            <Setter Property="Margin" Value="0,0,0,16" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+        <Style x:Key="FieldHint" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,8,0,0" />
+            <Setter Property="Opacity" Value="0.6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </Page.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24" MaxWidth="980" HorizontalAlignment="Stretch">
+            <StackPanel Margin="0,0,0,24">
+                <TextBlock Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_Title}"
+                           FontSize="24" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_Subtitle}"
+                           Margin="0,8,0,0" Opacity="0.65" />
+            </StackPanel>
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_ConsoleTitle}"
+                        FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_ConsoleHint}"
+                        Style="{StaticResource FieldHint}" />
+                    <TextBlock Text="{Binding ConsoleStatusText}" Margin="0,12,0,0" />
+                    <WrapPanel Margin="0,16,0,0">
+                        <Button Command="{Binding OpenConsoleCommand}" Margin="0,0,12,8"
+                                Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_OpenConsole}" />
+                        <Button Command="{Binding CloseConsoleCommand}" Margin="0,0,0,8"
+                                IsEnabled="{Binding IsConsoleOpen}" Style="{StaticResource MaterialDesignFlatButton}"
+                                Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_CloseConsole}" />
+                    </WrapPanel>
+                    <TextBlock Text="{Binding ConsoleMessage}" TextWrapping="Wrap"
+                               AutomationProperties.LiveSetting="Polite">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ConsoleHasError}" Value="True">
+                                        <Setter Property="Foreground"
+                                                Value="{DynamicResource MaterialDesign.Brush.ValidationError}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,12">
+                        <md:PackIcon Kind="FileDocumentOutline" Width="22" Height="22" Margin="0,0,10,0"
+                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                        <TextBlock
+                            Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_ConfigurationFile}"
+                            FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBox Text="{Binding ConfigurationPath, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                             BorderThickness="0" Background="Transparent"
+                             AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_ConfigurationPath}" />
+                    <TextBlock Style="{StaticResource FieldHint}"
+                               Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_ConfigurationHint}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,24">
+                        <md:PackIcon Kind="TextBoxOutline" Width="22" Height="22" Margin="0,0,10,0"
+                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                        <StackPanel>
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_LoggingSettings}"
+                                FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Style="{StaticResource FieldHint}" Text="{Binding ActiveProviderText}" />
+                        </StackPanel>
+                    </DockPanel>
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" /><ColumnDefinition Width="24" /><ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_Provider}"
+                                Style="{StaticResource FieldLabel}" />
+                            <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding Provider, Mode=TwoWay}"
+                                      AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_Provider}"
+                                      MinHeight="36" />
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_ProviderHint}"
+                                Style="{StaticResource FieldHint}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_MinimumLevel}"
+                                Style="{StaticResource FieldLabel}" />
+                            <ComboBox ItemsSource="{Binding Levels}" SelectedItem="{Binding MinimumLevel, Mode=TwoWay}"
+                                      AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_MinimumLevel}"
+                                      MinHeight="36" />
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_MinimumLevelHint}"
+                                Style="{StaticResource FieldHint}" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_LogDirectory}"
+                        Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding LogDirectory, UpdateSourceTrigger=PropertyChanged}" MinHeight="36"
+                             AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_LogDirectory}" />
+                    <TextBlock
+                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_LogDirectoryHint}"
+                        Style="{StaticResource FieldHint}" />
+                    <Grid Margin="0,24,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" /><ColumnDefinition Width="24" /><ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_FileSizeLimit}"
+                                Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding FileSizeLimitBytes, UpdateSourceTrigger=PropertyChanged}"
+                                     MinHeight="36"
+                                     AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_FileSizeLimitName}" />
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_FileSizeLimitHint}"
+                                Style="{StaticResource FieldHint}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RetainedFileCount}"
+                                Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding RetainedFileCountLimit, UpdateSourceTrigger=PropertyChanged}"
+                                     MinHeight="36"
+                                     AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RetainedFileCount}" />
+                            <TextBlock
+                                Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RetainedFileCountHint}"
+                                Style="{StaticResource FieldHint}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            <Border Padding="16" CornerRadius="8" Margin="0,0,0,16"
+                    Background="{DynamicResource MaterialDesign.Brush.Card.Background}">
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource MaterialDesign.Brush.ValidationError}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Border>
+            <WrapPanel HorizontalAlignment="Right">
+                <Button
+                    Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RestoreDefaults}"
+                    Command="{Binding RestoreDefaultsCommand}" Margin="0,0,12,8"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RestoreDefaultsHint}" />
+                <Button Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_Reload}"
+                        Command="{Binding ReloadCommand}" Margin="0,0,12,8"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_ReloadHint}" />
+                <Button Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_Save}"
+                        Command="{Binding SaveCommand}" Margin="0,0,0,8" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
 </Page>

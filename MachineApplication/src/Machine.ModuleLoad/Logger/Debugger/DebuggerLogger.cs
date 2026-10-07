@@ -1,12 +1,13 @@
 ﻿using System.Drawing;
 using System.Globalization;
-using ColorConsole = Colorful.Console;
+using System.IO;
+using Machine.ModuleLoad.StartupTool;
 
 namespace Machine.ModuleLoad.Logger.Debugger
 {
     public class DebuggerLogger : ILogger
     {
-        private static readonly object OutputLock = new();
+        internal static readonly object OutputLock = new();
         private const int LevelWidth = 7;
 
         public void Trace(string message) => Write("TRACE", message, Color.Gray);
@@ -31,6 +32,8 @@ namespace Machine.ModuleLoad.Logger.Debugger
         {
             lock (OutputLock)
             {
+                if (!CmdTools.HasStandardOutput()) return;
+
                 var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
                 var output = "";
@@ -48,16 +51,18 @@ namespace Machine.ModuleLoad.Logger.Debugger
                     output += Environment.NewLine + exception;
                 }
 
-                // Colorful changes shared console state; keep each complete entry under one lock.
-                if (Console.IsOutputRedirected)
+                try
                 {
-                    // IDE consoles receive a text stream and need ANSI sequences for colors.
-                    Console.WriteLine($"\u001b[38;2;{color.R};{color.G};{color.B}m{output}\u001b[0m");
+                    if (CmdTools.SupportsColorSequences)
+                    {
+                        Console.WriteLine($"\u001b[38;2;{color.R};{color.G};{color.B}m{output}\u001b[0m");
+                    }
+                    else
+                    {
+                        Console.WriteLine(output);
+                    }
                 }
-                else
-                {
-                    ColorConsole.WriteLine(output, color);
-                }
+                catch (IOException) { }
             }
         }
     }

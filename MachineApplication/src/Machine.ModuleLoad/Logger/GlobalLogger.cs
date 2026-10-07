@@ -30,6 +30,17 @@ public static class GlobalLogger
         AppDomain.CurrentDomain.ProcessExit += static (_, _) => CloseAndFlush();
     }
 
+    internal static void EnableDebuggerLogger()
+    {
+        lock (SyncRoot)
+        {
+            if (_closed) throw new InvalidOperationException("Global logging has been closed.");
+            DebuggerLogger ??= new DebuggerLogger();
+            if (!_loggers.Contains(DebuggerLogger))
+                Volatile.Write(ref _loggers, [.. _loggers, DebuggerLogger]);
+        }
+    }
+
     internal static void Initialize(LoggingOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);

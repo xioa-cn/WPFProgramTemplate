@@ -53,3 +53,9 @@ GlobalLogger.Error("保存失败", exception);
 以上方法写入所选文件日志和已启用的调试日志；直接调用 `DebuggerLogger` 仍只输出调试日志。
 `GlobalLogger.Provider` 显示当前提供程序；初始化前为 null。正常进程退出时自动刷新并释放，
 `GlobalLogger.CloseAndFlush()` 可以主动终止记录，调用后不能重新初始化。
+
+配置页提供即时打开、关闭调试控制台的操作，也可调用 `CmdTools.OpenConsole()` / `CmdTools.CloseConsole()`。
+外部 EXE 启动时手动打开会启用 `GlobalLogger.DebuggerLogger`，同时接收全局日志与注入的 `ILogger` 输出；不回放打开前的消息。
+关闭仅释放应用创建的控制台，恢复之前的标准输入输出，不停止文件日志或退出 WPF 应用；可再次打开。
+原生控制台关闭菜单禁用，请通过页面按钮关闭，避免 Windows 控制台关闭行为终止宿主程序。
+IDE 已重定向的输出保持原样；手动打开应用控制台期间输出到该控制台，关闭后恢复 IDE 输出。不接管已有的外部终端。
