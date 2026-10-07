@@ -27,12 +27,16 @@ internal static class ConsoleUi
 
     public static void Info(string text) => Line("  " + text, ConsoleColor.Gray);
 
+    /// <summary>提示与输入分行显示，并显式结束输入行，兼容不回显换行的 IDE 和重定向终端。</summary>
     public static string Ask(string prompt, string fallback)
     {
         Write($"  › {prompt} ", ConsoleColor.White);
-        Write($"[{fallback}]", ConsoleColor.Yellow);
-        Write(": ", ConsoleColor.Cyan);
-        var input = Console.ReadLine() ?? throw new OperationCanceledException("输入已结束。");
+        Line($"[{fallback}]", ConsoleColor.Yellow);
+        Write("    > ", ConsoleColor.Cyan);
+        var input = Console.ReadLine();
+        // ReadLine 本身不保证向输出流写入换行，不能依赖宿主的输入回显分隔下一条提示。
+        Console.WriteLine();
+        if (input is null) throw new OperationCanceledException("输入已结束。");
         return string.IsNullOrWhiteSpace(input) ? fallback : input.Trim();
     }
 

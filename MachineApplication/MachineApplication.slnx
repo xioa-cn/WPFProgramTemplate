@@ -3,7 +3,9 @@
     <Project Path="src/I18n.LangsGenerator/I18n.LangsGenerator.csproj" />
     <Project Path="src/I18nExtensions/I18nExtensions.csproj" />
   </Folder>
-  <Folder Name="/modules/" />
+  <Folder Name="/modules/">
+    <Project Path="src/WorkFlowCore/WorkFlowCore.csproj" />
+  </Folder>
   <Folder Name="/src/mls/">
     <Project Path="src/ModuleLoadGenerator/ModuleLoadGenerator.csproj" />
     <Project Path="src/ModuleLoadSources/ModuleLoadSources.csproj" />
