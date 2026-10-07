@@ -22,8 +22,8 @@ public sealed class PermissionService
 
     /// <summary>使用当前用户数据目录保存独立 SQLite 文件。</summary>
     public PermissionService() : this(Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "MachineApplication", "permissions.db"))
+        AppDomain.CurrentDomain.BaseDirectory,
+        "setting", "permissions.db"))
     {
     }
 
