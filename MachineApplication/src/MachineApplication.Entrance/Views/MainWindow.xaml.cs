@@ -51,7 +51,7 @@ public partial class MainWindow : Window
         var region = regionManager?.GetRegion("MainRegion");
         region?.Animation = new ObstructionRegionAnimation()
         {
-            Duration = TimeSpan.FromMilliseconds(1500),
+            Duration = TimeSpan.FromMilliseconds(300),
             EasingFunction = new CubicEase()
             {
                 EasingMode = EasingMode.EaseOut

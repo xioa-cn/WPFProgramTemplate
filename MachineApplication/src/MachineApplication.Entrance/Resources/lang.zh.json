@@ -232,7 +232,12 @@
     "ConsoleOpen": "应用控制台已打开",
     "ConsoleClosed": "应用控制台已关闭（IDE 重定向输出不受影响）",
     "ConsoleOpened": "调试控制台已打开，正在接收 DebuggerLogger 日志。",
-    "ConsoleFailed": "控制台操作失败：{0}"
+    "ConsoleFailed": "控制台操作失败：{0}",
+    "RestartRequired": "重启后生效",
+    "ConfigurationSummary": "编辑运行目录中的配置，保存前自动备份原文件。",
+    "StorageTitle": "存储与保留策略",
+    "ConsoleSummary": "即时查看调试日志，打开或关闭均不影响文件日志。",
+    "ConsoleDetails": "使用说明与注意事项"
   },
   "HomeDemo": {
     "Title": "组件演示",

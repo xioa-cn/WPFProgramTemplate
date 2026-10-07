@@ -231,7 +231,12 @@
     "ConsoleOpen": "Application console is open",
     "ConsoleClosed": "Application console is closed (redirected IDE output is unaffected)",
     "ConsoleOpened": "Debug console opened. Receiving DebuggerLogger output.",
-    "ConsoleFailed": "Console operation failed: {0}"
+    "ConsoleFailed": "Console operation failed: {0}",
+    "RestartRequired": "Restart required",
+    "ConfigurationSummary": "Edits the runtime configuration. The existing file is backed up before saving.",
+    "StorageTitle": "Storage & retention",
+    "ConsoleSummary": "View live debug output without changing file logging.",
+    "ConsoleDetails": "Usage details & precautions"
   },
   "HomeDemo": {
     "Title": "Component demos",
