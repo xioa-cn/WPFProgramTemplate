@@ -2,6 +2,8 @@ using System.Windows;
 using Machine.ModuleLoad.Logger;
 using Machine.ModuleLoad.Region;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Machine.ModuleLoad.ModuleConfig;
 
@@ -10,6 +12,9 @@ public static class ModuleServiceCollectionExtensions
 {
     private static readonly Type[] InfrastructureServiceTypes =
     [
+        typeof(IConfiguration),
+        typeof(IOptions<LoggingOptions>),
+        typeof(ILogger),
         typeof(Machine.ModuleLoad.Mapper.PermissionService),
         typeof(StartupCommand),
         typeof(Application),

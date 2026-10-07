@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Machine.ModuleLoad.Logger;
 using Machine.ModuleLoad.ModuleConfig;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.ViewModels;
@@ -29,7 +30,9 @@ public sealed class HomeView : UserControl
             {
                 snackBar?.SendMessage("Hello World!", 3000);
                 await Task.Delay(2000);
+                GlobalLogger.Warn("WarnNingLogger");
                 throw new Exception();
+                
             });
         };
     }

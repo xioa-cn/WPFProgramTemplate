@@ -4,6 +4,7 @@ using Machine.ModuleLoad.ModuleConfig;
 using Machine.ModuleLoad.StartupTool;
 using Microsoft.Extensions.DependencyInjection;
 using Machine.ModuleLoad.Region;
+using Microsoft.Extensions.Options;
 
 namespace Machine.ModuleLoad;
 
@@ -80,12 +81,24 @@ public static class WpfApplication
         /// <returns></returns>
         public IServiceProvider BuildWpfServiceProvider()
         {
+            serviceCollection.AddLogger();
+
             GlobalLogger.DebuggerLogger?.Trace("Build the already prepared WPF desktop program");
             // 明确调用 Microsoft DI，避免与宿主扩展方法重名导致递归。
-            MainProvider.ServiceProvider =
+            var provider =
                 ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(serviceCollection);
 
-            return MainProvider.ServiceProvider;
+            try
+            {
+                GlobalLogger.Initialize(provider.GetRequiredService<IOptions<LoggingOptions>>().Value);
+                MainProvider.ServiceProvider = provider;
+                return provider;
+            }
+            catch
+            {
+                provider.Dispose();
+                throw;
+            }
         }
 
         [Obsolete("请使用 BuildWpfWithStartupWindow。")]
