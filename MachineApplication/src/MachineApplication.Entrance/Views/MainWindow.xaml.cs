@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using Machine.ModuleLoad.ModuleConfig;
 using Machine.ModuleLoad.Region;
+using MachineApplication.Entrance.Components;
 using MachineApplication.Entrance.Models;
 using MachineApplication.Entrance.ViewModels;
 
@@ -25,12 +26,32 @@ public partial class MainWindow : Window
         InitializeComponent();
         Loaded += MainWindowLoaded;
         var provider = ModuleProvider.RootProvider;
+
+        var loadingBar = ModuleProvider.GetModuleProvider("Common")
+            .GetRequiredKeyedService<ILoadingBar>("LoadingBar");
+        if (loadingBar is not FrameworkElement loadingBarElement)
+            throw new InvalidOperationException("注册的 LoadingBar 必须继承 FrameworkElement。");
+
+        if (loadingBarElement is LoadingBar lb)
+        {
+            lb.BarHeight = 5;
+        }
+
+        LoadingBarHost.Content = loadingBarElement;
+
+        var snackBar = ModuleProvider.GetModuleProvider("Common")
+            .GetRequiredService<ISnackBar>();
+        if (snackBar is not FrameworkElement snackElement)
+            throw new InvalidOperationException("注册的 ISnackBar 必须继承 FrameworkElement。");
+
+        SnackHost.Content = snackElement;
+
         // 设置区域切换动画
         var regionManager = provider?.GetRequiredService<IRegionManager>();
         var region = regionManager?.GetRegion("MainRegion");
-        region?.Animation = new SlideRegionAnimation()
+        region?.Animation = new ObstructionRegionAnimation()
         {
-            Duration = TimeSpan.FromMilliseconds(3500),
+            Duration = TimeSpan.FromMilliseconds(1500),
             EasingFunction = new CubicEase()
             {
                 EasingMode = EasingMode.EaseOut
@@ -147,6 +168,8 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _isClosed = true;
+        LoadingBarHost.Content = null;
+        SnackHost.Content = null;
         if (_windowSource is { IsDisposed: false }) _windowSource.RemoveHook(WindowMessage);
         _windowSource = null;
         base.OnClosed(e);

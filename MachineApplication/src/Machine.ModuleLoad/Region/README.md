@@ -208,6 +208,14 @@ regions.Regions["MainRegion"].Animation = new SlideAnimation();
 </ContentControl>
 ```
 
+`ObstructionRegionAnimation` 提供加载动画覆盖层：旧页移除后，临时隐藏目标页并显示居中的方块翻转跳动动画，持续指定时间后恢复目标页。覆盖层默认透明，不通过不透明底色遮挡。
+
+```xml
+<models:ObstructionRegionAnimation Duration="0:0:0.6" IsEnabled="True" />
+```
+
+支持 `Duration`（默认 600 毫秒）、`IsEnabled`、`Background`、`Foreground`、`TextForeground` 和 `Text`。默认背景透明且不绘制不透明底色，动画开始时将宿主内容临时设为透明，结束、取消或卸载时恢复原透明度，因此不会透出下方页面；方块、阴影和文字跟随宿主的 `MaterialDesign.Brush.Primary`，动画期间切换主题也会更新。显式配置的颜色优先，文字默认使用窗口标题。48×48 方块每 500 毫秒线性循环翻转跳动，包含压缩、右下角圆角变化和阴影伸缩；循环速度独立于遮挡总时长，兼容保留的 `EasingFunction` 不改变循环节奏。宿主需要位于 `AdornerDecorator` 内（主窗口已具备）；加载后找不到装饰层则直接显示目标页。初始布局完成后才开始计时，覆盖层随宿主尺寸变化，不修改宿主的变换或裁剪。连续导航、清空区域、卸载或注销区域都会清理之前的覆盖层和动画。
+
 #### 上下文与取消清理
 
 | `RegionAnimationContext` 成员 | 用途 |

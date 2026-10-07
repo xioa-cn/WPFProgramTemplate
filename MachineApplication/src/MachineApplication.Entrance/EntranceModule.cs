@@ -1,8 +1,7 @@
-using System.Windows.Media.Animation;
 using Machine.ModuleLoad;
 using Machine.ModuleLoad.ModuleConfig;
 using Machine.ModuleLoad.Region;
-using MachineApplication.Entrance.Models;
+using MachineApplication.Entrance.Components;
 using MachineApplication.Entrance.ViewModels;
 using MachineApplication.Entrance.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,15 +10,18 @@ namespace MachineApplication.Entrance;
 
 public sealed class EntranceModule : IModule
 {
-    public void ModuleStartupCommand(StartupCommand? command = null) { }
+    public void ModuleStartupCommand(StartupCommand? command = null)
+    {
+    }
+
     public void RegisterTypes(IServiceCollection services)
     {
-        services.AddTransient<UserManagementViewModel>();
+        services.AddSingleton<UserManagementViewModel>();
         services.AddTransient<UserManagement>();
-        services.AddTransient<PermissionSettingsViewModel>();
+        services.AddSingleton<PermissionSettingsViewModel>();
         services.AddTransient<PermissionSettings>();
         services.AddSingleton<MainWindowViewModel>();
-        services.AddTransient<RouterSettingViewModel>();
+        services.AddSingleton<RouterSettingViewModel>();
         services.AddTransient<RouterSetting>();
         services.AddTransient<WelcomeViewModel>();
         services.AddTransient<Welcome>();
@@ -27,20 +29,25 @@ public sealed class EntranceModule : IModule
         services.AddTransient<SettingsView>();
         services.AddSingleton<ThemeColorsViewModel>();
         services.AddTransient<ThemeColorsView>();
+
+        services.AddKeyedSingleton<ILoadingBar, LoadingBar>("LoadingBar");
+        services.AddSingleton<ISnackBar, Snack>();
     }
+
     public void OnInitialized(IServiceProvider provider)
     {
         var navigation = provider.GetRequiredService<INavigationService>();
         navigation.Register("settings/routes", typeof(RouterSetting), "Common");
         navigation.Register("settings/users", typeof(UserManagement), "Common");
         navigation.Register("settings/permissions", typeof(PermissionSettings), "Common");
-       
+
         navigation.Register("welcome", typeof(Welcome), "Common");
         navigation.Register("home", typeof(HomeView), "Common");
         navigation.Register("settings", typeof(SettingsView), "Common");
         navigation.Register("theme/colors", typeof(ThemeColorsView), "Common");
-        
-       
     }
-    public void OnShutdown() { }
+
+    public void OnShutdown()
+    {
+    }
 }

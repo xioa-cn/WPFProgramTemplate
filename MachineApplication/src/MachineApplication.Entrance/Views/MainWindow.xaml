@@ -47,11 +47,20 @@
             BorderBrush="{DynamicResource MaterialDesign.Brush.Divider}"
             BorderThickness="0">
 
-            <Grid>
+            <Grid x:Name="MainWindowRoot">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="70" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
+                <ContentControl x:Name="SnackHost"
+                                Grid.RowSpan="2"
+                                Panel.ZIndex="6000"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Bottom"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Bottom"
+                                Focusable="False" />
+             
                 <!--  标题栏跟随主题主色，波纹揭开旧截图时可见整条标题栏逐步换色。  -->
                 <Border
                     x:Name="ThemeTitleBar"
@@ -601,6 +610,15 @@
                         </Grid>
                     </Border>
                 </Grid>
+                
+                <ContentControl x:Name="LoadingBarHost"
+                               Grid.Row="1"
+                                Panel.ZIndex="5999"
+                                VerticalAlignment="Top"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Top"
+                                IsHitTestVisible="False"
+                                Focusable="False" />
             </Grid>
         </Border>
     </AdornerDecorator>
