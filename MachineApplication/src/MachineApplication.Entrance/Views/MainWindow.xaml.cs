@@ -130,6 +130,23 @@ public partial class MainWindow : Window
                 : Visibility.Collapsed;
     }
 
+    /// <summary>左键点击语言按钮时，在按钮下方展开菜单，不直接改变语言。</summary>
+    private void ChangeLanguageClick(object sender, RoutedEventArgs args)
+    {
+        if (sender is Button button && button.ContextMenu is { } menu)
+        {
+            menu.PlacementTarget = button;
+            menu.IsOpen = true;
+        }
+    }
+
+    /// <summary>每次展开都读取当前语言目录，同时覆盖鼠标和键盘打开菜单的情况。</summary>
+    private void LanguageMenuOpened(object sender, RoutedEventArgs args)
+    {
+        if (sender is ContextMenu { PlacementTarget: FrameworkElement { DataContext: MainWindowViewModel model } })
+            model.RefreshLanguages();
+    }
+
     private void WorkspaceTabsOverflowClick(object sender, RoutedEventArgs args)
     {
         if (sender is Button button && button.ContextMenu is { } menu)

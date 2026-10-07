@@ -17,6 +17,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
 {
     private readonly INavigationService _navigation;
     private readonly Dispatcher _dispatcher;
+    private readonly HashSet<WorkspaceTab> _closingTabs = [];
 
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private bool _isNavigationCollapsed;
@@ -42,8 +43,23 @@ public partial class MainWindowViewModel : MachineViewModelBase
         permissions.CatalogChanged += (_, _) => ReloadNavigation();
         // 弱订阅避免语言服务一直持有已释放模块的 VM。
         PropertyChangedEventManager.AddHandler(ViewModelLocator.EntranceLang, OnLanguageChanged, string.Empty);
+        RefreshLanguages();
     }
     public IReadOnlyList<NavModel> NavigationItems { get; private set; } = [];
+
+    /// <summary>供标题栏下拉菜单绑定的实际可用语言列表。</summary>
+    public IReadOnlyList<LanguageOption> Languages { get; private set; } = [];
+
+    /// <summary>打开菜单时重新查询，兼容后续加载模块或增加语言资源，不写死语言数量。</summary>
+    public void RefreshLanguages()
+    {
+        var manager = LanguageManager.Instance;
+        Languages = manager.GetAvailableCultures()
+            .Select(culture => new LanguageOption(culture,
+                string.Equals(culture, manager.CurrentCulture, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+        OnPropertyChanged(nameof(Languages));
+    }
 
     /// <summary>按真实导航权限过滤菜单，移除无权页签，并保留当前页面的选中状态。</summary>
     public void ReloadNavigation()
@@ -133,11 +149,12 @@ public partial class MainWindowViewModel : MachineViewModelBase
     }
 
     /// <summary>导航成功后更新整棵菜单，快捷入口也复用此方法。</summary>
-    private void NavigateTo(string url)
+    private void NavigateTo(string url, Action<bool>? completed = null)
     {
         if (!CanNavigate(url))
         {
             ReloadNavigation();
+            completed?.Invoke(false);
             return;
         }
 
@@ -150,6 +167,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
                 GlobalLogger.Error($"页面导航失败：{url}", error);
                 Growl.Error(error.Message);
             }
+            completed?.Invoke(result.Result);
         });
         // 只有导航成功后才更新菜单高亮，拒绝访问时保留原选择。
         // 菜单选中状态由实际嵌入区域的 Navigated 事件更新。
@@ -158,6 +176,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
     /// <summary>即时刷新各层级菜单的中英文名称。</summary>
     private void OnLanguageChanged(object? sender, PropertyChangedEventArgs args)
     {
+        RefreshLanguages();
         foreach (var item in NavigationItems) item.RefreshLanguage();
         foreach (var tab in OpenTabs) UpdateTabTitle(tab);
     }
@@ -173,12 +192,16 @@ public partial class MainWindowViewModel : MachineViewModelBase
     [RelayCommand]
     private void ShowThemeColors() => NavigateTo("theme/colors");
 
-    /// <summary>在中文与英文之间切换，并由语言管理器广播属性刷新。</summary>
+    /// <summary>切换到菜单指定的已注册语言，由语言管理器广播界面刷新；重复选择不切换。</summary>
     [RelayCommand]
-    private void ChangeLanguage()
+    private void ChangeLanguage(string? culture)
     {
-        var language = LanguageManager.Instance.CurrentCulture == "zh" ? "en" : "zh";
-        LanguageManager.Instance.ChangeLang(language);
+        var manager = LanguageManager.Instance;
+        if (string.IsNullOrWhiteSpace(culture) ||
+            string.Equals(culture, manager.CurrentCulture, StringComparison.OrdinalIgnoreCase)) return;
+        var language = manager.GetAvailableCultures()
+            .FirstOrDefault(item => string.Equals(item, culture, StringComparison.OrdinalIgnoreCase));
+        if (language is not null) manager.ChangeLang(language);
     }
     /// <summary>按首次打开顺序维护页签，相同路由不会重复创建。</summary>
     public ObservableCollection<WorkspaceTab> OpenTabs { get; } = [];
@@ -238,18 +261,42 @@ public partial class MainWindowViewModel : MachineViewModelBase
         if (tab is not null) NavigateTo(tab.Url);
     }
 
-    /// <summary>关闭当前标签时先尝试激活相邻标签，最后一项关闭后清空内容区。</summary>
+    /// <summary>关闭当前标签时等待相邻页面导航成功；失败或取消时保留原标签。</summary>
     [RelayCommand]
     private void CloseTab(WorkspaceTab? tab)
     {
-        if (tab is null || !OpenTabs.Contains(tab)) return;
+        if (tab is null || !OpenTabs.Contains(tab) || _closingTabs.Contains(tab)) return;
         var index = OpenTabs.IndexOf(tab);
         if (tab.IsSelected && OpenTabs.Count > 1)
         {
             var next = OpenTabs[index == OpenTabs.Count - 1 ? index - 1 : index + 1];
-            NavigateTo(next.Url);
-            if (!next.IsSelected) return;
+            _closingTabs.Add(tab);
+            try
+            {
+                // 导航包含异步加载和遮挡动画，不能在发起请求后立即检查选中状态。
+                NavigateTo(next.Url, succeeded =>
+                {
+                    try
+                    {
+                        if (succeeded) RemoveTab(tab);
+                    }
+                    finally { _closingTabs.Remove(tab); }
+                });
+            }
+            catch
+            {
+                _closingTabs.Remove(tab);
+                throw;
+            }
+            return;
         }
+        RemoveTab(tab);
+    }
+
+    /// <summary>同时移除页面缓存和页签；异步等待期间已被其他流程移除的页签不重复处理。</summary>
+    private void RemoveTab(WorkspaceTab tab)
+    {
+        if (!OpenTabs.Contains(tab)) return;
         if (_navigation is NavigationService navigation) navigation.ClosePage("MainRegion", tab.Url);
         OpenTabs.Remove(tab);
         if (OpenTabs.Count == 0)

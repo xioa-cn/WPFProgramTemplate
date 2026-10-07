@@ -60,7 +60,7 @@
                                 HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Bottom"
                                 Focusable="False" />
-             
+
                 <!--  标题栏跟随主题主色，波纹揭开旧截图时可见整条标题栏逐步换色。  -->
                 <Border
                     x:Name="ThemeTitleBar"
@@ -104,11 +104,41 @@
                             VerticalAlignment="Center"
                             Orientation="Horizontal">
                             <Button x:Name="ChangeLanguageButton"
-                                    Command="{Binding ChangeLanguageCommand}"
+                                    Click="ChangeLanguageClick"
+                                    Width="58"
                                     Style="{StaticResource CaptionButton}"
                                     ToolTip="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_ChangeLanguage}"
                                     AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}">
-                                <materialDesign:PackIcon Kind="Translate" Width="20" Height="20" />
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Translate" Width="20" Height="20" />
+                                    <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14"
+                                                             Margin="3,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Button.ContextMenu>
+                                    <ContextMenu Placement="Bottom" Opened="LanguageMenuOpened"
+                                                 Style="{StaticResource MaterialDesignContextMenu}"
+                                                 Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                                                 Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                 BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}"
+                                                 BorderThickness="1"
+                                                 MinWidth="190" MaxHeight="360"
+                                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                 ItemsSource="{Binding PlacementTarget.DataContext.Languages, RelativeSource={RelativeSource Self}}">
+                                        <ContextMenu.ItemContainerStyle>
+                                            <Style TargetType="MenuItem"
+                                                   BasedOn="{StaticResource MaterialDesignMenuItem}">
+                                                <Setter Property="Foreground"
+                                                        Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                                                <Setter Property="Header" Value="{Binding DisplayName}" />
+                                                <Setter Property="IsCheckable" Value="True" />
+                                                <Setter Property="IsChecked" Value="{Binding IsSelected, Mode=OneWay}" />
+                                                <Setter Property="Command"
+                                                        Value="{Binding PlacementTarget.DataContext.ChangeLanguageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                <Setter Property="CommandParameter" Value="{Binding Culture}" />
+                                            </Style>
+                                        </ContextMenu.ItemContainerStyle>
+                                    </ContextMenu>
+                                </Button.ContextMenu>
                             </Button>
                             <Button
                                 x:Name="ThemeButton"
@@ -553,8 +583,9 @@
                                                                 Value="{x:Null}">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding ElementName=MainPageHost, Path=(region:RegionAnimation.IsLoading)}"
-                                                                         Value="True">
+                                                            <DataTrigger
+                                                                Binding="{Binding ElementName=MainPageHost, Path=(region:RegionAnimation.IsLoading)}"
+                                                                Value="True">
                                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -574,7 +605,8 @@
                                                             <Trigger Property="Content" Value="{x:Null}">
                                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                             </Trigger>
-                                                            <Trigger Property="region:RegionAnimation.IsLoading" Value="True">
+                                                            <Trigger Property="region:RegionAnimation.IsLoading"
+                                                                     Value="True">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                             </Trigger>
                                                         </Style.Triggers>
@@ -617,7 +649,7 @@
                         </Grid>
                     </Border>
                 </Grid>
-                
+
                 <design:Growl Grid.Row="1"
                               Width="360"
                               Margin="16"
@@ -626,7 +658,7 @@
                               Panel.ZIndex="6001"
                               CloseText="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=MainWindow_Close}" />
                 <ContentControl x:Name="LoadingBarHost"
-                               Grid.Row="1"
+                                Grid.Row="1"
                                 Panel.ZIndex="5999"
                                 VerticalAlignment="Top"
                                 HorizontalContentAlignment="Stretch"

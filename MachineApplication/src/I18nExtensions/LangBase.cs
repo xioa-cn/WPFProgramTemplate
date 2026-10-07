@@ -8,6 +8,9 @@ namespace I18nExtensions
     {
         private Dictionary<string, Dictionary<string, string>>? _langStore;
 
+        /// <summary>返回本模块实际注册的语言快照，不依赖语言文件在运行目录中是否存在。</summary>
+        public IReadOnlyList<string> GetAvailableCultures() => _langStore?.Keys.ToArray() ?? [];
+
         public void SetLangInfo(string culture, string key, string value)
         {
             if (_langStore == null)

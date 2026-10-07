@@ -27,6 +27,14 @@ public class LanguageManager
         _moduleLang.Add(moduleLang);
     }
 
+    /// <summary>汇总已加载模块的语言，按标识去重；每次查询都包含后来加载的模块资源。</summary>
+    public IReadOnlyList<string> GetAvailableCultures() => _moduleLang
+        .SelectMany(module => module.GetAvailableCultures())
+        .Where(culture => !string.IsNullOrWhiteSpace(culture))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(culture => culture, StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
     public void ChangeLang(string langKey)
     {
         CurrentCulture = langKey;
