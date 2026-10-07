@@ -6,6 +6,9 @@ using I18nExtensions;
 using MachineApplication.Entrance.Models;
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
+using System.Windows.Threading;
+using Machine.ModuleLoad.Logger;
+using Machine.ModuleLoad.Utils;
 
 namespace MachineApplication.Entrance.ViewModels;
 
@@ -13,6 +16,7 @@ namespace MachineApplication.Entrance.ViewModels;
 public partial class MainWindowViewModel : MachineViewModelBase
 {
     private readonly INavigationService _navigation;
+    private readonly Dispatcher _dispatcher;
 
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private bool _isNavigationCollapsed;
@@ -27,28 +31,96 @@ public partial class MainWindowViewModel : MachineViewModelBase
     public MainWindowViewModel(INavigationService navigation, PermissionService permissions)
     {
         _navigation = navigation;
-        NavigationItems = RouterConfiguration.Load();
+        _dispatcher = System.Windows.Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+        ReloadNavigation();
         if (navigation is NavigationService routes)
         {
             routes.Navigated += OnRouteNavigated;
             routes.Floated += OnRouteFloated;
         }
-        permissions.Changed += (_, _) =>
-        {
-            OpenTabs.Clear();
-            foreach (var item in NavigationItems) item.SelectRoute("");
-        };
+        permissions.Changed += OnPermissionsChanged;
+        permissions.CatalogChanged += (_, _) => ReloadNavigation();
         // 弱订阅避免语言服务一直持有已释放模块的 VM。
         PropertyChangedEventManager.AddHandler(ViewModelLocator.EntranceLang, OnLanguageChanged, string.Empty);
     }
-    public IReadOnlyList<NavModel> NavigationItems { get; private set; }
+    public IReadOnlyList<NavModel> NavigationItems { get; private set; } = [];
 
-    /// <summary>重新读取路由菜单并通知界面替换导航集合。</summary>
+    /// <summary>按真实导航权限过滤菜单，移除无权页签，并保留当前页面的选中状态。</summary>
     public void ReloadNavigation()
     {
-        NavigationItems = RouterConfiguration.Load();
+        if (!_dispatcher.CheckAccess())
+        {
+            _dispatcher.Invoke(ReloadNavigation);
+            return;
+        }
+
+        try
+        {
+            NavigationItems = FilterNavigation(RouterConfiguration.Load());
+        }
+        catch (Exception exception)
+        {
+            NavigationItems = [];
+            GlobalLogger.Error("读取导航菜单失败。", exception);
+        }
         OnPropertyChanged(nameof(NavigationItems));
+
+        foreach (var tab in OpenTabs.Where(tab => !CanNavigate(tab.Url)).ToArray())
+        {
+            if (_navigation is NavigationService navigation) navigation.ClosePage("MainRegion", tab.Url);
+            OpenTabs.Remove(tab);
+        }
         foreach (var tab in OpenTabs) UpdateTabTitle(tab);
+        var selectedUrl = OpenTabs.FirstOrDefault(tab => tab.IsSelected)?.Url ?? "";
+        foreach (var item in NavigationItems) item.SelectRoute(selectedUrl);
+    }
+
+    /// <summary>只过滤展示树，不修改 Router.json；空分组一并移除，保留顺序和多语言标题。</summary>
+    private IReadOnlyList<NavModel> FilterNavigation(IEnumerable<NavModel> nodes)
+    {
+        var visible = new List<NavModel>();
+        foreach (var node in nodes)
+        {
+            if (node.HasChildren)
+            {
+                var children = FilterNavigation(node.Children);
+                if (children.Count == 0) continue;
+                visible.Add(new NavModel(node.LanguageKey, node.Icon, node.Url, children.ToArray())
+                {
+                    Titles = node.Titles,
+                    RequiredLevelIds = node.RequiredLevelIds,
+                    IsExpanded = node.IsExpanded
+                });
+            }
+            else if (node.Url is { } url && CanNavigate(url))
+            {
+                visible.Add(node);
+            }
+        }
+        return visible;
+    }
+
+    /// <summary>菜单与快捷入口共用导航服务的权限规则，配置读取异常时按无权处理。</summary>
+    private bool CanNavigate(string url)
+    {
+        try { return _navigation.CanNavigate(url); }
+        catch (Exception exception)
+        {
+            GlobalLogger.Error($"检查页面导航权限失败：{url}", exception);
+            return false;
+        }
+    }
+
+    /// <summary>账号变化后丢弃旧账号的页签，并重新生成该账号可见的菜单。</summary>
+    private void OnPermissionsChanged(object? sender, EventArgs args)
+    {
+        if (!_dispatcher.CheckAccess())
+        {
+            _dispatcher.Invoke(() => OnPermissionsChanged(sender, args));
+            return;
+        }
+        OpenTabs.Clear();
+        ReloadNavigation();
     }
 
     /// <summary>分组按钮展开子菜单，页面按钮通过 URL 导航。</summary>
@@ -63,11 +135,21 @@ public partial class MainWindowViewModel : MachineViewModelBase
     /// <summary>导航成功后更新整棵菜单，快捷入口也复用此方法。</summary>
     private void NavigateTo(string url)
     {
+        if (!CanNavigate(url))
+        {
+            ReloadNavigation();
+            return;
+        }
+
         _navigation.RequestNavigate("MainRegion", new Uri(url, UriKind.RelativeOrAbsolute), result =>
         {
-            if (result.Error is { } error)
-                System.Windows.MessageBox.Show(error.Message,
-                    error is UnauthorizedAccessException ? "权限不足" : "导航失败");
+            if (result.Error is UnauthorizedAccessException)
+                ReloadNavigation();
+            else if (result.Error is { } error)
+            {
+                GlobalLogger.Error($"页面导航失败：{url}", error);
+                Growl.Error(error.Message);
+            }
         });
         // 只有导航成功后才更新菜单高亮，拒绝访问时保留原选择。
         // 菜单选中状态由实际嵌入区域的 Navigated 事件更新。

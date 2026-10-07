@@ -18,6 +18,7 @@ internal static class ManagementMessages
             "请先登录。" => lang.Management_SignInRequired,
             "仅最高权限账号可以管理权限。" => lang.Management_AdminOnly,
             "请选择权限等级。" => lang.Management_ChooseLevel,
+            "权限等级已变化，请刷新后重新配置。" => lang.ButtonAuth_LevelsChanged,
             "最高权限账号不能重命名。" => lang.Management_CannotRenameAdmin,
             "不能删除最高权限账号。" => lang.Management_CannotDeleteAdmin,
             _ when exception is UnauthorizedAccessException => lang.Management_AccessDenied,

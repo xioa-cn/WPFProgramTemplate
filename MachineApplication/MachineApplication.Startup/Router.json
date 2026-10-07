@@ -44,6 +44,16 @@
           }
         },
         {
+          "LanguageKey": "ButtonAuth_Title",
+          "Icon": "ShieldAccount",
+          "Url": "btn/auth",
+          "RequiredLevelIds": [],
+          "Titles": {
+            "zh": "按钮权限",
+            "en": "Button permissions"
+          }
+        },
+        {
           "LanguageKey": "MainWindow_Users",
           "Icon": "AccountGroup",
           "Url": "settings/users",

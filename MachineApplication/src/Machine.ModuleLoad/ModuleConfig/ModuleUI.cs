@@ -12,6 +12,12 @@ public static class ModuleUI
     public static DependencyObject AssemblyUI(this DependencyObject element)
     {
         ArgumentNullException.ThrowIfNull(element);
+        if (Mvvm.BtnAuthAttribute.IsMarked(element.GetType()))
+        {
+            var permissions = MainProvider.ServiceProvider?.GetRequiredService<Mapper.PermissionService>()
+                ?? throw new InvalidOperationException("权限服务尚未初始化。");
+            Mvvm.ButtonAuthorization.Attach(element, permissions);
+        }
         var attribute = element.GetType().GetCustomAttributes(true)
             .FirstOrDefault(x => x.GetType().Name.StartsWith("ModuleDataContextAttribute", StringComparison.Ordinal));
         if (attribute is null) return element;

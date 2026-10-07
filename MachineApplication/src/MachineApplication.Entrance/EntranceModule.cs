@@ -32,6 +32,8 @@ public sealed class EntranceModule : IModule
         services.AddTransient<ThemeColorsView>();
         services.AddTransient<SuperViewModel>();
         services.AddTransient<SuperPage>();
+        services.AddTransient<BtnAuthViewModel>();
+        services.AddTransient<BtnAuthPage>();
 
         services.AddKeyedSingleton<ILoadingBar, LoadingBar>("LoadingBar");
         services.AddSingleton<ISnackBar, Snack>();
@@ -49,6 +51,7 @@ public sealed class EntranceModule : IModule
         navigation.Register("settings", typeof(SettingsView), "Common");
         navigation.Register("theme/colors", typeof(ThemeColorsView), "Common");
         navigation.Register("super", typeof(SuperPage), "Common");
+        navigation.Register("btn/auth", typeof(BtnAuthPage), "Common");
     }
 
     public void OnShutdown()

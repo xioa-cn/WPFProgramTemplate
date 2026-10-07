@@ -144,6 +144,11 @@ public partial class MainWindow : Window
         try
         {
             var navigation = MainProvider.ServiceProvider!.GetRequiredService<Machine.ModuleLoad.Region.INavigationService>();
+            if (!navigation.CanNavigate(tab.Url))
+            {
+                if (DataContext is MainWindowViewModel current) current.ReloadNavigation();
+                return;
+            }
             if (navigation is Machine.ModuleLoad.Region.NavigationService routes)
             {
                 var window = new FloatingPageWindow { Owner = this, Title = tab.Title };
@@ -160,10 +165,14 @@ public partial class MainWindow : Window
                 routes.FloatPage("MainRegion", tab.Url, window, window.PageHost);
             }
         }
+        catch (UnauthorizedAccessException)
+        {
+            if (DataContext is MainWindowViewModel current) current.ReloadNavigation();
+        }
         catch (Exception ex)
         {
             Machine.ModuleLoad.Logger.GlobalLogger.Error(ex.ToString());
-            MessageBox.Show(this, ex.Message, "页面弹出失败");
+            Machine.ModuleLoad.Utils.Growl.Error(ex.Message);
         }
     }
     private HwndSource? _windowSource;

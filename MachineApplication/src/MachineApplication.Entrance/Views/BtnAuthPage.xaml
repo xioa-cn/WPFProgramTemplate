@@ -1,0 +1,183 @@
+﻿<Page x:Class="MachineApplication.Entrance.Views.BtnAuthPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:vm="clr-namespace:MachineApplication.Entrance.ViewModels"
+      xmlns:utils="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
+      utils:ViewDesignInclude.Source="/MachineApplication.Entrance;component/AppResources.xaml"
+      d:DataContext="{d:DesignInstance Type=vm:BtnAuthViewModel}"
+      mc:Ignorable="d"
+      Title="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Title}"
+      d:DesignHeight="720" d:DesignWidth="1120"
+      Background="{DynamicResource MaterialDesign.Brush.Background}"
+      Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+    <Page.Resources>
+        <Style x:Key="AuthCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+        <Style x:Key="AuthHeading" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+        <Style x:Key="AuthListItem" TargetType="ListBoxItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Margin" Value="0,2" />
+        </Style>
+    </Page.Resources>
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,20">
+            <Button DockPanel.Dock="Right" Command="{Binding ReloadCommand}" VerticalAlignment="Center"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Refresh}" />
+            <StackPanel Margin="0,0,20,0">
+                <TextBlock FontSize="26" FontWeight="SemiBold"
+                           Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Title}" />
+                <TextBlock Margin="0,8,0,0" Opacity=".65" TextWrapping="Wrap"
+                           Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Subtitle}" />
+            </StackPanel>
+        </DockPanel>
+        <Border Grid.Row="1" Style="{StaticResource AuthCard}" Margin="0,0,0,16">
+            <TextBlock TextWrapping="Wrap" Opacity=".75" LineHeight="22"
+                       Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_DiscoveryHint}" />
+        </Border>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width=".9*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="1.25*" />
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource AuthCard}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource AuthHeading}"
+                               Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Pages}" />
+                    <ListBox ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}"
+                             IsEnabled="{Binding CanBrowse}" Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource AuthListItem}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Description}" Opacity=".55" FontSize="11"
+                                               Margin="0,6,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource AuthCard}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource AuthHeading}"
+                               Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Buttons}" />
+                    <ListBox ItemsSource="{Binding Buttons}" SelectedItem="{Binding SelectedButton}"
+                             IsEnabled="{Binding CanBrowse}" Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource AuthListItem}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Id}" Opacity=".6" FontSize="11" Margin="0,5,0,0" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding ControlType}" Opacity=".5" FontSize="11" />
+                                    <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,5,0,0"
+                                               Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Unidentified}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CanConfigure}" Value="False">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+            <Border Grid.Column="4" Style="{StaticResource AuthCard}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource AuthHeading}"
+                               Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Levels}" />
+                    <StackPanel DockPanel.Dock="Top">
+                        <TextBlock Text="{Binding SelectedButton.Name}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding SelectionHint}" Opacity=".65" Margin="0,10,0,18" TextWrapping="Wrap" LineHeight="21" />
+                        <CheckBox IsChecked="{Binding IsRestricted}" IsEnabled="{Binding CanEdit}" Margin="0,0,0,14">
+                            <TextBlock TextWrapping="Wrap"
+                                       Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Restrict}" />
+                        </CheckBox>
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+                        <TextBlock TextWrapping="Wrap" Opacity=".65" Margin="0,0,0,12"
+                                   Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_DirtyHint}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <WrapPanel>
+                            <Button Command="{Binding SaveCommand}" Margin="0,0,8,8"
+                                    Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Save}" />
+                            <Button Command="{Binding RevertCommand}" Margin="0,0,0,8"
+                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_Revert}" />
+                        </WrapPanel>
+                    </StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <TextBlock TextWrapping="Wrap" Opacity=".6"
+                                       Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=ButtonAuth_NoLevels}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Levels.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding Levels}" IsEnabled="{Binding CanSelectLevels}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsAllowed}" Margin="2,8">
+                                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+        <TextBlock Grid.Row="3" Text="{Binding Status}" Margin="4,14,4,0" TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Polite" />
+    </Grid>
+</Page>

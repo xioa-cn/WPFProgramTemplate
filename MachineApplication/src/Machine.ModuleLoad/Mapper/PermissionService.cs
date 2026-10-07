@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Machine.ModuleLoad.Mapper;
 
 /// <summary>本地身份认证、权限等级和账号管理服务。</summary>
-public sealed class PermissionService
+public sealed partial class PermissionService
 {
     private readonly DbContextOptions<PermissionDbContext> _options;
 
@@ -59,6 +59,7 @@ public sealed class PermissionService
     {
         if (CurrentUser is null) return false;
         if (CurrentUser.IsAdministrator) return true;
+        if (key.StartsWith("button:", StringComparison.OrdinalIgnoreCase)) return AllowsButton(key);
         if (!key.StartsWith("page:", StringComparison.OrdinalIgnoreCase)) return false;
         if (!File.Exists(RouterPath)) return false;
         // 每次读取路由权限，保存配置后立即生效；未勾选等级的页面仅最高权限可访问。
@@ -186,6 +187,7 @@ public sealed class PermissionService
         if (db.Users.Any(x => x.LevelId == id)) throw new InvalidOperationException("该等级仍有账号使用，请先调整账号等级。");
         db.Levels.Remove(db.Levels.Single(x => x.Id == id));
         db.SaveChanges();
+        InvalidateButtonPermissions();
         NotifyCatalogChanged();
     }
 

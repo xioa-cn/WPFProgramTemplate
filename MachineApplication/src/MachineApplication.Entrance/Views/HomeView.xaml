@@ -18,7 +18,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
             <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
         </Style>
-        <Style x:Key="DemoButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+        <Style x:Key="DemoButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatMidBgButton}">
             <Setter Property="Margin" Value="0,4,10,4" />
             <Setter Property="MinWidth" Value="80" />
         </Style>
@@ -58,37 +58,45 @@
                     <TextBlock
                         Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_GrowlHint}"
                         Style="{StaticResource DemoHint}" />
-                    <CheckBox
-                        Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Global}"
-                        IsChecked="{Binding UseGlobal}" Margin="0,0,0,12" />
+                    <CheckBox x:Name="UseGlobalGrowl"
+                              Style="{StaticResource MaterialDesignLightCheckBox}"
+                              Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Global}"
+                              IsChecked="{Binding UseGlobal}" Margin="0,0,0,12" />
                     <WrapPanel>
                         <Button
+                            x:Name="ShowInfoGrowl"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Info}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Info}" />
                         <Button
+                            x:Name="ShowSuccessGrowl"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Success}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Success}" />
                         <Button
+                            x:Name="ShowWarningGrowl"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Warning}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Warning}" />
                         <Button
+                            x:Name="ShowErrorGrowl"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Error}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Error}" />
                         <Button
+                            x:Name="ShowFatalGrowl"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Fatal}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding ShowGrowlCommand}" CommandParameter="{x:Static utils:GrowlType.Fatal}" />
                     </WrapPanel>
                     <WrapPanel Margin="0,8,0,0">
                         <Button
+                            x:Name="ClearLocalGrowl"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_ClearLocal}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding ClearGrowlCommand}" CommandParameter="Local" />
                         <Button
+                            x:Name="ClearGlobalGrowl"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_ClearGlobal}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding ClearGrowlCommand}" CommandParameter="Global" />
@@ -105,14 +113,17 @@
                         Style="{StaticResource DemoHint}" />
                     <WrapPanel>
                         <Button
+                            x:Name="RunLoadingSuccess"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_LoadingSuccess}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding RunLoadingCommand}" CommandParameter="Success" />
                         <Button
+                            x:Name="RunLoadingError"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_LoadingError}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding RunLoadingCommand}" CommandParameter="Error" />
                         <Button
+                            x:Name="RunLoadingNotify"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_Combined}"
                             Style="{StaticResource DemoButton}"
                             Command="{Binding RunLoadingCommand}" CommandParameter="Notify" />
@@ -129,9 +140,11 @@
                         Style="{StaticResource DemoHint}" />
                     <WrapPanel>
                         <Button
+                            x:Name="ShowSnack"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_SendSnack}"
                             Style="{StaticResource DemoButton}" Command="{Binding ShowSnackCommand}" />
                         <Button
+                            x:Name="QueueSnack"
                             Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=HomeDemo_QueueSnack}"
                             Style="{StaticResource DemoButton}" Command="{Binding QueueSnackCommand}" />
                     </WrapPanel>
