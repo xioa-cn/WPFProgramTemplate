@@ -1,5 +1,6 @@
 using Machine.ModuleLoad;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Machine.ModuleLoad.Mapper;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
@@ -68,12 +69,29 @@ public partial class MainWindow : Window
 
     }
 
+    /// <summary>初始化欢迎页，并根据启动配置决定是否自动进入首个可访问页面。</summary>
     private void MainWindowLoaded(object sender, RoutedEventArgs e)
     {
-        // 空内容占位独立于路由和页签，不触发导航。
-        var navigation = MainProvider.ServiceProvider!.GetRequiredService<Machine.ModuleLoad.Region.INavigationService>();
-        EmptyWorkspaceWelcome.DataContext = new WelcomeViewModel(navigation);
         Loaded -= MainWindowLoaded;
+        var provider = MainProvider.ServiceProvider!;
+        var navigation = provider.GetRequiredService<INavigationService>();
+        EmptyWorkspaceWelcome.DataContext = new WelcomeViewModel(navigation);
+
+        var indexPage = provider.GetRequiredService<IConfiguration>()["Startup:IndexPage"];
+        if (string.Equals(indexPage?.Trim(), "Index", StringComparison.OrdinalIgnoreCase))
+            ContentRendered += OpenStartupIndexPage;
+    }
+
+    /// <summary>窗口首次绘制后发起异步导航，避免在构造窗口时同步创建目标页面。</summary>
+    private void OpenStartupIndexPage(object? sender, EventArgs args)
+    {
+        // 只自动进入一次；之后关闭全部页签或重新显示窗口时，不重复打开页面。
+        ContentRendered -= OpenStartupIndexPage;
+        if (!IsVisible || MainPageHost.Content is not null || RegionAnimation.GetIsLoading(MainPageHost)) return;
+
+        // 与欢迎页按钮共用菜单顺序、权限检查、错误提示和导航遮挡流程。
+        if (EmptyWorkspaceWelcome.DataContext is WelcomeViewModel welcome)
+            welcome.EnterWorkspaceCommand.Execute(null);
     }
     /// <summary>通过框架隐藏主页、注销并显示居中的登录窗口。</summary>
     private void SwitchAccountClick(object sender, RoutedEventArgs args)

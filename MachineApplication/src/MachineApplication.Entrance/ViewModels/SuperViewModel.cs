@@ -37,11 +37,15 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
     public LoggingProvider[] Providers { get; } = Enum.GetValues<LoggingProvider>();
     public LoggingLevel[] Levels { get; } = Enum.GetValues<LoggingLevel>();
 
+    /// <summary>主窗口启动方式：Normal 显示欢迎页，Index 自动进入首个可访问页面。</summary>
+    [ObservableProperty] private string _indexPage = "Normal";
+
     [ObservableProperty] private LoggingProvider _provider;
     [ObservableProperty] private LoggingLevel _minimumLevel;
     [ObservableProperty] private string _logDirectory = "Logs";
     [ObservableProperty] private string _fileSizeLimitBytes = "10485760";
     [ObservableProperty] private string _retainedFileCountLimit = "31";
+    [ObservableProperty] private string _retentionDays = "30";
     [ObservableProperty] private string _status = "";
     [ObservableProperty] private bool _hasError;
     [ObservableProperty]
@@ -108,9 +112,10 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
             string? text;
             try { text = await File.ReadAllTextAsync(ConfigurationPath, cancellationToken); }
             catch (FileNotFoundException) { text = null; }
-            var (document, options) = await Task.Run(() => ParseConfiguration(text), cancellationToken);
+            var (document, options, indexPage) = await Task.Run(() => ParseConfiguration(text), cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             ApplyOptions(options);
+            IndexPage = indexPage;
             _document = document;
             _loadedText = text;
             IsLoaded = true;
@@ -131,7 +136,7 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
         }
     }
 
-    private static (JsonObject Document, LoggingOptions Options) ParseConfiguration(string? text)
+    private static (JsonObject Document, LoggingOptions Options, string IndexPage) ParseConfiguration(string? text)
     {
         var document = text is null
             ? new JsonObject(new JsonNodeOptions { PropertyNameCaseInsensitive = true })
@@ -145,18 +150,24 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
               ?? throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_RootObjectRequired);
         if (document["Logging"] is not null and not JsonObject)
             throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_LoggingObjectRequired);
+        if (document["Startup"] is not null and not JsonObject)
+            throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_StartupObjectRequired);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(document.ToJsonString()));
         var configuration = new ConfigurationBuilder().AddJsonStream(stream).Build();
         using var configurationLifetime = (IDisposable)configuration;
         var options = configuration.GetSection("Logging").Get<LoggingOptions>() ?? new LoggingOptions();
-        return (document, options);
+        // 与主窗口保持一致：仅 Index 开启自动导航，缺失或其他值均按 Normal 回填。
+        var indexPage = string.Equals(configuration["Startup:IndexPage"]?.Trim(), "Index",
+            StringComparison.OrdinalIgnoreCase) ? "Index" : "Normal";
+        return (document, options, indexPage);
     }
 
     [RelayCommand]
     private void RestoreDefaults()
     {
         ApplyOptions(new LoggingOptions());
+        IndexPage = "Normal";
         HasError = !IsLoaded;
         SetStatus(() => IsLoaded
             ? ViewModelLocator.EntranceLang.SuperPage_DefaultsRestored
@@ -168,6 +179,8 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
     {
         try
         {
+            if (IndexPage is not ("Normal" or "Index"))
+                throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_IndexPageInvalid);
             if (!Enum.IsDefined(Provider) || !Enum.IsDefined(MinimumLevel))
                 throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_InvalidSelection);
             if (string.IsNullOrWhiteSpace(LogDirectory))
@@ -178,6 +191,8 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
                 throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_FileSizeInvalid);
             if (!int.TryParse(RetainedFileCountLimit, out var fileCount) || fileCount <= 0)
                 throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_FileCountInvalid);
+            if (!int.TryParse(RetentionDays, out var retentionDays) || retentionDays < 0)
+                throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_RetentionDaysInvalid);
 
             var document = (JsonObject)_document!.DeepClone();
             var logging = document["Logging"] as JsonObject;
@@ -191,6 +206,15 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
             logging["LogDirectory"] = directory;
             logging["FileSizeLimitBytes"] = fileSize;
             logging["RetainedFileCountLimit"] = fileCount;
+            logging["RetentionDays"] = retentionDays;
+            // 在原配置副本中只更新目标字段，保留 Startup 的其他字段和不相关配置节。
+            var startup = document["Startup"] as JsonObject;
+            if (startup is null)
+            {
+                startup = new JsonObject();
+                document["Startup"] = startup;
+            }
+            startup["IndexPage"] = IndexPage;
             if (!string.Equals(ReadConfiguration(), _loadedText, StringComparison.Ordinal))
                 throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_ExternalChange);
             if (_loadedText is not null)
@@ -206,6 +230,7 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
 
             _document = document;
             LogDirectory = directory;
+            RetentionDays = retentionDays.ToString(CultureInfo.InvariantCulture);
             try
             {
                 _loadedText = File.ReadAllText(ConfigurationPath);
@@ -258,5 +283,6 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
         LogDirectory = options.LogDirectory;
         FileSizeLimitBytes = options.FileSizeLimitBytes.ToString(CultureInfo.InvariantCulture);
         RetainedFileCountLimit = options.RetainedFileCountLimit.ToString(CultureInfo.InvariantCulture);
+        RetentionDays = options.RetentionDays.ToString(CultureInfo.InvariantCulture);
     }
 }

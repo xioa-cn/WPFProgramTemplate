@@ -199,6 +199,29 @@
                     <StackPanel>
                         <Grid Margin="0,0,0,22">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <md:PackIcon Kind="HomeOutline" Width="21" Height="21" Margin="0,1,10,0"
+                                         Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource SectionTitle}"
+                                       Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_StartupSettings}" />
+                        </Grid>
+                        <TextBlock Style="{StaticResource FieldLabel}"
+                                   Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_IndexPage}" />
+                        <ComboBox SelectedValue="{Binding IndexPage, Mode=TwoWay}" SelectedValuePath="Tag"
+                                  Style="{StaticResource SettingsSelect}"
+                                  AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_IndexPage}">
+                            <ComboBoxItem Tag="Normal"
+                                          Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_IndexPageNormal}" />
+                            <ComboBoxItem Tag="Index"
+                                          Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_IndexPageIndex}" />
+                        </ComboBox>
+                        <TextBlock Style="{StaticResource FieldHint}"
+                                   Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_IndexPageHint}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,22">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <md:PackIcon Kind="TextBoxOutline" Width="21" Height="21" Margin="0,1,10,0"
                                          Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
                             <StackPanel Grid.Column="1">
@@ -242,6 +265,14 @@
                                 <TextBlock Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RetainedFileCountHint}" Style="{StaticResource FieldHint}" />
                             </StackPanel>
                         </Grid>
+                        <StackPanel Margin="0,20,0,0">
+                            <TextBlock Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RetentionDays}"
+                                       Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding RetentionDays, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsInput}"
+                                     AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RetentionDays}" />
+                            <TextBlock Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_RetentionDaysHint}"
+                                       Style="{StaticResource FieldHint}" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource SettingsCard}">

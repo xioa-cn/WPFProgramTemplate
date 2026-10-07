@@ -7,6 +7,7 @@ public sealed class SerilogLogger : global::Machine.ModuleLoad.Logger.ILogger, I
 {
     private readonly global::Serilog.ILogger _logger;
     private readonly bool _ownsLogger;
+    private readonly DailyLogRetention? _retention;
     private readonly object _syncRoot = new();
     private bool _disposed;
 
@@ -31,6 +32,7 @@ public sealed class SerilogLogger : global::Machine.ModuleLoad.Logger.ILogger, I
             .WriteTo.Sink(new DailyDirectorySink(options))
             .CreateLogger();
         _ownsLogger = true;
+        _retention = new DailyLogRetention(options);
     }
 
     /// <summary>适配已有 Serilog 实例；默认不接管该实例的释放。</summary>
@@ -73,6 +75,7 @@ public sealed class SerilogLogger : global::Machine.ModuleLoad.Logger.ILogger, I
         {
             if (_disposed) return;
             _disposed = true;
+            _retention?.Dispose();
             if (_ownsLogger && _logger is IDisposable disposable) disposable.Dispose();
         }
     }

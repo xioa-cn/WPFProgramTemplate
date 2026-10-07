@@ -17,6 +17,9 @@ public sealed class LoggingOptions
 
     public int RetainedFileCountLimit { get; set; } = 31;
 
+    /// <summary>保留含今天在内的最近自然日数；0 表示关闭按天清理，不影响每日文件数限制。</summary>
+    public int RetentionDays { get; set; } = 30;
+
     internal string ResolveLogDirectory() => Path.GetFullPath(LogDirectory, AppContext.BaseDirectory);
 
     internal void Validate()
@@ -66,6 +69,7 @@ internal sealed class LoggingOptionsValidator : IValidateOptions<LoggingOptions>
 
         if (options.FileSizeLimitBytes <= 0) errors.Add("Logging:FileSizeLimitBytes 必须大于零。");
         if (options.RetainedFileCountLimit <= 0) errors.Add("Logging:RetainedFileCountLimit 必须大于零。");
+        if (options.RetentionDays < 0) errors.Add("Logging:RetentionDays 不能小于零，0 表示关闭按天清理。");
         return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);
     }
 }

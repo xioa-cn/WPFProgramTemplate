@@ -12,6 +12,7 @@ public sealed class NLogLogger : global::Machine.ModuleLoad.Logger.ILogger, IDis
 {
     private readonly global::NLog.Logger _logger;
     private readonly bool _ownsFactory;
+    private readonly DailyLogRetention? _retention;
     private readonly object _syncRoot = new();
     private bool _disposed;
 
@@ -53,6 +54,7 @@ public sealed class NLogLogger : global::Machine.ModuleLoad.Logger.ILogger, IDis
             factory.Configuration = configuration;
             _logger = factory.GetLogger("Machine.ModuleLoad");
             _ownsFactory = true;
+            _retention = new DailyLogRetention(options);
         }
         catch
         {
@@ -107,6 +109,7 @@ public sealed class NLogLogger : global::Machine.ModuleLoad.Logger.ILogger, IDis
         {
             if (_disposed) return;
             _disposed = true;
+            _retention?.Dispose();
             if (!_ownsFactory) return;
             try
             {
