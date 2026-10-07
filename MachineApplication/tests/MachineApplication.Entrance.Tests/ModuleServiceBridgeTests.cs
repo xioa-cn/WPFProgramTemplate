@@ -73,6 +73,13 @@ public class ModuleServiceBridgeTests
     {
         public bool Disposed { get; private set; }
         public void Dispose() => Disposed = true;
+
+        public void RequestNavigate(string regionName, Uri target, Action<NavigationResult>? callback = null,
+            NavigationParameters? navigationParameters = null)
+        {
+            
+        }
+
         public void Register(string url, Type viewType, string? moduleName = null) => throw new NotSupportedException();
         public UIElement Navigate(string regionName, string url, bool keepAlive = true) => throw new NotSupportedException();
         public bool CanNavigate(string url) => false;

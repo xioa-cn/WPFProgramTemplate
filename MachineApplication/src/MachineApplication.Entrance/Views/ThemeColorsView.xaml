@@ -157,17 +157,29 @@
                 </Popup>
             </StackPanel>
         </StackPanel>
-        <ScrollViewer
+        <ItemsControl
             Grid.Row="1"
-            Style="{StaticResource MaterialDesignScrollViewer}"
-            HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto">
-            <ItemsControl
-                Margin="0,0,12,0"
-                HorizontalContentAlignment="Stretch"
-                ItemTemplate="{StaticResource PaletteTemplate}" ItemsSource="{Binding Palettes}">
-
-            </ItemsControl>
-        </ScrollViewer>
+            Margin="0,0,12,0"
+            HorizontalContentAlignment="Stretch"
+            VirtualizingPanel.IsVirtualizing="True"
+            VirtualizingPanel.VirtualizationMode="Recycling"
+            VirtualizingPanel.ScrollUnit="Pixel"
+            ItemTemplate="{StaticResource PaletteTemplate}" ItemsSource="{Binding Palettes}">
+            <ItemsControl.Template>
+                <ControlTemplate TargetType="ItemsControl">
+                    <ScrollViewer Style="{StaticResource MaterialDesignScrollViewer}"
+                                  CanContentScroll="True"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsPresenter />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </ItemsControl.Template>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
     </Grid>
 </UserControl>

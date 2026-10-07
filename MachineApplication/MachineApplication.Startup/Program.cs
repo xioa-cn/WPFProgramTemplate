@@ -1,5 +1,6 @@
 ﻿using Machine.ModuleLoad;
 using Machine.ModuleLoad.ModuleConfig;
+using Machine.ModuleLoad.Mvvm;
 using MachineApplication.Entrance;
 using MachineApplication.Entrance.Views;
 
@@ -12,6 +13,7 @@ public static class Program
     public static void Main(string[] args)
     {
         WpfApplication.Create<App>()
+            .AddDispatcher()
             .LoadModuleConfig(AppDomain.CurrentDomain.BaseDirectory)
             .BuildWpfWithLoginStartupWindow<LoginWindow, MainWindow>()
             .LoadAndBuildModules()

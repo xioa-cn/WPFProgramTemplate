@@ -36,6 +36,12 @@ public interface INavigationAware
     void OnNavigatedFrom(RegionNavigationContext context) => OnNavigatedFrom();
 }
 
+/// <summary>允许页面在已经显示加载遮挡时异步准备数据。</summary>
+public interface IAsyncNavigationAware
+{
+    Task PrepareAsync(RegionNavigationContext context, CancellationToken cancellationToken);
+}
+
 public interface IRegionView
 {
     void OnActivated();

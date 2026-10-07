@@ -23,8 +23,11 @@ public partial class WelcomeViewModel(INavigationService navigation) : Observabl
             if (firstPage?.Url is not { Length: > 0 } target)
                 throw new InvalidOperationException("路由配置中没有可访问的页面。");
 
-            navigation.Navigate("MainRegion", target);
-            Status = "";
+            navigation.RequestNavigate("MainRegion", new Uri(target, UriKind.RelativeOrAbsolute), result =>
+            {
+                if (result.Result) Status = "";
+                else if (result.Error is { } error) Status = ManagementMessages.Error(error);
+            });
         }
         catch (Exception ex) { Status = ManagementMessages.Error(ex); }
     }

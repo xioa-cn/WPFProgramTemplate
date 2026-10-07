@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Machine.ModuleLoad.Logger;
+using Machine.ModuleLoad.Region;
 using Machine.ModuleLoad.Utils;
 using Machine.ModuleLoad.StartupTool;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace MachineApplication.Entrance.ViewModels;
 
-public partial class SuperViewModel : MachineViewModelBase
+public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAware
 {
     private JsonObject? _document;
     private string? _loadedText;
@@ -53,8 +54,10 @@ public partial class SuperViewModel : MachineViewModelBase
         IsConsoleOpen = CmdTools.IsConsoleOpen;
         System.ComponentModel.PropertyChangedEventManager.AddHandler(
             ViewModelLocator.EntranceLang, OnDisplayLanguageChanged, string.Empty);
-        Reload();
     }
+
+    public Task PrepareAsync(RegionNavigationContext context, CancellationToken cancellationToken)
+        => IsLoaded ? Task.CompletedTask : ReloadAsync(cancellationToken);
 
     [RelayCommand]
     private void OpenConsole()
@@ -98,28 +101,15 @@ public partial class SuperViewModel : MachineViewModelBase
     }
 
     [RelayCommand]
-    private void Reload()
+    private async Task ReloadAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var text = ReadConfiguration();
-            var document = text is null
-                ? new JsonObject(new JsonNodeOptions { PropertyNameCaseInsensitive = true })
-                : JsonNode.Parse(text,
-                    new JsonNodeOptions { PropertyNameCaseInsensitive = true },
-                    new JsonDocumentOptions
-                    {
-                        AllowTrailingCommas = true,
-                        CommentHandling = JsonCommentHandling.Skip
-                    }) as JsonObject
-                  ?? throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_RootObjectRequired);
-            if (document["Logging"] is not null and not JsonObject)
-                throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_LoggingObjectRequired);
-
-            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(document.ToJsonString()));
-            var configuration = new ConfigurationBuilder().AddJsonStream(stream).Build();
-            using var configurationLifetime = (IDisposable)configuration;
-            var options = configuration.GetSection("Logging").Get<LoggingOptions>() ?? new LoggingOptions();
+            string? text;
+            try { text = await File.ReadAllTextAsync(ConfigurationPath, cancellationToken); }
+            catch (FileNotFoundException) { text = null; }
+            var (document, options) = await Task.Run(() => ParseConfiguration(text), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             ApplyOptions(options);
             _document = document;
             _loadedText = text;
@@ -129,12 +119,38 @@ public partial class SuperViewModel : MachineViewModelBase
                 ? ViewModelLocator.EntranceLang.SuperPage_FileMissing
                 : ViewModelLocator.EntranceLang.SuperPage_Loaded);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             IsLoaded = false;
             HasError = true;
             SetStatus(() => string.Format(ViewModelLocator.EntranceLang.SuperPage_ReadFailed, exception.Message));
         }
+    }
+
+    private static (JsonObject Document, LoggingOptions Options) ParseConfiguration(string? text)
+    {
+        var document = text is null
+            ? new JsonObject(new JsonNodeOptions { PropertyNameCaseInsensitive = true })
+            : JsonNode.Parse(text,
+                new JsonNodeOptions { PropertyNameCaseInsensitive = true },
+                new JsonDocumentOptions
+                {
+                    AllowTrailingCommas = true,
+                    CommentHandling = JsonCommentHandling.Skip
+                }) as JsonObject
+              ?? throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_RootObjectRequired);
+        if (document["Logging"] is not null and not JsonObject)
+            throw new LocalizedConfigurationException(() => ViewModelLocator.EntranceLang.SuperPage_LoggingObjectRequired);
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(document.ToJsonString()));
+        var configuration = new ConfigurationBuilder().AddJsonStream(stream).Build();
+        using var configurationLifetime = (IDisposable)configuration;
+        var options = configuration.GetSection("Logging").Get<LoggingOptions>() ?? new LoggingOptions();
+        return (document, options);
     }
 
     [RelayCommand]

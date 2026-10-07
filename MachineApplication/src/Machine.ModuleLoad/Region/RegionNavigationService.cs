@@ -1,5 +1,6 @@
 using System.Runtime.ExceptionServices;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace Machine.ModuleLoad.Region;
 
@@ -42,6 +43,7 @@ public sealed class RegionNavigationService : IRegionNavigationService
         _region = region;
         Region = region;
         History = new(this);
+        region.Host.Unloaded += OnHostUnloaded;
     }
 
     public void RequestNavigate(Uri target, Action<NavigationResult>? callback = null,
@@ -68,7 +70,7 @@ public sealed class RegionNavigationService : IRegionNavigationService
         {
             failure = result.Error;
             callback?.Invoke(result);
-        }, null);
+        }, null, false);
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
         return view;
     }
@@ -91,7 +93,7 @@ public sealed class RegionNavigationService : IRegionNavigationService
     }
 
     private void Start(RegionNavigationContext context, Func<UIElement> resolve, bool keepAlive, bool direct,
-        Action<NavigationResult>? callback, Action? journalCommit)
+        Action<NavigationResult>? callback, Action? journalCommit, bool useLoadingAnimation = true)
     {
         var request = new Request(context, callback);
         var previous = _pending;
@@ -121,8 +123,38 @@ public sealed class RegionNavigationService : IRegionNavigationService
             });
         }
 
-        void Execute()
+        async void Execute()
         {
+            try
+            {
+                if (useLoadingAnimation && _region.Animation is IRegionLoadingAnimation animation)
+                {
+                    request.LoadingContext = _region.BeginLoading();
+                    animation.BeginLoading(request.LoadingContext);
+                    await WaitForPresentationAsync(request);
+                }
+
+                await LoadContentAsync();
+                if (!IsCurrent(request)) return;
+                if (request.LoadingContext is not null)
+                    await WaitForPresentationAsync(request);
+            }
+            catch (OperationCanceledException) when (request.CancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception error)
+            {
+                if (IsCurrent(request)) Complete(request, false, error);
+                return;
+            }
+
+            if (IsCurrent(request)) Complete(request, true);
+        }
+
+        async Task LoadContentAsync()
+        {
+            if (!IsCurrent(request)) return;
             var view = resolve();
             if (!IsCurrent(request)) return;
             _manager.Assemble(view);
@@ -130,8 +162,15 @@ public sealed class RegionNavigationService : IRegionNavigationService
             // 激活浮动页面不替换区域当前内容，也不写入该区域的历史。
             if (_manager.FocusFloating(view))
             {
-                Complete(request, true);
                 return;
+            }
+
+            var participants = new object?[] { view, (view as FrameworkElement)?.DataContext };
+            foreach (var participant in participants.OfType<IAsyncNavigationAware>()
+                         .Distinct<IAsyncNavigationAware>(ReferenceEqualityComparer.Instance))
+            {
+                await participant.PrepareAsync(context, request.CancellationToken);
+                if (!IsCurrent(request)) return;
             }
 
             Navigating?.Invoke(this, new(context));
@@ -143,7 +182,7 @@ public sealed class RegionNavigationService : IRegionNavigationService
             }
 
             _region.Remember(view, context.Uri, keepAlive);
-            _region.SwitchTo(view);
+            _region.SwitchTo(view, request.LoadingContext);
             if (!IsCurrent(request)) return;
             foreach (var old in outgoing)
                 if (!ReferenceEquals(old, view)) _region.ReleaseIfNeeded(old);
@@ -161,13 +200,35 @@ public sealed class RegionNavigationService : IRegionNavigationService
                 item.OnNavigatedTo(context);
                 if (!IsCurrent(request)) return;
             }
-            Complete(request, true);
         }
 
         Guard(request, () => Confirm(0));
     }
 
     private bool IsCurrent(Request request) => !request.Completed && ReferenceEquals(_pending, request);
+
+    private async Task WaitForPresentationAsync(Request request)
+    {
+        var host = request.LoadingContext!.Host;
+        await host.Dispatcher.InvokeAsync(() =>
+        {
+            host.ApplyTemplate();
+            if (!host.IsMeasureValid || !host.IsArrangeValid)
+                host.UpdateLayout();
+        }, DispatcherPriority.Loaded, request.CancellationToken);
+
+        await host.Dispatcher.InvokeAsync(static () => { }, DispatcherPriority.Loaded,
+            request.CancellationToken);
+    }
+
+    private void OnHostUnloaded(object sender, RoutedEventArgs args)
+    {
+        if (sender is not FrameworkElement host || _pending is not { } request) return;
+        host.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            if (!host.IsLoaded && IsCurrent(request)) Complete(request, false);
+        }));
+    }
 
     private void Guard(Request request, Action action)
     {
@@ -186,6 +247,8 @@ public sealed class RegionNavigationService : IRegionNavigationService
         if (request.Completed) return;
         request.Completed = true;
         if (ReferenceEquals(_pending, request)) _pending = null;
+        request.LoadingContext?.Cancel();
+        request.Cancel();
         try
         {
             if (success) Navigated?.Invoke(this, new(request.Context));
@@ -207,10 +270,28 @@ public sealed class RegionNavigationService : IRegionNavigationService
         else _region.Host.Dispatcher.BeginInvoke(action);
     }
 
-    private sealed class Request(RegionNavigationContext context, Action<NavigationResult>? callback)
+    private sealed class Request
     {
-        public RegionNavigationContext Context { get; } = context;
-        public Action<NavigationResult>? Callback { get; } = callback;
+        private readonly CancellationTokenSource _cancellation = new();
+
+        public Request(RegionNavigationContext context, Action<NavigationResult>? callback)
+        {
+            Context = context;
+            Callback = callback;
+            CancellationToken = _cancellation.Token;
+        }
+
+        public RegionNavigationContext Context { get; }
+        public Action<NavigationResult>? Callback { get; }
+        public CancellationToken CancellationToken { get; }
+        public RegionAnimationContext? LoadingContext { get; set; }
         public bool Completed { get; set; }
+
+        public void Cancel()
+        {
+            try { _cancellation.Cancel(); }
+            catch (AggregateException) { }
+            finally { _cancellation.Dispose(); }
+        }
     }
 }

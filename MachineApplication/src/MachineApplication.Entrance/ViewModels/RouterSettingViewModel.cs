@@ -97,21 +97,21 @@ public partial class RouteEditorNode : ObservableObject
 }
 
 /// <summary>路由配置视图模型，管理菜单树编辑、权限目录同步及配置保存。</summary>
-public partial class RouterSettingViewModel : NavigationObservableObject
+public partial class RouterSettingViewModel : NavigationObservableObject, IAsyncNavigationAware
 {
     private readonly INavigationService _navigation;
     private readonly MainWindowViewModel _main;
     private readonly PermissionService _permissions;
+    private bool _isInitialized;
     public ObservableCollection<RouteEditorNode> Items { get; } = [];
     public ObservableCollection<RegisteredRoute> Pages { get; } = [];
 
-    public IReadOnlyList<PackIconKind> Icons { get; } =
-        Enum.GetValues<PackIconKind>().Distinct().OrderBy(icon => icon.ToString()).ToArray();
+    public IReadOnlyList<PackIconKind> Icons { get; private set; } = [];
 
     [ObservableProperty] private RouteEditorNode? _selectedItem;
     [ObservableProperty] private string _status = "";
 
-    /// <summary>关联导航、主窗口和权限服务，订阅等级目录变化并加载路由。</summary>
+    /// <summary>关联导航、主窗口和权限服务，数据在导航准备阶段加载。</summary>
     public RouterSettingViewModel(INavigationService navigation, MainWindowViewModel main, PermissionService permissions)
     {
         _navigation = navigation;
@@ -119,13 +119,48 @@ public partial class RouterSettingViewModel : NavigationObservableObject
         _permissions = permissions;
         System.ComponentModel.PropertyChangedEventManager.AddHandler(ViewModelLocator.EntranceLang, OnDisplayLanguageChanged, string.Empty);
         _permissions.CatalogChanged += OnCatalogChanged;
-        Reload();
     }
 
     public override bool IsNavigationTarget(RegionNavigationContext context) => true;
 
-    /// <summary>页面被缓存复用时重新读取权限等级，避免沿用旧目录。</summary>
-    public override void OnNavigatedTo(RegionNavigationContext context) => RefreshLevels();
+    public async Task PrepareAsync(RegionNavigationContext context, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (Icons.Count == 0)
+            {
+                var icons = await Task.Run(() => Enum.GetValues<PackIconKind>().Distinct()
+                    .OrderBy(icon => icon.ToString()).ToArray(), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                Icons = icons;
+                OnPropertyChanged(nameof(Icons));
+            }
+
+            if (_isInitialized)
+            {
+                var levels = await Task.Run(_permissions.Levels, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                ApplyLevels(levels);
+            }
+            else
+            {
+                var (configuration, levels) = await Task.Run(
+                    () => (RouterConfiguration.Read(), CurrentLevels()), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                ApplyConfiguration(configuration, levels);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            SetStatus(() => (_isInitialized
+                ? ViewModelLocator.EntranceLang.Management_LevelRefreshFailed
+                : ViewModelLocator.EntranceLang.Management_LoadFailed) + ManagementMessages.Error(exception));
+        }
+    }
 
     /// <summary>响应权限等级目录变化，更新当前页面的可分配等级。</summary>
     private void OnCatalogChanged(object? sender, EventArgs args) => RefreshLevels();
@@ -193,18 +228,23 @@ public partial class RouterSettingViewModel : NavigationObservableObject
     {
         try
         {
-            var config = RouterConfiguration.Read();
-            Items.Clear();
-            foreach (var item in config.NavigationItems) Items.Add(RouteEditorNode.From(item));
-            ApplyLevels(CurrentLevels());
-            SelectedItem = Items.FirstOrDefault();
-            RefreshPages();
-            SetStatus(() => ViewModelLocator.EntranceLang.Management_RoutesLoaded);
+            ApplyConfiguration(RouterConfiguration.Read(), CurrentLevels());
         }
         catch (Exception ex)
         {
             SetStatus(() => ViewModelLocator.EntranceLang.Management_LoadFailed + ManagementMessages.Error(ex));
         }
+    }
+
+    private void ApplyConfiguration(RouterConfiguration configuration, IReadOnlyList<PermissionLevel> levels)
+    {
+        Items.Clear();
+        foreach (var item in configuration.NavigationItems) Items.Add(RouteEditorNode.From(item));
+        ApplyLevels(levels);
+        SelectedItem = Items.FirstOrDefault();
+        RefreshPages();
+        _isInitialized = true;
+        SetStatus(() => ViewModelLocator.EntranceLang.Management_RoutesLoaded);
     }
 
     /// <summary>创建顶层菜单节点，初始化等级选项并选中新节点。</summary>

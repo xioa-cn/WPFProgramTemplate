@@ -214,6 +214,8 @@ regions.Regions["MainRegion"].Animation = new SlideAnimation();
 <models:ObstructionRegionAnimation Duration="0:0:0.6" IsEnabled="True" />
 ```
 
+使用 `RequestNavigate` 时，遮挡在页面解析前显示，持续到异步准备和首次布局处理完成；此时 `Duration` 不控制遮挡退出。`Duration` 仅用于直接激活等普通切换动画。宿主可绑定只读附加属性 `RegionAnimation.IsLoading`，在尚无内容时保留宿主尺寸并隐藏空页面占位。
+
 支持 `Duration`（默认 600 毫秒）、`IsEnabled`、`Background`、`Foreground`、`TextForeground` 和 `Text`。默认背景透明且不绘制不透明底色，动画开始时将宿主内容临时设为透明，结束、取消或卸载时恢复原透明度，因此不会透出下方页面；方块、阴影和文字跟随宿主的 `MaterialDesign.Brush.Primary`，动画期间切换主题也会更新。显式配置的颜色优先，文字默认使用窗口标题。48×48 方块每 500 毫秒线性循环翻转跳动，包含压缩、右下角圆角变化和阴影伸缩；循环速度独立于遮挡总时长，兼容保留的 `EasingFunction` 不改变循环节奏。宿主需要位于 `AdornerDecorator` 内（主窗口已具备）；加载后找不到装饰层则直接显示目标页。初始布局完成后才开始计时，覆盖层随宿主尺寸变化，不修改宿主的变换或裁剪。连续导航、清空区域、卸载或注销区域都会清理之前的覆盖层和动画。
 
 #### 上下文与取消清理
@@ -427,6 +429,25 @@ UIElement view = navigation.Navigate("MainRegion", "settings", keepAlive: true);
 `RegionManager.Clear`、`IRegion.Remove`、区域注销和 `NavigationService.ClosePage` 属于直接管理操作，会取消当前等待中的确认回调并清理相应视图或历史。
 
 ## 10. 当前适配范围
+
+### 加载遮挡与异步准备
+
+页面入口应使用 `RequestNavigate` 或 `RequestNavigateAsync`。旧的 `Navigate` 为了立即返回视图，仍会同步解析视图，不能用它实现导航前遮挡。
+
+实现 `IRegionLoadingAnimation.BeginLoading` 的动画会在视图解析前启动。导航先应用宿主模板并处理布局，经过 Dispatcher 的 Loaded 优先级调度供遮挡显示，再创建视图和 DataContext，等待视图及 DataContext 的 `IAsyncNavigationAware.PrepareAsync`，然后切换内容、处理首次布局并清理遮挡、报告完成。这里不订阅目标视图的 Loaded 事件作为完成条件，也不等待 ContextIdle，避免未接入可视树的内容或持续动画使导航一直挂起。加载遮挡不依赖固定动画时长。取消、失败或宿主确实卸载也会清理遮挡；短暂卸载后重新挂载不会误取消请求。
+
+```csharp
+public async Task PrepareAsync(RegionNavigationContext context, CancellationToken cancellationToken)
+{
+    var rows = await repository.LoadAsync(cancellationToken);
+    cancellationToken.ThrowIfCancellationRequested();
+    Rows = rows;
+}
+```
+
+构造函数和同步 `OnNavigatedTo` 中不要执行耗时 I/O 或计算。异步 I/O 直接 await；线程安全的纯数据计算可使用 `Task.Run`，完成后回到 UI 线程更新绑定。路由设置页通过此阶段准备图标、路由配置和权限等级，复用页面时只刷新等级，保留尚未保存的编辑。控件创建、XAML 解析、布局和未冻结的 WPF 对象不能整体移到线程池。大型列表应开启虚拟化；复杂静态视觉树仍可能阻塞 UI 线程，遮挡不等于后台渲染，也不能保证同步重活期间动画持续流畅。
+
+遮挡方块使用复用的几何、变换与关键帧动画，不再通过每帧触发 OnRender 重建几何和变换；文字只随尺寸、DPI 或画刷变化重绘。导航仅在宿主布局失效时补一次布局，后续调度不重复强制 UpdateLayout。
 
 - 区域宿主为 WPF `ContentControl`。
 - 每个区域只有一个活动视图。

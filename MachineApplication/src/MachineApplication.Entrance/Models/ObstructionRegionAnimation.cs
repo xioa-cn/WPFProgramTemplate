@@ -9,7 +9,7 @@ using System.Windows.Media.Animation;
 
 namespace MachineApplication.Entrance.Models;
 
-public class ObstructionRegionAnimation : IRegionAnimation
+public class ObstructionRegionAnimation : IRegionLoadingAnimation
 {
     public TimeSpan Duration { get; set; } = TimeSpan.FromMilliseconds(600);
 
@@ -26,10 +26,16 @@ public class ObstructionRegionAnimation : IRegionAnimation
     public IEasingFunction? EasingFunction { get; set; }
 
     public void Animate(RegionAnimationContext context)
+        => Show(context, false);
+
+    public void BeginLoading(RegionAnimationContext context)
+        => Show(context, true);
+
+    private void Show(RegionAnimationContext context, bool waitForContent)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!IsEnabled || Duration <= TimeSpan.Zero || context.CurrentContent is null ||
+        if (!IsEnabled || (!waitForContent && (Duration <= TimeSpan.Zero || context.CurrentContent is null)) ||
             context.CancellationToken.IsCancellationRequested)
             return;
 
@@ -38,7 +44,7 @@ public class ObstructionRegionAnimation : IRegionAnimation
         var title = Window.GetWindow(host)?.Title;
         var text = Text ?? (string.IsNullOrWhiteSpace(title) ? "加载中…" : title);
         var obstruction = new ObstructionAdorner(host, background, Foreground, TextForeground, text);
-        var animation = new DoubleAnimation(0, 1, new Duration(Duration))
+        var animation = new DoubleAnimation(0, 1, new Duration(Duration > TimeSpan.Zero ? Duration : TimeSpan.Zero))
         {
             EasingFunction = EasingFunction,
             FillBehavior = FillBehavior.Stop
@@ -76,7 +82,7 @@ public class ObstructionRegionAnimation : IRegionAnimation
             host.PreviewTextInput -= OnPreviewTextInput;
             animation.Completed -= OnCompleted;
             obstruction.BeginAnimation(ObstructionAdorner.ProgressProperty, null);
-            obstruction.BeginAnimation(ObstructionAdorner.CycleProperty, null);
+            obstruction.StopAnimation();
             layer?.Remove(obstruction);
             ShowContent();
             cleanupRegistration?.Dispose();
@@ -100,13 +106,10 @@ public class ObstructionRegionAnimation : IRegionAnimation
 
             if (host.RenderSize.Width <= 0 || host.RenderSize.Height <= 0) return;
             started = true;
-            obstruction.BeginAnimation(ObstructionAdorner.CycleProperty,
-                new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(500)))
-                {
-                    RepeatBehavior = RepeatBehavior.Forever
-                }, HandoffBehavior.SnapshotAndReplace);
-            obstruction.BeginAnimation(ObstructionAdorner.ProgressProperty, animation,
-                HandoffBehavior.SnapshotAndReplace);
+            obstruction.StartAnimation();
+            if (!waitForContent)
+                obstruction.BeginAnimation(ObstructionAdorner.ProgressProperty, animation,
+                    HandoffBehavior.SnapshotAndReplace);
         }
 
         void OnLoaded(object sender, RoutedEventArgs args) => Start();
@@ -131,17 +134,29 @@ public class ObstructionRegionAnimation : IRegionAnimation
     private sealed class ObstructionAdorner : Adorner
     {
         public static readonly DependencyProperty ProgressProperty = DependencyProperty.Register(
-            nameof(Progress), typeof(double), typeof(ObstructionAdorner),
-            new PropertyMetadata(0d));
+            "Progress", typeof(double), typeof(ObstructionAdorner), new PropertyMetadata(0d));
 
-        public static readonly DependencyProperty CycleProperty = DependencyProperty.Register(
-            nameof(Cycle), typeof(double), typeof(ObstructionAdorner),
-            new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
+        private static readonly DependencyProperty LoaderForegroundProperty = DependencyProperty.Register(
+            "LoaderForeground", typeof(Brush), typeof(ObstructionAdorner),
+            new FrameworkPropertyMetadata(SystemColors.HighlightBrush, FrameworkPropertyMetadataOptions.AffectsRender));
+
+        private static readonly DependencyProperty LoaderTextForegroundProperty = DependencyProperty.Register(
+            "LoaderTextForeground", typeof(Brush), typeof(ObstructionAdorner),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
         private readonly Brush _background;
-        private readonly Brush? _foreground;
-        private readonly Brush? _textForeground;
         private readonly string _text;
+        private readonly TranslateTransform _position = new();
+        private readonly TranslateTransform _bounce = new();
+        private readonly ScaleTransform _squash = new(1, 1);
+        private readonly RotateTransform _rotation = new();
+        private readonly TranslateTransform _shadowPosition = new();
+        private readonly ScaleTransform _shadowScale = new(1, 1);
+        private readonly LineSegment _cornerStart = new(new Point(24, 20), true);
+        private readonly ArcSegment _corner = new(new Point(20, 24), new Size(4, 4), 0,
+            false, SweepDirection.Clockwise, true);
+        private readonly PathGeometry _block;
+        private readonly List<(Animatable Target, DependencyProperty Property)> _animations = [];
         private FormattedText? _formattedText;
         private double _pixelsPerDip;
 
@@ -150,35 +165,100 @@ public class ObstructionRegionAnimation : IRegionAnimation
             : base(adornedElement)
         {
             _background = background;
-            _foreground = foreground;
-            _textForeground = textForeground;
             _text = text;
             ClipToBounds = true;
+            if (foreground is null)
+                SetResourceReference(LoaderForegroundProperty, "MaterialDesign.Brush.Primary");
+            else
+                SetValue(LoaderForegroundProperty, foreground);
+            if (textForeground is not null)
+                SetValue(LoaderTextForegroundProperty, textForeground);
+
+            _block = new PathGeometry
+            {
+                Figures =
+                {
+                    new PathFigure(new Point(-20, -24),
+                    [
+                        new LineSegment(new Point(20, -24), true),
+                        new ArcSegment(new Point(24, -20), new Size(4, 4), 0, false, SweepDirection.Clockwise, true),
+                        _cornerStart,
+                        _corner,
+                        new LineSegment(new Point(-20, 24), true),
+                        new ArcSegment(new Point(-24, 20), new Size(4, 4), 0, false, SweepDirection.Clockwise, true),
+                        new LineSegment(new Point(-24, -20), true),
+                        new ArcSegment(new Point(-20, -24), new Size(4, 4), 0, false, SweepDirection.Clockwise, true)
+                    ], true)
+                }
+            };
         }
 
-        public double Progress
+        public void StartAnimation()
         {
-            get => (double)GetValue(ProgressProperty);
-            set => SetValue(ProgressProperty, value);
+            if (_animations.Count != 0) return;
+            Animate(_rotation, RotateTransform.AngleProperty, Frames((0, 0), (500, 90)));
+            Animate(_bounce, TranslateTransform.YProperty, Frames((0, 0), (250, 18), (500, 0)));
+            Animate(_squash, ScaleTransform.ScaleYProperty,
+                Frames((0, 1), (125, 1), (250, 0.9), (375, 1), (500, 1)));
+            Animate(_shadowScale, ScaleTransform.ScaleXProperty, Frames((0, 1), (250, 1.2), (500, 1)));
+
+            var cornerStart = new PointAnimationUsingKeyFrames
+            {
+                Duration = TimeSpan.FromMilliseconds(500), RepeatBehavior = RepeatBehavior.Forever
+            };
+            var cornerEnd = new PointAnimationUsingKeyFrames
+            {
+                Duration = TimeSpan.FromMilliseconds(500), RepeatBehavior = RepeatBehavior.Forever
+            };
+            var cornerSize = new SizeAnimationUsingKeyFrames
+            {
+                Duration = TimeSpan.FromMilliseconds(500), RepeatBehavior = RepeatBehavior.Forever
+            };
+            foreach (var (milliseconds, radius) in new (double, double)[] { (0, 4), (75, 3), (250, 40), (500, 4) })
+            {
+                var keyTime = KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(milliseconds));
+                cornerStart.KeyFrames.Add(new LinearPointKeyFrame(new Point(24, 24 - radius), keyTime));
+                cornerEnd.KeyFrames.Add(new LinearPointKeyFrame(new Point(24 - radius, 24), keyTime));
+                cornerSize.KeyFrames.Add(new LinearSizeKeyFrame(new Size(radius, radius), keyTime));
+            }
+            Animate(_cornerStart, LineSegment.PointProperty, cornerStart);
+            Animate(_corner, ArcSegment.PointProperty, cornerEnd);
+            Animate(_corner, ArcSegment.SizeProperty, cornerSize);
         }
 
-        public double Cycle
+        public void StopAnimation()
         {
-            get => (double)GetValue(CycleProperty);
-            set => SetValue(CycleProperty, value);
+            foreach (var (target, property) in _animations)
+                target.BeginAnimation(property, null);
+            _animations.Clear();
+        }
+
+        private void Animate(Animatable target, DependencyProperty property, AnimationTimeline animation)
+        {
+            _animations.Add((target, property));
+            target.BeginAnimation(property, animation, HandoffBehavior.SnapshotAndReplace);
+        }
+
+        private static DoubleAnimationUsingKeyFrames Frames(params (double Milliseconds, double Value)[] frames)
+        {
+            var animation = new DoubleAnimationUsingKeyFrames
+            {
+                Duration = TimeSpan.FromMilliseconds(500), RepeatBehavior = RepeatBehavior.Forever
+            };
+            foreach (var (milliseconds, value) in frames)
+                animation.KeyFrames.Add(new LinearDoubleKeyFrame(value,
+                    KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(milliseconds))));
+            return animation;
         }
 
         protected override void OnRender(DrawingContext drawingContext)
         {
             var bounds = new Rect(RenderSize);
             drawingContext.DrawRectangle(_background, null, bounds);
-
             if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-            var foreground = _foreground
-                ?? (AdornedElement as FrameworkElement)?.TryFindResource("MaterialDesign.Brush.Primary") as Brush
-                ?? SystemColors.HighlightBrush;
-            var textForeground = _textForeground ?? foreground;
+            var foreground = (Brush)GetValue(LoaderForegroundProperty);
+            var textForeground = (Brush?)GetValue(LoaderTextForegroundProperty) ?? foreground;
             var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
             if (_formattedText is null || _pixelsPerDip != pixelsPerDip)
             {
@@ -195,51 +275,28 @@ public class ObstructionRegionAnimation : IRegionAnimation
             _formattedText.SetForegroundBrush(textForeground);
             _formattedText.MaxTextWidth = bounds.Width;
             var loaderTop = (bounds.Height - (48 + 50 + 18 + _formattedText.Height + 18)) / 2;
-            var centerX = bounds.Width / 2;
-            var cycle = Math.Clamp(Cycle, 0, 1);
-            var bounce = 1 - Math.Abs(cycle * 2 - 1);
-            var squash = Math.Max(0, 1 - Math.Abs(cycle * 4 - 2));
-            var cornerRadius = cycle switch
-            {
-                <= 0.15 => 4 - cycle / 0.15,
-                <= 0.5 => 3 + (cycle - 0.15) / 0.35 * 37,
-                _ => 40 - (cycle - 0.5) / 0.5 * 36
-            };
+            _position.X = bounds.Width / 2;
+            _position.Y = loaderTop + 24;
+            _shadowPosition.X = bounds.Width / 2;
+            _shadowPosition.Y = loaderTop + 62.5;
 
-            drawingContext.DrawEllipse(foreground, null, new Point(centerX, loaderTop + 62.5),
-                24 * (1 + 0.2 * bounce), 2.5);
+            drawingContext.PushTransform(_shadowPosition);
+            drawingContext.PushTransform(_shadowScale);
+            drawingContext.DrawEllipse(foreground, null, new Point(0, 0), 24, 2.5);
+            drawingContext.Pop();
+            drawingContext.Pop();
 
-            drawingContext.PushTransform(new TranslateTransform(centerX, loaderTop + 24 + 18 * bounce));
-            drawingContext.PushTransform(new ScaleTransform(1, 1 - 0.1 * squash));
-            drawingContext.PushTransform(new RotateTransform(90 * cycle));
-            drawingContext.DrawGeometry(foreground, null, CreateBlock(cornerRadius));
+            drawingContext.PushTransform(_position);
+            drawingContext.PushTransform(_bounce);
+            drawingContext.PushTransform(_squash);
+            drawingContext.PushTransform(_rotation);
+            drawingContext.DrawGeometry(foreground, null, _block);
+            drawingContext.Pop();
             drawingContext.Pop();
             drawingContext.Pop();
             drawingContext.Pop();
 
             drawingContext.DrawText(_formattedText, new Point(0, loaderTop + 48 + 50 + 18));
-        }
-
-        private static StreamGeometry CreateBlock(double bottomRightRadius)
-        {
-            var geometry = new StreamGeometry();
-            var corner = new Size(4, 4);
-            using (var path = geometry.Open())
-            {
-                path.BeginFigure(new Point(-20, -24), true, true);
-                path.LineTo(new Point(20, -24), true, false);
-                path.ArcTo(new Point(24, -20), corner, 0, false, SweepDirection.Clockwise, true, false);
-                path.LineTo(new Point(24, 24 - bottomRightRadius), true, false);
-                path.ArcTo(new Point(24 - bottomRightRadius, 24),
-                    new Size(bottomRightRadius, bottomRightRadius), 0, false, SweepDirection.Clockwise, true, false);
-                path.LineTo(new Point(-20, 24), true, false);
-                path.ArcTo(new Point(-24, 20), corner, 0, false, SweepDirection.Clockwise, true, false);
-                path.LineTo(new Point(-24, -20), true, false);
-                path.ArcTo(new Point(-20, -24), corner, 0, false, SweepDirection.Clockwise, true, false);
-            }
-
-            geometry.Freeze();
-            return geometry;
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Machine.ModuleLoad.Region;
 
 /// <summary>描述一次区域切换涉及的视图和宿主内容。</summary>
 /// <remarks>
-/// 区域会先设置 <see cref="ContentControl.Content"/>，再调用动画策略，确保导航状态和视觉树保持同步。自定义动画可以使用
+/// 普通动画在内容切换后启动；加载动画在解析视图前启动，此时 CurrentView 和 CurrentContent 尚未赋值。自定义动画可以使用
 /// <see cref="PreviousContent"/> 创建覆盖层，或操作宿主模板中的其他元素。
 /// </remarks>
 public sealed class RegionAnimationContext
@@ -34,13 +34,13 @@ public sealed class RegionAnimationContext
     public UIElement? PreviousView { get; }
 
     /// <summary>获取切换后处于活动状态的视图。</summary>
-    public UIElement? CurrentView { get; }
+    public UIElement? CurrentView { get; internal set; }
 
     /// <summary>获取切换前宿主中的内容。</summary>
     public object? PreviousContent { get; }
 
     /// <summary>获取本次切换分配给宿主的内容。</summary>
-    public object? CurrentContent { get; }
+    public object? CurrentContent { get; internal set; }
 
     /// <summary>获取在其他切换替代本次切换时取消的令牌。</summary>
     public CancellationToken CancellationToken => _cancellation.Token;
@@ -112,6 +112,12 @@ public interface IRegionAnimation
     void Animate(RegionAnimationContext context);
 }
 
+/// <summary>支持在视图解析和组装期间先显示遮挡层的区域动画。</summary>
+public interface IRegionLoadingAnimation : IRegionAnimation
+{
+    void BeginLoading(RegionAnimationContext context);
+}
+
 /// <summary>区域默认动画，同时可作为自定义策略的基类。</summary>
 /// <remarks>
 /// 默认构造函数创建短时淡入动画。可以继承此类重写 <see cref="Animate"/>，
@@ -119,6 +125,16 @@ public interface IRegionAnimation
 /// </remarks>
 public class RegionAnimation : IRegionAnimation
 {
+    private static readonly DependencyPropertyKey IsLoadingPropertyKey = DependencyProperty.RegisterAttachedReadOnly(
+        "IsLoading", typeof(bool), typeof(RegionAnimation), new PropertyMetadata(false));
+
+    public static readonly DependencyProperty IsLoadingProperty = IsLoadingPropertyKey.DependencyProperty;
+
+    public static bool GetIsLoading(DependencyObject element) => (bool)element.GetValue(IsLoadingProperty);
+
+    internal static void SetIsLoading(DependencyObject element, bool value)
+        => element.SetValue(IsLoadingPropertyKey, value);
+
     private readonly Action<RegionAnimationContext>? _transition;
 
     /// <summary>创建默认淡入策略。</summary>

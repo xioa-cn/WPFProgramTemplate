@@ -63,12 +63,12 @@ public partial class MainWindowViewModel : MachineViewModelBase
     /// <summary>导航成功后更新整棵菜单，快捷入口也复用此方法。</summary>
     private void NavigateTo(string url)
     {
-        try { _navigation.Navigate("MainRegion", url); }
-        catch (UnauthorizedAccessException ex)
+        _navigation.RequestNavigate("MainRegion", new Uri(url, UriKind.RelativeOrAbsolute), result =>
         {
-            System.Windows.MessageBox.Show(ex.Message, "权限不足");
-            return;
-        }
+            if (result.Error is { } error)
+                System.Windows.MessageBox.Show(error.Message,
+                    error is UnauthorizedAccessException ? "权限不足" : "导航失败");
+        });
         // 只有导航成功后才更新菜单高亮，拒绝访问时保留原选择。
         // 菜单选中状态由实际嵌入区域的 Navigated 事件更新。
     }

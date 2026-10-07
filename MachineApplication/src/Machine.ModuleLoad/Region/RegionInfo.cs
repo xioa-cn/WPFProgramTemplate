@@ -61,6 +61,16 @@ public sealed class RegionInfo : IRegion
     }
 
     internal void Remember(UIElement view, Uri uri, bool keepAlive) => _metadata[view] = (uri, keepAlive);
+
+    internal RegionAnimationContext BeginLoading()
+    {
+        CancelAnimation();
+        var context = new RegionAnimationContext(Host, ActiveView, null, Host.Content, null);
+        _animationContext = context;
+        context.RegisterCleanup(() => RegionAnimation.SetIsLoading(Host, false));
+        RegionAnimation.SetIsLoading(Host, true);
+        return context;
+    }
     internal Uri GetUri(UIElement view) => _metadata.TryGetValue(view, out var item)
         ? item.Uri : new Uri("view:///" + Guid.NewGuid().ToString("N"), UriKind.Absolute);
     internal bool IsRoute(UIElement view, string route) => _metadata.TryGetValue(view, out var item) &&
@@ -86,12 +96,20 @@ public sealed class RegionInfo : IRegion
         ReleaseIfNeeded(view);
     }
 
-    internal void SwitchTo(UIElement? view)
+    internal void SwitchTo(UIElement? view, RegionAnimationContext? loadingContext = null)
     {
-        if (ReferenceEquals(ActiveView, view)) return;
+        if (ReferenceEquals(ActiveView, view))
+        {
+            if (loadingContext is not null)
+            {
+                loadingContext.CurrentView = view;
+                loadingContext.CurrentContent = Host.Content;
+            }
+            return;
+        }
         var old = ActiveView;
         var previousContent = Host.Content;
-        _animationContext?.Cancel();
+        if (loadingContext is null) _animationContext?.Cancel();
         if (old is IRegionView oldRegion) oldRegion.OnDeactivated();
         var currentContent = view is null ? null : _manager.GetPresentation(view);
         Host.Content = currentContent;
@@ -101,6 +119,13 @@ public sealed class RegionInfo : IRegion
             AddCore(view);
             _activeViews.Add(view);
             if (view is IRegionView active) active.OnActivated();
+        }
+
+        if (loadingContext is not null)
+        {
+            loadingContext.CurrentView = view;
+            loadingContext.CurrentContent = currentContent;
+            return;
         }
 
         var animationContext = new RegionAnimationContext(

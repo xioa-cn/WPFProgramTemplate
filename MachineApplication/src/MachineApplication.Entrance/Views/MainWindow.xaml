@@ -553,6 +553,10 @@
                                                                 Value="{x:Null}">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ElementName=MainPageHost, Path=(region:RegionAnimation.IsLoading)}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Frame.Style>
@@ -569,6 +573,9 @@
                                                         <Style.Triggers>
                                                             <Trigger Property="Content" Value="{x:Null}">
                                                                 <Setter Property="Visibility" Value="Collapsed" />
+                                                            </Trigger>
+                                                            <Trigger Property="region:RegionAnimation.IsLoading" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
                                                             </Trigger>
                                                         </Style.Triggers>
                                                     </Style>

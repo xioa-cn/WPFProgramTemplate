@@ -131,6 +131,22 @@ public sealed class NavigationService : INavigationService, INavigateAsync
 /// <summary>兼容原有应用导航入口。</summary>
 public interface INavigationService
 {
+    void RequestNavigate(string regionName, Uri target, Action<NavigationResult>? callback = null,
+        NavigationParameters? navigationParameters = null)
+    {
+        NavigationResult result;
+        try
+        {
+            Navigate(regionName, target.OriginalString);
+            result = new(null, true);
+        }
+        catch (Exception error)
+        {
+            result = new(null, false, error);
+        }
+        callback?.Invoke(result);
+    }
+
     void Register(string url, Type viewType, string? moduleName = null);
     UIElement Navigate(string regionName, string url, bool keepAlive = true);
     IReadOnlyList<RegisteredRoute> GetRegisteredRoutes() => Array.Empty<RegisteredRoute>();
