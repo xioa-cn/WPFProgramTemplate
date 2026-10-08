@@ -66,6 +66,21 @@ public sealed class NodeLibraryTests
     }
 
     [Fact]
+    public void NestedPathsStayInOneCategoryAndCountLeafNodes()
+    {
+        RunSta(() =>
+        {
+            var library = CreateLibrary();
+            library.AddNode(typeof(NestedStringNode));
+            var category = FindCategory(FindTree(library), "字符串");
+            Assert.Equal("19", GetCount(category));
+            Assert.All(category.Items.OfType<TreeViewItem>(), item => Assert.IsAssignableFrom<Type>(item.Tag));
+            library.Search("高级");
+            Assert.Equal("1 / 19", GetCount(FindCategory(FindTree(library), "字符串")));
+        });
+    }
+
+    [Fact]
     public void CompactTemplatesRenderAtSidebarWidth()
     {
         RunSta(() =>
@@ -97,6 +112,13 @@ public sealed class NodeLibraryTests
             var marker = Assert.IsType<Border>(selected.Template.FindName("SelectionMark", selected));
             Assert.Equal(Visibility.Visible, marker.Visibility);
             Assert.All(tree.Items.OfType<TreeViewItem>(), group => Assert.NotEmpty(GetCount(group)));
+            var scroll = Assert.IsType<ScrollViewer>(tree.Template.FindName("PART_ScrollViewer", tree));
+            Assert.True(scroll.ScrollableHeight > 0);
+            scroll.ScrollToVerticalOffset(100);
+            library.UpdateLayout();
+            Assert.True(scroll.VerticalOffset > 0);
+            scroll.ScrollToTop();
+            library.UpdateLayout();
             var bitmap = new RenderTargetBitmap(260, 700, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(library);
             var encoder = new PngBitmapEncoder();
@@ -113,6 +135,9 @@ public sealed class NodeLibraryTests
             Assert.True(library.AddNode(type));
         return library;
     }
+
+    [XTNode("字符串/高级", "", "", "", "用于验证单级分类")]
+    public sealed class NestedStringNode : XTNode { }
 
     private static TreeView FindTree(XTNodeTreeView library) => Assert.Single(((DockPanel)library.Content).Children.OfType<TreeView>());
     private static TreeViewItem FindCategory(TreeView tree, string name) => tree.Items.OfType<TreeViewItem>().Single(group => Equals(group.Tag, name));

@@ -106,6 +106,41 @@
         </Setter>
     </Style>
 
+    <Style x:Key="NodeLibrary.ScrollThumb" TargetType="Thumb">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="Grip" Background="#4B5972" CornerRadius="3" Margin="1,2" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Grip" Property="Background" Value="#7483A1" /></Trigger>
+                        <Trigger Property="IsDragging" Value="True"><Setter TargetName="Grip" Property="Background" Value="{StaticResource NodeLibrary.Accent}" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="NodeLibrary.ScrollPage" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent" /></ControlTemplate></Setter.Value></Setter>
+    </Style>
+
+    <Style x:Key="NodeLibrary.ScrollBar" TargetType="ScrollBar">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="Vertical">
+                        <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource NodeLibrary.ScrollPage}" /></Track.DecreaseRepeatButton>
+                        <Track.Thumb><Thumb Style="{StaticResource NodeLibrary.ScrollThumb}" MinHeight="24" /></Track.Thumb>
+                        <Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource NodeLibrary.ScrollPage}" /></Track.IncreaseRepeatButton>
+                    </Track>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="NodeLibrary.Tree" TargetType="TreeView">
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="BorderThickness" Value="0" />
@@ -118,6 +153,9 @@
                 <ControlTemplate TargetType="TreeView">
                     <ScrollViewer x:Name="PART_ScrollViewer" Focusable="False" Padding="{TemplateBinding Padding}"
                                   HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer.Resources>
+                            <Style TargetType="ScrollBar" BasedOn="{StaticResource NodeLibrary.ScrollBar}" />
+                        </ScrollViewer.Resources>
                         <ItemsPresenter />
                     </ScrollViewer>
                 </ControlTemplate>

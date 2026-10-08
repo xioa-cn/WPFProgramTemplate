@@ -10,6 +10,7 @@ using WorkFlowCore.Nodes;
 using WorkFlowCore.Nodes.Data;
 using WorkFlowCore.Nodes.Flow;
 using WorkFlowCore.Nodes.Math;
+using WorkFlowCore.Nodes.Operation;
 using WorkFlowCore.Nodes.Script;
 using WorkFlowCore.Nodes.Str;
 using WorkFlowCore.ViewModels;
@@ -74,6 +75,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         EditorPanel.AddXTNode(typeof(StrIsWhiteSpaceNode));
         EditorPanel.AddXTNode(typeof(StrPadLeftNode));
         EditorPanel.AddXTNode(typeof(StrPadRightNode));
+        OperationNodeCatalog.Register(EditorPanel);
         EditorPanel.Editor.NodeAdded += OnNodeAdded;
         EditorPanel.Editor.NodeRemoved += OnNodeRemoved;
         EditorPanel.Editor.OptionConnected += OnConnectionChanged;
