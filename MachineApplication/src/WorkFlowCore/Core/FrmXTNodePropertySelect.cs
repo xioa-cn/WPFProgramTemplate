@@ -30,16 +30,17 @@ internal class FrmXTNodePropertySelect : Window
         var type = descriptor.PropertyInfo.PropertyType;
         var items = new ListBox
         {
-            ItemsSource = type == typeof(bool) ? new object[] { false, true } : Enum.GetValues(type),
-            SelectedItem = descriptor.GetValue(null)
+            ItemsSource = descriptor.GetSelectItems(type == typeof(bool) ? new object[] { false, true } : Enum.GetValues(type).Cast<object>()),
+            DisplayMemberPath = "Text", SelectedValuePath = "Value",
+            SelectedValue = descriptor.GetValue(null)
         };
         panel.Children.Add(items);
         confirm.Click += (_, _) =>
         {
-            if (items.SelectedItem is null) return;
+            if (items.SelectedValue is null) return;
             try
             {
-                descriptor.SetValue(items.SelectedItem);
+                descriptor.SetValue(items.SelectedValue);
                 descriptor.Invalidate();
                 DialogResult = true;
             }

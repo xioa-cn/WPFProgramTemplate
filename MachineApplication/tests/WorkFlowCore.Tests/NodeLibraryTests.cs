@@ -136,7 +136,7 @@ public sealed class NodeLibraryTests
         return library;
     }
 
-    [XTNode("字符串/高级", "", "", "", "用于验证单级分类")]
+    [XTNode("字符串/高级", "1327916255@qq.com", "https://github.com/xioa-cn/", "", "用于验证单级分类")]
     public sealed class NestedStringNode : XTNode { }
 
     private static TreeView FindTree(XTNodeTreeView library) => Assert.Single(((DockPanel)library.Content).Children.OfType<TreeView>());

@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("写入变量")]
-[XTNode("变量操作", "xioa", "", "", "仅执行时写入变量并输出原值和完成信号；编辑、加载及就绪检查不会写变量。")]
+[XTNode("变量操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "仅执行时写入变量并输出原值和完成信号；编辑、加载及就绪检查不会写变量。")]
 public sealed class SetVarialbeNode : VariableNode
 {
     public SetVarialbeNode() : base("写入变量")

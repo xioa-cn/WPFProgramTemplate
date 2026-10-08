@@ -60,7 +60,12 @@ public class XTNodePropertyDescriptor
         if (value is null) return "";
         return TypeDescriptor.GetConverter(value.GetType()).ConvertToInvariantString(value) ?? "";
     }
-    protected internal virtual string GetSelectItemText(object value) => Convert.ToString(value, CultureInfo.CurrentUICulture) ?? "";
+    protected internal virtual string GetSelectItemText(object value) =>
+        value.GetType().GetField(value.ToString() ?? "")?.GetCustomAttribute<DescriptionAttribute>()?.Description
+        ?? Convert.ToString(value, CultureInfo.CurrentUICulture) ?? "";
+
+    internal XTNodePropertySelectItem[] GetSelectItems(IEnumerable<object> values) =>
+        values.Select(value => new XTNodePropertySelectItem(value, GetSelectItemText(value))).ToArray();
     protected internal virtual byte[] GetBytesFromValue() => Encoding.UTF8.GetBytes(GetStringFromValue());
     protected internal virtual object? GetValueFromBytes(byte[] bytes) => GetValueFromString(Encoding.UTF8.GetString(bytes));
     protected internal virtual object? GetValue(object[]? index) => PropertyInfo.GetValue(Node, index);
@@ -78,3 +83,5 @@ public class XTNodePropertyDescriptor
     protected internal virtual void OnSetValueError(Exception exception) => Control?.SetErrorMessage(exception.GetBaseException().Message);
     public void Invalidate() { Node.Invalidate(); Control?.RefreshProperties(); }
 }
+
+internal sealed record XTNodePropertySelectItem(object Value, string Text);

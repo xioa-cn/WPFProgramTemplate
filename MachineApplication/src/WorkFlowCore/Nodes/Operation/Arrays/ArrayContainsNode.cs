@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("数组包含元素")]
-[XTNode("数组操作", "xioa", "", "", "判断数组是否包含指定元素。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "判断数组是否包含指定元素。")]
 public sealed class ArrayContainsNode : ArrayOperationNode
 {
     public ArrayContainsNode() : base("数组包含元素", typeof(bool))

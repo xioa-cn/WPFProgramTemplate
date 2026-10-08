@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("查找数组元素")]
-[XTNode("数组操作", "xioa", "", "", "返回元素首次出现的索引，未找到返回 -1。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "返回元素首次出现的索引，未找到返回 -1。")]
 public sealed class ArrayIndexOfNode : ArrayOperationNode
 {
     public ArrayIndexOfNode() : base("查找数组元素", typeof(int))

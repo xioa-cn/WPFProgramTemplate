@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("反转数组")]
-[XTNode("数组操作", "xioa", "", "", "输出顺序反转后的数组副本。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "输出顺序反转后的数组副本。")]
 public sealed class ArrayReverseNode : ArrayOperationNode
 {
     public ArrayReverseNode() : base("反转数组", typeof(object[])) { }

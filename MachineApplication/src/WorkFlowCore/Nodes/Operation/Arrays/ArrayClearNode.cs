@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("清空数组")]
-[XTNode("数组操作", "xioa", "", "", "输出空数组，不修改上游集合。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "输出空数组，不修改上游集合。")]
 public sealed class ArrayClearNode : ArrayOperationNode
 {
     public ArrayClearNode() : base("清空数组", typeof(object[])) { }

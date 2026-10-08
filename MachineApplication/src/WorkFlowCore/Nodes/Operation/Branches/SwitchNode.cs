@@ -5,7 +5,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("多路分支")]
-[XTNode("流程控制", "xioa", "", "", "按 JSON 分支值匹配，仅激活一个出口；未匹配走默认分支。修改分支列表前请断开出口。")]
+[XTNode("流程控制", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "按 JSON 分支值匹配，仅激活一个出口；未匹配走默认分支。修改分支列表前请断开出口。")]
 public sealed class SwitchNode : UnaryValueNode
 {
     private string _casesJson = "[0,1,2]";

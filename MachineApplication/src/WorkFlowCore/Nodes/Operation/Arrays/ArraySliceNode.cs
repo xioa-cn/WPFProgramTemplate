@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("截取数组")]
-[XTNode("数组操作", "xioa", "", "", "按起始位置和长度截取数组，长度 -1 表示到末尾。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "按起始位置和长度截取数组，长度 -1 表示到末尾。")]
 public sealed class ArraySliceNode : ArrayOperationNode
 {
     public ArraySliceNode() : base("截取数组", typeof(object[]))

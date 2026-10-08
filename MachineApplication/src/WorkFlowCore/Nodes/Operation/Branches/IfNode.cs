@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("条件分支")]
-[XTNode("流程控制", "xioa", "", "", "条件为 true 仅激活真分支，为 false 仅激活假分支；输出流程信号。")]
+[XTNode("流程控制", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "条件为 true 仅激活真分支，为 false 仅激活假分支；输出流程信号。")]
 public sealed class IfNode : OperationNode
 {
     public IfNode() : base("条件分支", typeof(object))

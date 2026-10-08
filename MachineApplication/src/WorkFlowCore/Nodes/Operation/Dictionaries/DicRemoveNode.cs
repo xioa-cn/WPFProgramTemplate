@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("删除字典键")]
-[XTNode("字典操作", "xioa", "", "", "删除字典键；键区分大小写。修改输出副本，缺失键读取报错、删除忽略。")]
+[XTNode("字典操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "删除字典键；键区分大小写。修改输出副本，缺失键读取报错、删除忽略。")]
 public sealed class DicRemoveNode : DictionaryOperationNode
 {
     public DicRemoveNode() : base("删除字典键", typeof(object))

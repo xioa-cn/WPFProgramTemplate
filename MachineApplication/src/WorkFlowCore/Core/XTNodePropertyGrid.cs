@@ -168,17 +168,22 @@ public class XTNodePropertyGrid : UserControl
             }
             else if (propertyType.IsEnum)
             {
-                var combo = new ComboBox { ItemsSource = Enum.GetValues(propertyType), SelectedItem = descriptor.GetValue(null), IsEnabled = !descriptor.IsReadOnly };
+                var combo = new ComboBox
+                {
+                    ItemsSource = descriptor.GetSelectItems(Enum.GetValues(propertyType).Cast<object>()),
+                    DisplayMemberPath = "Text", SelectedValuePath = "Value",
+                    SelectedValue = descriptor.GetValue(null), IsEnabled = !descriptor.IsReadOnly
+                };
                 var restoringSelection = false;
                 combo.SelectionChanged += (_, _) =>
                 {
-                    if (restoringSelection || combo.SelectedItem is null) return;
+                    if (restoringSelection || combo.SelectedValue is null) return;
                     // 类型切换可能联动默认值和端口信息；成功后刷新，失败时恢复真实的枚举选项。
-                    if (Commit(descriptor, () => descriptor.SetValue(combo.SelectedItem))) RefreshProperties();
+                    if (Commit(descriptor, () => descriptor.SetValue(combo.SelectedValue))) RefreshProperties();
                     else
                     {
                         restoringSelection = true;
-                        try { combo.SelectedItem = descriptor.GetValue(null); }
+                        try { combo.SelectedValue = descriptor.GetValue(null); }
                         finally { restoringSelection = false; }
                     }
                 };

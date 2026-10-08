@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+    <PackageReference Include="System.IO.Ports" Version="10.0.12" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Nodes\Script\Script\Resources\CsxDark.xshd" />

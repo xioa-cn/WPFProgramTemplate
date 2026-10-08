@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("删除数组元素")]
-[XTNode("数组操作", "xioa", "", "", "删除指定索引元素并输出新数组。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "删除指定索引元素并输出新数组。")]
 public sealed class ArrayRemoveAtNode : ArrayOperationNode
 {
     public ArrayRemoveAtNode() : base("删除数组元素", typeof(object[]))

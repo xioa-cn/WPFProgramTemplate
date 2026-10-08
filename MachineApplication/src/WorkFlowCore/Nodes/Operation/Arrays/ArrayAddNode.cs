@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("追加数组元素")]
-[XTNode("数组操作", "xioa", "", "", "追加元素并输出新数组，不修改上游集合。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "追加元素并输出新数组，不修改上游集合。")]
 public sealed class ArrayAddNode : ArrayOperationNode
 {
     public ArrayAddNode() : base("追加数组元素", typeof(object[]))

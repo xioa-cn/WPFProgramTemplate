@@ -17,6 +17,14 @@ public sealed class MathNodeTests
     [InlineData(typeof(MulNode), -7.5, 2, -15)]
     [InlineData(typeof(DivNode), 7, 2, 3.5)]
     [InlineData(typeof(ModNode), -7.5, 2, -1.5)]
+    [InlineData(typeof(PowNode), 2, 3, 8)]
+    [InlineData(typeof(PowNode), 2, -3, 0.125)]
+    [InlineData(typeof(PowNode), -2, 3, -8)]
+    [InlineData(typeof(PowNode), -2, 4, 16)]
+    [InlineData(typeof(PowNode), 9, 0.5, 3)]
+    [InlineData(typeof(PowNode), 0, 0, 1)]
+    [InlineData(typeof(PowNode), 0, 2, 0)]
+    [InlineData(typeof(PowNode), -2, 0, 1)]
     public void BinaryOperationsUseConfiguredDefaults(Type nodeType, double left, double right, double expected)
     {
         RunSta(() =>
@@ -385,6 +393,78 @@ public sealed class MathNodeTests
                 Assert.Contains("输出", text);
                 Assert.Contains(text, value => value.Contains(node.Output.Description) && value.Contains("Double") && value.Contains(node.Output.Text));
             }
+        });
+    }
+
+    [Theory]
+    [InlineData(0, -1)]
+    [InlineData(-8, 0.5)]
+    [InlineData(-8, 1.0 / 3.0)]
+    public void PowerRejectsInvalidRealDomainsAndClearsPreviousResult(double basis, double exponent)
+    {
+        RunSta(() =>
+        {
+            var node = new PowNode { LeftValue = 2, RightValue = 3 };
+            AssertResult(node, 8);
+            node.LeftValue = basis;
+            node.RightValue = exponent;
+            Assert.False(node.CanExecute(new()).IsReady);
+            AssertFailure(node);
+        });
+    }
+
+    [Fact]
+    public void PowerSupportsNumericPortsAndRejectsOverflowAndInvalidTypes()
+    {
+        RunSta(() =>
+        {
+            var node = new PowNode { LeftValue = 3 };
+            AssertResult(node, 9);
+            node.LeftInput.Data = 4m;
+            node.RightInput.Data = 0.5f;
+            AssertResult(node, 2);
+            foreach (var port in new[] { node.LeftInput, node.RightInput })
+            {
+                foreach (var invalid in new object[] { "2", true, double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+                {
+                    node.LeftInput.Data = 2;
+                    node.RightInput.Data = 3;
+                    AssertResult(node, 8);
+                    port.Data = invalid;
+                    Assert.False(node.CanExecute(new()).IsReady);
+                    AssertFailure(node);
+                }
+            }
+            node.LeftInput.Data = double.MaxValue;
+            node.RightInput.Data = 2;
+            AssertFailure(node);
+        });
+    }
+
+    [Fact]
+    public void PowerConfigurationAndConnectionsRoundTrip()
+    {
+        RunSta(() =>
+        {
+            var panel = new XTNodeEditorPannel();
+            Assert.True(panel.AddXTNode(typeof(PowNode)));
+            Assert.True(panel.AddXTNode(typeof(AbsNode)));
+            var node = new PowNode { LeftValue = -2, RightValue = 3, NodeName = "幂计算", EnableExecutionLog = true };
+            var next = new AbsNode();
+            panel.Editor.Nodes.Add(node);
+            panel.Editor.Nodes.Add(next);
+            Assert.Equal(ConnectionStatus.Connected, node.Output.ConnectOption(next.Input));
+            panel.Editor.LoadCanvas(panel.Editor.GetCanvasData());
+            var loaded = Assert.Single(panel.Editor.Nodes.OfType<PowNode>());
+            var loadedNext = Assert.Single(panel.Editor.Nodes.OfType<AbsNode>());
+            Assert.Equal(-2, loaded.LeftValue);
+            Assert.Equal(3, loaded.RightValue);
+            Assert.Equal("幂计算", loaded.NodeName);
+            Assert.True(loaded.EnableExecutionLog);
+            Assert.Null(loaded.Output.Data);
+            Assert.Same(loadedNext.Input, Assert.Single(loaded.Output.ConnectedOption));
+            AssertResult(loaded, -8);
+            AssertResult(loadedNext, 8);
         });
     }
 

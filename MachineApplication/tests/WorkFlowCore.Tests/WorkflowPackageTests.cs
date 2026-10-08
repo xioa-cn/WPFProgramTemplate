@@ -109,7 +109,7 @@ public sealed class WorkflowPackageTests
             Assert.Equal("Fixture.Package", Assert.Single(nuget.GetInstalledPackages()).Id);
             var references = nuget.GetCompileReferencePathsAsync(CancellationToken.None).GetAwaiter().GetResult();
             Assert.StartsWith(moved, Assert.Single(references), StringComparison.OrdinalIgnoreCase);
-            var options = new ScriptClassDefinition("", "", node.ScriptDirectory)
+            var options = new ScriptClassDefinition("",  "", node.ScriptDirectory)
             {
                 PackageWorkspaceDirectory = node.PackageWorkspaceDirectory,
                 ScriptPath = node.ScriptFilePath

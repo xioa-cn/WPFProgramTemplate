@@ -11,6 +11,7 @@ using WorkFlowCore.Nodes.Data;
 using WorkFlowCore.Nodes.Flow;
 using WorkFlowCore.Nodes.Math;
 using WorkFlowCore.Nodes.Operation;
+using WorkFlowCore.Nodes.NodeSystem;
 using WorkFlowCore.Nodes.Script;
 using WorkFlowCore.Nodes.Str;
 using WorkFlowCore.ViewModels;
@@ -44,6 +45,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         EditorPanel.AddXTNode(typeof(AddNode));
         EditorPanel.AddXTNode(typeof(SubNode));
         EditorPanel.AddXTNode(typeof(MulNode));
+        EditorPanel.AddXTNode(typeof(PowNode));
         EditorPanel.AddXTNode(typeof(DivNode));
         EditorPanel.AddXTNode(typeof(ModNode));
         EditorPanel.AddXTNode(typeof(AbsNode));
@@ -76,6 +78,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         EditorPanel.AddXTNode(typeof(StrPadLeftNode));
         EditorPanel.AddXTNode(typeof(StrPadRightNode));
         OperationNodeCatalog.Register(EditorPanel);
+        SystemNodeCatalog.Register(EditorPanel);
         EditorPanel.Editor.NodeAdded += OnNodeAdded;
         EditorPanel.Editor.NodeRemoved += OnNodeRemoved;
         EditorPanel.Editor.OptionConnected += OnConnectionChanged;

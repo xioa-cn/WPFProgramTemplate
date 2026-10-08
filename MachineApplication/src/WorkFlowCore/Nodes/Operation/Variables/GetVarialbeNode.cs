@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("读取变量")]
-[XTNode("变量操作", "xioa", "", "", "读取当前上下文或进程全局变量；缺失时可配置默认 JSON 值。运行值不随节点保存。")]
+[XTNode("变量操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "读取当前上下文或进程全局变量；缺失时可配置默认 JSON 值。运行值不随节点保存。")]
 public sealed class GetVarialbeNode : VariableNode
 {
     public GetVarialbeNode() : base("读取变量")

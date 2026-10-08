@@ -4,7 +4,7 @@ using ST.Library.UI.NodeEditor;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("设置数组元素")]
-[XTNode("数组操作", "xioa", "", "", "替换指定索引处的元素并输出副本。")]
+[XTNode("数组操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "替换指定索引处的元素并输出副本。")]
 public sealed class ArraySetNode : ArrayOperationNode
 {
     public ArraySetNode() : base("设置数组元素", typeof(object[]))

@@ -6,7 +6,7 @@ using WorkFlowCore.Nodes.Data;
 namespace WorkFlowCore.Nodes.Operation;
 
 [DisplayName("类型转换")]
-[XTNode("类型操作", "xioa", "", "", "按固定文化转换基础类型；null 仅可转换为 Object 或 String，溢出和无效转换会失败。")]
+[XTNode("类型操作", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/", "按固定文化转换基础类型；null 仅可转换为 Object 或 String，溢出和无效转换会失败。")]
 public sealed class TypeConverterNode : UnaryValueNode
 {
     public TypeConverterNode() : base("类型转换", typeof(object)) { ValueJson = "\"123\""; }
