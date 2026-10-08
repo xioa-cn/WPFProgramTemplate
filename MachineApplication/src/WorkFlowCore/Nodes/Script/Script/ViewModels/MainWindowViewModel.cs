@@ -23,18 +23,20 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _isLoadingDocument;
     private bool _usesAspNetCoreFramework;
 
-    public MainWindowViewModel(WorkspaceSessionService? sessionService = null, string? nodeScript = null, string nodeTitle = "node.csx")
+    public MainWindowViewModel(WorkspaceSessionService? sessionService = null, string? nodeScript = null,
+        string nodeTitle = "node.csx", string? nodeScriptPath = null, string? packageWorkspaceDirectory = null)
     {
         _sessionService = sessionService ?? new WorkspaceSessionService();
-        _nuGetWorkspace = new NuGetWorkspaceService();
-        _scriptService = new CSharpScriptService();
+        _nuGetWorkspace = new NuGetWorkspaceService(packageWorkspaceDirectory);
+        _scriptService = new CSharpScriptService(packageWorkspaceDirectory: packageWorkspaceDirectory);
         ResultView = CreateEmptyView();
         IsNodeDocument = nodeScript is not null;
         if (nodeScript is null) RestoreWorkspaceSession();
         else
         {
-            LoadDocument(null, nodeScript);
+            LoadDocument(nodeScriptPath, nodeScript);
             DocumentTitle = nodeTitle;
+            if (nodeScriptPath is not null) SetWorkspaceFromDocument(nodeScriptPath);
         }
         _usesAspNetCoreFramework = NuGetWorkspaceService.UsesAspNetCoreFramework(ScriptText);
         RefreshInstalledPackages();
@@ -802,7 +804,8 @@ public partial class MainWindowViewModel : ObservableObject
         {
             var paths = await _nuGetWorkspace.GetScriptReferencePathsAsync(
                 ScriptText,
-                CancellationToken.None);
+                CancellationToken.None,
+                CurrentScriptPath);
             PackageCompletionCatalog = await Task.Run(() => PackageCompletionCatalog.Load(paths));
         }
         catch

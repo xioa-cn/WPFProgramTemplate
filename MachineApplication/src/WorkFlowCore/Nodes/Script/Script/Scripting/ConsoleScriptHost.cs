@@ -55,7 +55,8 @@ internal static class ConsoleScriptHost
             // Run the async script pipeline on a pool thread so continuations cannot deadlock startup.
             var result = Task.Run(async () =>
                 {
-                    var service = new CSharpScriptService(isolateConsoleScripts: false);
+                    var service = new CSharpScriptService(isolateConsoleScripts: false,
+                        packageWorkspaceDirectory: request!.PackageWorkspaceDirectory);
                     return await service.RunAsync(request!.Code, request.ScriptPath, CancellationToken.None);
                 })
                 .GetAwaiter()

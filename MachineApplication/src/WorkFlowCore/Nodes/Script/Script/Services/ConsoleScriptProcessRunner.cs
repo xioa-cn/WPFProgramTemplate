@@ -11,7 +11,8 @@ internal static class ConsoleScriptProcessRunner
     public static async Task<ScriptRunResult> RunAsync(
         string code,
         string? scriptPath,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? packageWorkspaceDirectory = null)
     {
         var pipeName = $"CsxPad.Console.{Environment.ProcessId}.{Guid.NewGuid():N}";
         await using var pipe = new NamedPipeServerStream(
@@ -26,7 +27,7 @@ internal static class ConsoleScriptProcessRunner
         try
         {
             await pipe.WaitForConnectionAsync(cancellationToken);
-            if (!ConsoleScriptHost.TryWriteMessage(pipe, new ConsoleScriptRequest(code, scriptPath)))
+            if (!ConsoleScriptHost.TryWriteMessage(pipe, new ConsoleScriptRequest(code, scriptPath, packageWorkspaceDirectory)))
             {
                 return ScriptRunResult.Failed("The script console was closed.");
             }

@@ -36,11 +36,16 @@ public abstract class ScriptNode : WorkflowNode, IEditorCustomEditorNode
     [XTNodeProperty("脚本目录", "相对 #load、#r 的基础目录；留空使用当前工作目录。")]
     public string ScriptDirectory { get; set; } = string.Empty;
 
+    public string? PackageWorkspaceDirectory { get; set; }
+    public string? ScriptFilePath { get; set; }
+
     public string EditorButtonText => "在 CsxPad 中编辑";
 
     public bool OpenEditor(Window? owner)
     {
-        var editor = new CsxPad.Wpf.MainWindow(ScriptCode, ClassName + ".csx");
+        var editor = new CsxPad.Wpf.MainWindow(ScriptCode, ClassName + ".csx",
+            ScriptFilePath ?? Path.Combine(string.IsNullOrWhiteSpace(ScriptDirectory)
+                ? Environment.CurrentDirectory : ScriptDirectory, ClassName + ".csx"), PackageWorkspaceDirectory);
         if (owner is not null) editor.Owner = owner;
         if (editor.ShowDialog() != true || editor.EditedScript is null) return false;
         ScriptCode = editor.EditedScript;
@@ -54,7 +59,11 @@ public abstract class ScriptNode : WorkflowNode, IEditorCustomEditorNode
     {
         var definition = new ScriptClassDefinition(ScriptCode, ClassName.Trim(),
             Path.GetFullPath(
-                string.IsNullOrWhiteSpace(ScriptDirectory) ? Environment.CurrentDirectory : ScriptDirectory));
+                string.IsNullOrWhiteSpace(ScriptDirectory) ? Environment.CurrentDirectory : ScriptDirectory))
+        {
+            PackageWorkspaceDirectory = PackageWorkspaceDirectory,
+            ScriptPath = ScriptFilePath
+        };
         definition.Validate();
         return definition;
     }

@@ -8,6 +8,9 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using CsxPad.Wpf.Models;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CsxPad.Wpf.Services;
 
@@ -29,9 +32,9 @@ public sealed partial class NuGetWorkspaceService
     private bool _restoreRequired;
     private static string RuntimeIdentifier => RuntimeInformation.RuntimeIdentifier;
 
-    public NuGetWorkspaceService()
+    public NuGetWorkspaceService(string? workspaceDirectory = null)
     {
-        _workspaceDirectory = Path.Combine(AppContext.BaseDirectory, "Data", "NuGet");
+        _workspaceDirectory = Path.GetFullPath(workspaceDirectory ?? Path.Combine(AppContext.BaseDirectory, "Data", "NuGet"));
         _packageCacheDirectory = Path.Combine(_workspaceDirectory, "packages");
         _httpCacheDirectory = Path.Combine(_workspaceDirectory, "http-cache");
         _pluginCacheDirectory = Path.Combine(_workspaceDirectory, "plugin-cache");
@@ -99,13 +102,31 @@ public sealed partial class NuGetWorkspaceService
 
     public async Task<IReadOnlyList<string>> GetScriptReferencePathsAsync(
         string code,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? scriptPath = null)
     {
         var packageReferences = await GetCompileReferencePathsAsync(cancellationToken);
         return packageReferences
             .Concat(GetFrameworkReferencePaths(code))
+            .Concat(GetFileReferencePaths(code, scriptPath))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static IEnumerable<string> GetFileReferencePaths(string code, string? scriptPath)
+    {
+        var directory = string.IsNullOrWhiteSpace(scriptPath) ? Environment.CurrentDirectory
+            : Path.GetDirectoryName(Path.GetFullPath(scriptPath))!;
+        var root = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(kind: SourceCodeKind.Script)).GetRoot();
+        foreach (var reference in root.DescendantTrivia().Select(trivia => trivia.GetStructure())
+                     .OfType<ReferenceDirectiveTriviaSyntax>().Where(reference => reference.IsActive))
+        {
+            var value = reference.File.ValueText;
+            if (value.StartsWith("nuget:", StringComparison.OrdinalIgnoreCase) ||
+                value.StartsWith("framework:", StringComparison.OrdinalIgnoreCase)) continue;
+            var path = Path.GetFullPath(Path.Combine(directory, value));
+            if (File.Exists(path) && TryGetAssemblyName(path, out _)) yield return path;
+        }
     }
 
     public static bool UsesAspNetCoreFramework(string code) =>
@@ -149,7 +170,8 @@ public sealed partial class NuGetWorkspaceService
         await using var stream = File.OpenRead(_assetsPath);
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
         var root = document.RootElement;
-        var packageFolders = root.GetProperty("packageFolders").EnumerateObject().Select(property => property.Name).ToArray();
+        var packageFolders = new[] { _packageCacheDirectory }
+            .Concat(root.GetProperty("packageFolders").EnumerateObject().Select(property => property.Name)).ToArray();
         var libraries = root.GetProperty("libraries");
         var target = SelectTarget(root.GetProperty("targets"));
         if (target is null)
@@ -239,10 +261,6 @@ public sealed partial class NuGetWorkspaceService
                               !string.Equals(
                                   propertyGroup.Element("TargetFramework")?.Value,
                                   "net8.0",
-                                  StringComparison.OrdinalIgnoreCase) ||
-                              !string.Equals(
-                                  propertyGroup.Element("RestorePackagesPath")?.Value,
-                                  _packageCacheDirectory,
                                   StringComparison.OrdinalIgnoreCase) ||
                               !string.Equals(
                                   propertyGroup.Element("RuntimeIdentifier")?.Value,
@@ -402,13 +420,13 @@ public sealed partial class NuGetWorkspaceService
         var allTargets = targets.EnumerateObject().ToArray();
         var runtimeTarget = allTargets.FirstOrDefault(item =>
             item.Name.EndsWith('/' + RuntimeIdentifier, StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrEmpty(runtimeTarget.Name))
+        if (runtimeTarget.Value.ValueKind != JsonValueKind.Undefined)
         {
             return runtimeTarget.Value;
         }
 
         var frameworkTarget = allTargets.FirstOrDefault(item => !item.Name.Contains('/'));
-        return string.IsNullOrEmpty(frameworkTarget.Name) ? null : frameworkTarget.Value;
+        return frameworkTarget.Value.ValueKind == JsonValueKind.Undefined ? null : frameworkTarget.Value;
     }
 
     private static Dictionary<string, int> ReadCompatibleRuntimeIdentifiers(JsonElement root)

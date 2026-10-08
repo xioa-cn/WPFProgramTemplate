@@ -2,7 +2,7 @@ using CsxPad.Wpf.Services;
 
 namespace CsxPad.Wpf.Scripting;
 
-internal sealed record ConsoleScriptRequest(string Code, string? ScriptPath);
+internal sealed record ConsoleScriptRequest(string Code, string? ScriptPath, string? PackageWorkspaceDirectory = null);
 
 internal sealed record ConsoleScriptResultSection(
     string Title,

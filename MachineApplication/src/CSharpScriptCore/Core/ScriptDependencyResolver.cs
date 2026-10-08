@@ -64,7 +64,9 @@ internal sealed partial class ScriptDependencyResolver
                     var version = match.Groups[2].Value.Trim();
                     if (version.Length == 0)
                     {
-                        version = await FindLatestVersionAsync(id, cancellationToken).ConfigureAwait(false);
+                        version = installed.TryGetValue(id, out var installedVersion) && !string.IsNullOrWhiteSpace(installedVersion)
+                            ? installedVersion
+                            : await FindLatestVersionAsync(id, cancellationToken).ConfigureAwait(false);
                     }
 
                     if (!installed.TryGetValue(id, out var currentVersion) || currentVersion != version)
@@ -358,8 +360,8 @@ internal sealed partial class ScriptDependencyResolver
         using var stream = File.OpenRead(_assetsPath);
         using var document = JsonDocument.Parse(stream);
         var root = document.RootElement;
-        var packageFolders = root.GetProperty("packageFolders").EnumerateObject()
-            .Select(item => item.Name).ToArray();
+        var packageFolders = new[] { _packageDirectory }
+            .Concat(root.GetProperty("packageFolders").EnumerateObject().Select(item => item.Name)).ToArray();
         var libraries = root.GetProperty("libraries");
         var target = SelectTarget(root.GetProperty("targets"), EffectiveRuntimeIdentifier);
         if (target is null) return [];
@@ -402,10 +404,10 @@ internal sealed partial class ScriptDependencyResolver
         var allTargets = targets.EnumerateObject().ToArray();
         var runtimeTarget = allTargets.FirstOrDefault(item =>
             item.Name.EndsWith('/' + runtimeIdentifier, StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrEmpty(runtimeTarget.Name)) return runtimeTarget.Value;
+        if (runtimeTarget.Value.ValueKind != JsonValueKind.Undefined) return runtimeTarget.Value;
 
         var frameworkTarget = allTargets.FirstOrDefault(item => !item.Name.Contains('/'));
-        return string.IsNullOrEmpty(frameworkTarget.Name) ? null : frameworkTarget.Value;
+        return frameworkTarget.Value.ValueKind == JsonValueKind.Undefined ? null : frameworkTarget.Value;
     }
 
     private static Dictionary<string, int> ReadCompatibleRuntimeIdentifiers(

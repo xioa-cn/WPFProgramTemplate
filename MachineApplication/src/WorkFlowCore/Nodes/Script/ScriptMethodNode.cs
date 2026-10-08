@@ -3,7 +3,8 @@
 [System.ComponentModel.DisplayName("脚本方法")]
 [ST.Library.UI.NodeEditor.XTNode("脚本", "xioa", "1327916255@qq.com", "https://github.com/xioa-cn/",
     "调用类定义中的公开方法；未连接类定义时使用自身 CsxPad 脚本。实例模式每次创建并释放一个无参实例。")]
-public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEditorExecutableNode, ST.Library.UI.NodeEditor.IEditorNodeReadiness
+public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEditorExecutableNode,
+    ST.Library.UI.NodeEditor.IEditorNodeReadiness
 {
     public ScriptMethodNode() : base("脚本方法")
     {
@@ -12,7 +13,10 @@ public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEdi
         ArgumentsInput = InputOptions.Add("参数数组", typeof(object), true);
         ArgumentsInput.HasDefaultValue = true;
         foreach (var input in new[] { DefinitionInput, ArgumentsInput })
-            input.DataTransfer += (_, args) => input.Data = args.Status == ST.Library.UI.NodeEditor.ConnectionStatus.Connected ? args.TargetOption.Data : null;
+            input.DataTransfer += (_, args) =>
+                input.Data = args.Status == ST.Library.UI.NodeEditor.ConnectionStatus.Connected
+                    ? args.TargetOption.Data
+                    : null;
         Output = OutputOptions.Add("返回值", typeof(object), false);
         Output.Description = "方法返回值，void 和 null 返回值均为 null。";
         Completed = OutputOptions.Add("完成", typeof(object), false);
@@ -35,7 +39,12 @@ public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEdi
 
     private ScriptClassDefinition? ReadDefinition(bool allowPending)
     {
-        if (DefinitionInput.Data is ScriptClassDefinition definition) { definition.Validate(); return definition; }
+        if (DefinitionInput.Data is ScriptClassDefinition definition)
+        {
+            definition.Validate();
+            return definition;
+        }
+
         if (DefinitionInput.ConnectionCount == 0) return GetDefinition();
         if (allowPending) return null;
         throw new InvalidOperationException("类定义输入尚未收到数据，请先执行类定义节点。");
@@ -50,8 +59,10 @@ public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEdi
             if (allowPending) return null;
             throw new InvalidOperationException("参数数组输入尚未收到数据。");
         }
+
         using var document = System.Text.Json.JsonDocument.Parse(ArgumentsJson);
-        if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array) throw new ArgumentException("参数必须是 JSON 数组。");
+        if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array)
+            throw new ArgumentException("参数必须是 JSON 数组。");
         return document.RootElement.EnumerateArray().Select(ConvertArgument).ToArray();
     }
 
@@ -65,11 +76,13 @@ public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEdi
         System.Text.Json.JsonValueKind.Number when element.TryGetInt64(out var longInteger) => longInteger,
         System.Text.Json.JsonValueKind.Number => element.GetDouble(),
         System.Text.Json.JsonValueKind.Array => element.EnumerateArray().Select(ConvertArgument).ToArray(),
-        System.Text.Json.JsonValueKind.Object => element.EnumerateObject().ToDictionary(property => property.Name, property => ConvertArgument(property.Value)),
+        System.Text.Json.JsonValueKind.Object => element.EnumerateObject()
+            .ToDictionary(property => property.Name, property => ConvertArgument(property.Value)),
         _ => throw new ArgumentException("不支持的参数类型。")
     };
 
-    public ST.Library.UI.NodeEditor.EditorNodeReadinessResult CanExecute(ST.Library.UI.NodeEditor.EditorExecutionContext context)
+    public ST.Library.UI.NodeEditor.EditorNodeReadinessResult CanExecute(
+        ST.Library.UI.NodeEditor.EditorExecutionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         context.CancellationToken.ThrowIfCancellationRequested();
@@ -81,10 +94,13 @@ public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEdi
             return ST.Library.UI.NodeEditor.EditorNodeReadinessResult.Ready();
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
-        { return ST.Library.UI.NodeEditor.EditorNodeReadinessResult.NotReady(exception.Message); }
+        {
+            return ST.Library.UI.NodeEditor.EditorNodeReadinessResult.NotReady(exception.Message);
+        }
     }
 
-    public ST.Library.UI.NodeEditor.EditorNodeExecutionResult Execute(ST.Library.UI.NodeEditor.EditorExecutionContext context)
+    public ST.Library.UI.NodeEditor.EditorNodeExecutionResult Execute(
+        ST.Library.UI.NodeEditor.EditorExecutionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         Output.Data = null;
@@ -99,10 +115,14 @@ public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEdi
             var isStatic = IsStatic;
             var result = Task.Run(async () =>
             {
-                if (isStatic) return await CSharpScriptCore.Core.CSharpScriptRun.RunStaticMethodAsync(
-                    definition.Code, definition.ClassName, methodName, definition.CreateOptions(), arguments, context.CancellationToken).ConfigureAwait(false);
-                await using var instance = await CSharpScriptCore.Core.CSharpScriptService.GetServiceFromClassAsync<object>(
-                    definition.Code, definition.ClassName, definition.CreateOptions(), cancellationToken: context.CancellationToken).ConfigureAwait(false);
+                if (isStatic)
+                    return await CSharpScriptCore.Core.CSharpScriptRun.RunStaticMethodAsync(
+                        definition.Code, definition.ClassName, methodName, definition.CreateOptions(), arguments,
+                        context.CancellationToken).ConfigureAwait(false);
+                await using var instance = await CSharpScriptCore.Core.CSharpScriptService
+                    .GetServiceFromClassAsync<object>(
+                        definition.Code, definition.ClassName, definition.CreateOptions(),
+                        cancellationToken: context.CancellationToken).ConfigureAwait(false);
                 if (!instance.Success) return (CSharpScriptCore.Models.ScriptResult)instance;
                 return await CSharpScriptCore.Core.CSharpScriptService.ScriptClassExecuteMethodAsync<object, object>(
                     instance, methodName, arguments, context.CancellationToken).ConfigureAwait(false);
@@ -111,8 +131,10 @@ public sealed class ScriptMethodNode : ScriptNode, ST.Library.UI.NodeEditor.IEdi
             context.CancellationToken.ThrowIfCancellationRequested();
             Output.TransferData(result.ReturnValue);
             Completed.TransferData(new ST.Library.UI.NodeEditor.EditorFlowSignal(context.ExecutionId));
-            RuntimeText = Convert.ToString(result.ReturnValue, System.Globalization.CultureInfo.InvariantCulture) ?? "null";
-            return ST.Library.UI.NodeEditor.EditorNodeExecutionResult.Success($"{definition.ClassName}.{methodName} 调用成功。", Output, Completed);
+            RuntimeText = Convert.ToString(result.ReturnValue, System.Globalization.CultureInfo.InvariantCulture) ??
+                          "null";
+            return ST.Library.UI.NodeEditor.EditorNodeExecutionResult.Success(
+                $"{definition.ClassName}.{methodName} 调用成功。", Output, Completed);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {

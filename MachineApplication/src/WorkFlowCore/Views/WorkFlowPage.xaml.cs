@@ -11,7 +11,9 @@ using WorkFlowCore.Nodes.Data;
 using WorkFlowCore.Nodes.Flow;
 using WorkFlowCore.Nodes.Math;
 using WorkFlowCore.Nodes.Script;
+using WorkFlowCore.Nodes.Str;
 using WorkFlowCore.ViewModels;
+using WorkFlowCore.Services;
 
 namespace WorkFlowCore.Views;
 
@@ -54,6 +56,24 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         EditorPanel.AddXTNode(typeof(SinNode));
         EditorPanel.AddXTNode(typeof(CosNode));
         EditorPanel.AddXTNode(typeof(TanNode));
+        EditorPanel.AddXTNode(typeof(StrLenNode));
+        EditorPanel.AddXTNode(typeof(StrConcatNode));
+        EditorPanel.AddXTNode(typeof(StrJoinNode));
+        EditorPanel.AddXTNode(typeof(StrSplitNode));
+        EditorPanel.AddXTNode(typeof(StrSubstringNode));
+        EditorPanel.AddXTNode(typeof(StrReplaceNode));
+        EditorPanel.AddXTNode(typeof(StrTrimNode));
+        EditorPanel.AddXTNode(typeof(StrToUpperLowerNode));
+        EditorPanel.AddXTNode(typeof(StrContainsNode));
+        EditorPanel.AddXTNode(typeof(StrStartsWithNode));
+        EditorPanel.AddXTNode(typeof(StrEndsWithNode));
+        EditorPanel.AddXTNode(typeof(StrIndexOfNode));
+        EditorPanel.AddXTNode(typeof(StrLastIndexOfNode));
+        EditorPanel.AddXTNode(typeof(StrCompareNode));
+        EditorPanel.AddXTNode(typeof(StrIsEmptyNode));
+        EditorPanel.AddXTNode(typeof(StrIsWhiteSpaceNode));
+        EditorPanel.AddXTNode(typeof(StrPadLeftNode));
+        EditorPanel.AddXTNode(typeof(StrPadRightNode));
         EditorPanel.Editor.NodeAdded += OnNodeAdded;
         EditorPanel.Editor.NodeRemoved += OnNodeRemoved;
         EditorPanel.Editor.OptionConnected += OnConnectionChanged;
@@ -65,6 +85,8 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
         CreateDocument();
+        if (File.Exists(WorkflowPackageService.DefaultFilePath))
+            LoadDocument(WorkflowPackageService.DefaultFilePath);
     }
 
     /// <summary>确认未保存修改后，新建含一个开始节点的流程。</summary>
@@ -78,15 +100,21 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
     private void OnOpenExecuted(object sender, ExecutedRoutedEventArgs args)
     {
         args.Handled = true;
-        var dialog = new OpenFileDialog { Title = "打开工作流", Filter = CanvasFileFilter, CheckFileExists = true };
+        var dialog = new OpenFileDialog { Title = "打开工作流", Filter = CanvasFileFilter, CheckFileExists = true,
+            InitialDirectory = Directory.Exists(WorkflowPackageService.DefaultDirectory) ? WorkflowPackageService.DefaultDirectory : AppContext.BaseDirectory };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true || !ConfirmUnsavedChanges()) return;
+        LoadDocument(dialog.FileName);
+    }
+
+    private void LoadDocument(string filePath)
+    {
         try
         {
             _isReplacingDocument = true;
             // 底层先在临时画布校验节点及连接，损坏文件不会提前清空当前画布。
-            EditorPanel.Editor.LoadCanvas(dialog.FileName);
+            WorkflowPackageService.Load(EditorPanel.Editor, filePath);
             EditorPanel.PropertyGrid.SetNode(null);
-            _viewModel.AcceptDocument(dialog.FileName, $"已加载流程，共 {EditorPanel.Editor.Nodes.Count} 个节点。");
+            _viewModel.AcceptDocument(filePath, $"已加载流程及脚本依赖，共 {EditorPanel.Editor.Nodes.Count} 个节点。");
         }
         catch (Exception exception)
         {
@@ -98,7 +126,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         }
     }
 
-    /// <summary>保存到当前路径；首次保存时提示选择目标文件。</summary>
+    /// <summary>保存完整工作流；首次保存默认写入应用目录下的 workflow。</summary>
     private void OnSaveExecuted(object sender, ExecutedRoutedEventArgs args)
     {
         args.Handled = true;
@@ -120,7 +148,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         try
         {
             var filePath = _viewModel.FilePath;
-            if (saveAs || filePath is null)
+            if (saveAs)
             {
                 var dialog = new SaveFileDialog
                 {
@@ -130,15 +158,16 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
                     AddExtension = true,
                     OverwritePrompt = true,
                     FileName = filePath is null ? "未命名流程.workflow.json" : Path.GetFileName(filePath),
-                    InitialDirectory = filePath is null ? "" : Path.GetDirectoryName(filePath) ?? ""
+                    InitialDirectory = filePath is null ? AppContext.BaseDirectory : Path.GetDirectoryName(filePath) ?? ""
                 };
                 if (dialog.ShowDialog(Window.GetWindow(this)) != true) return false;
                 filePath = dialog.FileName;
             }
 
             // 复用编辑器的临时文件替换机制，成功写盘后才清除脏标记。
-            EditorPanel.Editor.SaveCanvas(filePath);
-            _viewModel.AcceptDocument(filePath, "流程已保存。");
+            filePath ??= WorkflowPackageService.CreateDefaultFilePath();
+            WorkflowPackageService.Save(EditorPanel.Editor, filePath);
+            _viewModel.AcceptDocument(filePath, "流程、脚本及依赖已保存。");
             return true;
         }
         catch (Exception exception)

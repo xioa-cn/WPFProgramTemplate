@@ -16,7 +16,9 @@ public partial class MainWindow : Window
     {
     }
 
-    public MainWindow(string script, string title) : this(new MainWindowViewModel(nodeScript: script, nodeTitle: title))
+    public MainWindow(string script, string title, string? scriptPath = null, string? packageWorkspaceDirectory = null)
+        : this(new MainWindowViewModel(nodeScript: script, nodeTitle: title,
+            nodeScriptPath: scriptPath, packageWorkspaceDirectory: packageWorkspaceDirectory))
     {
     }
 

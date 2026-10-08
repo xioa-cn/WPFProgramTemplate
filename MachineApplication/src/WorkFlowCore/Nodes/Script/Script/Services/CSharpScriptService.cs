@@ -7,7 +7,7 @@ namespace CsxPad.Wpf.Services;
 /// <summary>
 /// 将 CSharpScriptCore 的通用执行结果适配为 WPF 界面使用的数据视图。
 /// </summary>
-public sealed class CSharpScriptService(bool isolateConsoleScripts = true)
+public sealed class CSharpScriptService(bool isolateConsoleScripts = true, string? packageWorkspaceDirectory = null)
 {
     public Task<ScriptRunResult> RunAsync(string code, CancellationToken cancellationToken) =>
         RunCoreAsync(code, null, cancellationToken, null);
@@ -39,7 +39,7 @@ public sealed class CSharpScriptService(bool isolateConsoleScripts = true)
     {
         if (CoreScript.UsesFramework(code, "Console") && isolateConsoleScripts)
         {
-            return await ConsoleScriptProcessRunner.RunAsync(code, scriptPath, cancellationToken);
+            return await ConsoleScriptProcessRunner.RunAsync(code, scriptPath, cancellationToken, packageWorkspaceDirectory);
         }
 
         using var debugScope = debugSession is null ? null : ScriptDebugger.BeginSession(debugSession);
@@ -47,6 +47,8 @@ public sealed class CSharpScriptService(bool isolateConsoleScripts = true)
             ? code
             : ScriptDebugInstrumenter.Instrument(code, debugSession.Breakpoints);
         var options = CoreScript.CreateOptions(scriptPath);
+        if (!string.IsNullOrWhiteSpace(packageWorkspaceDirectory))
+            options.PackageWorkspaceDirectory = packageWorkspaceDirectory;
         options.References.Add(typeof(ScriptDebugger).Assembly.Location);
         var result = await CoreScript.ExecuteCodeAsync(executableCode, options, cancellationToken);
         if (result.RunResult is ScriptRunStatus.Cancelled or ScriptRunStatus.Timeout &&

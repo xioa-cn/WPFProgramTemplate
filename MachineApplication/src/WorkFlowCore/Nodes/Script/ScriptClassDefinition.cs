@@ -7,6 +7,9 @@ namespace WorkFlowCore.Nodes.Script;
 
 public sealed record ScriptClassDefinition(string Code, string ClassName, string BaseDirectory)
 {
+    public string? PackageWorkspaceDirectory { get; init; }
+    public string? ScriptPath { get; init; }
+
     public void Validate()
     {
         if (string.IsNullOrWhiteSpace(Code)) throw new ArgumentException("请先在 CsxPad 中编写类定义。");
@@ -20,9 +23,15 @@ public sealed record ScriptClassDefinition(string Code, string ClassName, string
             throw new ArgumentException($"源码中未找到顶层 class {ClassName}。");
     }
 
-    public ScriptExecutionOptions CreateOptions() => new()
+    public ScriptExecutionOptions CreateOptions()
     {
-        BaseDirectory = BaseDirectory,
-        ScriptPath = System.IO.Path.Combine(BaseDirectory, ClassName + ".csx")
-    };
+        var options = new ScriptExecutionOptions
+        {
+            BaseDirectory = BaseDirectory,
+            ScriptPath = ScriptPath ?? System.IO.Path.Combine(BaseDirectory, ClassName + ".csx")
+        };
+        if (!string.IsNullOrWhiteSpace(PackageWorkspaceDirectory))
+            options.PackageWorkspaceDirectory = PackageWorkspaceDirectory;
+        return options;
+    }
 }
