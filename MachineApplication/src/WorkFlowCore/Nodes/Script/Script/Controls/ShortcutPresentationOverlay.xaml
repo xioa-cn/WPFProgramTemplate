@@ -1,0 +1,66 @@
+<UserControl
+    x:Class="CsxPad.Wpf.Controls.ShortcutPresentationOverlay"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    HorizontalAlignment="Center"
+    VerticalAlignment="Bottom"
+    Focusable="False"
+    IsHitTestVisible="False"
+    Opacity="0"
+    Visibility="Collapsed">
+    <UserControl.RenderTransform>
+        <TranslateTransform x:Name="PresentationTransform" Y="8" />
+    </UserControl.RenderTransform>
+    <Border
+        Padding="5"
+        Background="#F01D222A"
+        BorderBrush="#596675"
+        BorderThickness="1"
+        CornerRadius="8">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border
+                MinWidth="260"
+                MaxWidth="520"
+                Padding="22,15"
+                Background="#2E568F"
+                CornerRadius="5">
+                <TextBlock
+                    x:Name="CommandText"
+                    VerticalAlignment="Center"
+                    FontSize="22"
+                    FontWeight="SemiBold"
+                    Foreground="White"
+                    TextWrapping="Wrap" />
+            </Border>
+            <Border
+                Grid.Column="1"
+                MinWidth="170"
+                Margin="5,0,0,0"
+                Padding="20,13"
+                Background="#294A7A"
+                CornerRadius="5">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock
+                        x:Name="GestureText"
+                        HorizontalAlignment="Center"
+                        FontFamily="Cascadia Mono, Consolas"
+                        FontSize="21"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        HorizontalAlignment="Center"
+                        FontFamily="Cascadia Mono, Consolas"
+                        FontSize="11"
+                        Foreground="#AFC0D7"
+                        Text="Windows" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

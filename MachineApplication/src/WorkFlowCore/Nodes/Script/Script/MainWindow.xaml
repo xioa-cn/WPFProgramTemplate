@@ -1,0 +1,239 @@
+<Window
+    x:Class="CsxPad.Wpf.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:CsxPad.Wpf.Controls"
+    xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+    Title="{Binding WindowTitle}"
+    Width="1480"
+    Height="900"
+    MinWidth="1080"
+    MinHeight="680"
+    PreviewKeyDown="MainWindow_PreviewKeyDown"
+    ResizeMode="CanResize"
+    TextOptions.TextFormattingMode="Display"
+    UseLayoutRounding="True"
+    WindowStartupLocation="CenterScreen"
+    WindowStyle="None">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome
+            CaptionHeight="44"
+            CornerRadius="0"
+            GlassFrameThickness="0"
+            ResizeBorderThickness="6"
+            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/WorkFlowCore;component/Nodes/Script/Script/Resources/IdeTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <Style x:Key="IdePaneResizeThumbStyle" TargetType="Thumb">
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Background" Value="{StaticResource IdeWindowBrush}" />
+                <Setter Property="Cursor" Value="SizeWE" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border x:Name="ResizeSurface" Background="{TemplateBinding Background}" />
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ResizeSurface" Property="Background" Value="{StaticResource IdeBorderStrongBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="True">
+                                    <Setter TargetName="ResizeSurface" Property="Background" Value="{StaticResource IdeAccentBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RunCommand}" />
+        <KeyBinding Key="F6" Command="{Binding DebugCommand}" />
+        <KeyBinding Key="F8" Command="{Binding ContinueDebugCommand}" />
+        <KeyBinding Key="F10" Command="{Binding StepDebugCommand}" />
+        <KeyBinding
+            Key="N"
+            Command="{Binding NewScriptCommand}"
+            Modifiers="Control" />
+        <KeyBinding
+            Key="O"
+            Command="{Binding OpenScriptCommand}"
+            Modifiers="Control" />
+        <KeyBinding
+            Key="S"
+            Command="{Binding SaveScriptCommand}"
+            Modifiers="Control" />
+    </Window.InputBindings>
+    <Grid Background="{StaticResource IdeWindowBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="54" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="26" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <controls:IdeTopBar Height="54" />
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="42" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="480" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="42" />
+            </Grid.ColumnDefinitions>
+            <Border
+                Background="{StaticResource IdeSurfaceRaisedBrush}"
+                BorderBrush="{StaticResource IdeBorderBrush}"
+                BorderThickness="0,0,1,0">
+                <StackPanel>
+                    <ToggleButton
+                        Command="{Binding ToggleExplorerCommand}"
+                        IsChecked="{Binding IsExplorerOpen, Mode=OneWay}"
+                        Style="{StaticResource IdeActivityButtonStyle}"
+                        ToolTip="Explorer">
+                        <md:PackIcon
+                            Width="20"
+                            Height="20"
+                            Kind="FolderMultipleOutline"
+                            Style="{StaticResource IdeGlyphStyle}" />
+                    </ToggleButton>
+                    <ToggleButton
+                        Command="{Binding TogglePackagesCommand}"
+                        IsChecked="{Binding IsPackagesOpen, Mode=OneWay}"
+                        Style="{StaticResource IdeActivityButtonStyle}"
+                        ToolTip="Installed packages">
+                        <md:PackIcon
+                            Width="20"
+                            Height="20"
+                            Kind="PackageVariantClosed"
+                            Style="{StaticResource IdeGlyphStyle}" />
+                    </ToggleButton>
+                </StackPanel>
+            </Border>
+            <Grid
+                x:Name="LeftPaneHost"
+                Grid.Column="1"
+                Width="265"
+                MinWidth="205"
+                MaxWidth="525"
+                Visibility="{Binding IsLeftPaneOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="5" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Background="{StaticResource IdeSurfaceBrush}"
+                    BorderBrush="{StaticResource IdeBorderBrush}"
+                    BorderThickness="0,0,1,0">
+                    <Grid>
+                        <controls:WorkspaceExplorer Visibility="{Binding IsExplorerOpen, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <controls:InstalledPackagesPane Visibility="{Binding IsPackagesOpen, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </Grid>
+                </Border>
+                <Thumb
+                    Grid.Column="1"
+                    DragDelta="LeftPaneResizeThumb_DragDelta"
+                    Style="{StaticResource IdePaneResizeThumbStyle}" />
+            </Grid>
+            <controls:EditorWorkspace Grid.Column="2" />
+            <Grid
+                x:Name="RightPaneHost"
+                Grid.Column="3"
+                Width="335"
+                MinWidth="265"
+                MaxWidth="645"
+                Visibility="{Binding IsRightPaneOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Thumb DragDelta="RightPaneResizeThumb_DragDelta" Style="{StaticResource IdePaneResizeThumbStyle}" />
+                <Border
+                    Grid.Column="1"
+                    BorderBrush="{StaticResource IdeBorderBrush}"
+                    BorderThickness="1,0,0,0">
+                    <controls:NuGetPane />
+                </Border>
+            </Grid>
+            <Border
+                Grid.Column="4"
+                Background="{StaticResource IdeSurfaceRaisedBrush}"
+                BorderBrush="{StaticResource IdeBorderBrush}"
+                BorderThickness="1,0,0,0">
+                <ToggleButton
+                    VerticalAlignment="Top"
+                    Command="{Binding ToggleRightPaneCommand}"
+                    IsChecked="{Binding IsRightPaneOpen, Mode=OneWay}"
+                    Style="{StaticResource IdeActivityButtonStyle}"
+                    ToolTip="NuGet packages">
+                    <md:PackIcon
+                        Width="20"
+                        Height="20"
+                        Kind="PackageVariantClosed"
+                        Style="{StaticResource IdeGlyphStyle}" />
+                </ToggleButton>
+            </Border>
+        </Grid>
+        <Border
+            Grid.Row="2"
+            Background="{StaticResource IdeSurfaceRaisedBrush}"
+            BorderBrush="{StaticResource IdeBorderBrush}"
+            BorderThickness="0,1,0,0">
+            <Grid Margin="10,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border HorizontalAlignment="Left" Style="{StaticResource IdeStatusPillStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <Border
+                            Width="6"
+                            Height="6"
+                            Margin="0,0,6,0"
+                            Background="{StaticResource IdeRunBrush}"
+                            CornerRadius="3" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="{StaticResource IdeTextBrush}"
+                            Text="{Binding StatusMessage}" />
+                    </StackPanel>
+                </Border>
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <TextBlock
+                        FontSize="11"
+                        Foreground="{StaticResource IdeTextMutedBrush}"
+                        Text="UTF-8" />
+                    <TextBlock
+                        Margin="14,0,0,0"
+                        FontSize="11"
+                        Foreground="{StaticResource IdeTextMutedBrush}"
+                        Text="C# 12" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Border Grid.Row="3" Padding="12,8" Background="{StaticResource IdeSurfaceRaisedBrush}"
+                Visibility="{Binding IsNodeDocument, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="应用到节点" Command="{Binding ApplyNodeScriptCommand}"
+                        Style="{StaticResource IdeToolbarButtonStyle}" />
+                <TextBlock Text="编辑 class 定义，方法写在类内。应用后还需保存工作流；关闭不应用则保留原源码。"
+                           VerticalAlignment="Center" Foreground="{StaticResource IdeTextMutedBrush}" />
+            </DockPanel>
+        </Border>
+        <controls:ShortcutPresentationOverlay
+            x:Name="ShortcutPresentation"
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            Margin="24,24,24,54"
+            Panel.ZIndex="100" />
+    </Grid>
+</Window>

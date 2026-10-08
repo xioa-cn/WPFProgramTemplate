@@ -1,0 +1,606 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:helpers="clr-namespace:CsxPad.Wpf.Helpers"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <ResourceDictionary.MergedDictionaries>
+        <md:BundledTheme BaseTheme="Dark" PrimaryColor="LightBlue" SecondaryColor="Teal" />
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <helpers:ResultHeadersVisibilityConverter x:Key="ResultHeadersVisibilityConverter" />
+
+    <Color x:Key="IdeWindowColor">#121417</Color>
+    <Color x:Key="IdeSurfaceColor">#181B20</Color>
+    <Color x:Key="IdeSurfaceRaisedColor">#20242A</Color>
+    <Color x:Key="IdeSurfaceHoverColor">#292E35</Color>
+    <Color x:Key="IdeBorderColor">#30353D</Color>
+    <Color x:Key="IdeBorderStrongColor">#454B55</Color>
+    <Color x:Key="IdeTextColor">#E8EAED</Color>
+    <Color x:Key="IdeTextMutedColor">#969DA8</Color>
+    <Color x:Key="IdeAccentColor">#38BDF8</Color>
+    <Color x:Key="IdeRunColor">#36C58C</Color>
+    <Color x:Key="IdeWarningColor">#F4B860</Color>
+    <Color x:Key="IdeDangerColor">#F07178</Color>
+
+    <SolidColorBrush x:Key="IdeWindowBrush" Color="{StaticResource IdeWindowColor}" />
+    <SolidColorBrush x:Key="IdeSurfaceBrush" Color="{StaticResource IdeSurfaceColor}" />
+    <SolidColorBrush x:Key="IdeSurfaceRaisedBrush" Color="{StaticResource IdeSurfaceRaisedColor}" />
+    <SolidColorBrush x:Key="IdeSurfaceHoverBrush" Color="{StaticResource IdeSurfaceHoverColor}" />
+    <SolidColorBrush x:Key="IdeBorderBrush" Color="{StaticResource IdeBorderColor}" />
+    <SolidColorBrush x:Key="IdeBorderStrongBrush" Color="{StaticResource IdeBorderStrongColor}" />
+    <SolidColorBrush x:Key="IdeTextBrush" Color="{StaticResource IdeTextColor}" />
+    <SolidColorBrush x:Key="IdeTextMutedBrush" Color="{StaticResource IdeTextMutedColor}" />
+    <SolidColorBrush x:Key="IdeAccentBrush" Color="{StaticResource IdeAccentColor}" />
+    <SolidColorBrush x:Key="IdeRunBrush" Color="{StaticResource IdeRunColor}" />
+    <SolidColorBrush x:Key="IdeWarningBrush" Color="{StaticResource IdeWarningColor}" />
+    <SolidColorBrush x:Key="IdeDangerBrush" Color="{StaticResource IdeDangerColor}" />
+
+    <FontFamily x:Key="IdeUiFont">Segoe UI</FontFamily>
+    <FontFamily x:Key="IdeCodeFont">Cascadia Code, Consolas</FontFamily>
+    <sys:Double x:Key="IdeTextSize">13</sys:Double>
+
+<Geometry x:Key="IdeFileGeometry">M3,1 H10 L14,5 V15 H3 Z M10,1 V5 H14</Geometry>
+<Geometry x:Key="IdeFolderGeometry">M1,4 H7 L8.5,6 H15 V14 H1 Z M1,4 V3 H6.5 L8,4</Geometry>
+<Geometry x:Key="IdePackageGeometry">M8,1 L15,4.5 8,8 1,4.5 Z M1,4.5 V11.5 L8,15 V8 M15,4.5 V11.5 L8,15</Geometry>
+<Geometry x:Key="IdeStopGeometry">M3,3 H13 V13 H3 Z</Geometry>
+<Geometry x:Key="IdeContinueGeometry">M3,2 L11,8 3,14 Z M13,2 V14</Geometry>
+<Geometry x:Key="IdeRenameGeometry">M3,12 L4,8 11,1 15,5 8,12 Z M10,2 L14,6 M3,15 H15</Geometry>
+<Geometry x:Key="IdeNuGetGeometry">M8,1 A7,7 0 1 1 8,15 A7,7 0 1 1 8,1 M5,5 V11 M5,5 L11,11 M11,5 V11</Geometry>
+<Geometry x:Key="IdeResultsGeometry">M2,2 H14 V14 H2 Z M2,6 H14 M6,2 V14</Geometry>
+<Style x:Key="IdeGlyphStyle" TargetType="md:PackIcon">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+
+    <Style x:Key="IdeFilledGlyphStyle" TargetType="md:PackIcon" BasedOn="{StaticResource IdeGlyphStyle}">
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+    </Style>
+
+    <Style TargetType="Window">
+        <Setter Property="Background" Value="{StaticResource IdeWindowBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource IdeUiFont}" />
+        <Setter Property="FontSize" Value="{StaticResource IdeTextSize}" />
+    </Style>
+
+    <Style x:Key="IdePaneHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    </Style>
+
+    <Style
+        x:Key="IdeIconButtonStyle"
+        BasedOn="{StaticResource MaterialDesignIconButton}"
+        TargetType="Button">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="7" />
+        <Setter Property="Margin" Value="2,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style x:Key="IdeTopBarIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Margin" Value="1,0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="ButtonSurface"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonSurface" Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonSurface" Property="Opacity" Value="0.72" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.36" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style
+        x:Key="IdeTopBarRunButtonStyle"
+        BasedOn="{StaticResource IdeTopBarIconButtonStyle}"
+        TargetType="Button">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Background" Value="{StaticResource IdeRunBrush}" />
+        <Setter Property="Foreground" Value="#09261B" />
+    </Style>
+
+    <Style x:Key="IdeActivityButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="42" />
+        <Setter Property="Height" Value="44" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid Background="{TemplateBinding Background}">
+                        <Border
+                            x:Name="ActiveIndicator"
+                            Width="2"
+                            Margin="0,7,0,7"
+                            HorizontalAlignment="Left"
+                            Background="{StaticResource IdeAccentBrush}"
+                            CornerRadius="0,2,2,0"
+                            Visibility="Collapsed" />
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="ActiveIndicator" Property="Visibility" Value="Visible" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeAccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="IdeToolWindowButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="11,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="ToolSurface" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}"
+                            BorderBrush="Transparent" BorderThickness="0,2,0,0">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ToolSurface" Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="ToolSurface" Property="Background" Value="{StaticResource IdeSurfaceRaisedBrush}" />
+                            <Setter TargetName="ToolSurface" Property="BorderBrush" Value="{StaticResource IdeAccentBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="IdeTreeItemStyle" TargetType="TreeViewItem">
+        <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="2" />
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="IsExpanded" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#243B4A" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="IdeToolbarButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinWidth" Value="76" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Margin" Value="3,0" />
+        <Setter Property="Background" Value="{StaticResource IdeSurfaceRaisedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource IdeBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style x:Key="IdePaneActionButtonStyle" TargetType="Button">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Background" Value="{StaticResource IdeSurfaceRaisedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource IdeBorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="ButtonSurface"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonSurface" Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonSurface" Property="Background" Value="{StaticResource IdeBorderStrongBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ButtonSurface" Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style
+        x:Key="IdeRunButtonStyle"
+        BasedOn="{StaticResource IdeToolbarButtonStyle}"
+        TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource IdeRunBrush}" />
+        <Setter Property="Foreground" Value="#0A251B" />
+        <Setter Property="BorderBrush" Value="{StaticResource IdeRunBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="IdeCaptionButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="44" />
+        <Setter Property="Height" Value="43" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="CaptionSurface" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="CaptionSurface" Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="CaptionSurface" Property="Opacity" Value="0.72" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style
+        x:Key="IdeCloseCaptionButtonStyle"
+        BasedOn="{StaticResource IdeCaptionButtonStyle}"
+        TargetType="Button">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#C42B1C" />
+                <Setter Property="Foreground" Value="White" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="IdeTabItemStyle" TargetType="TabItem">
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="15,0" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border
+                        x:Name="TabSurface"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="Transparent"
+                        BorderThickness="0,0,0,2">
+                        <ContentPresenter
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            ContentSource="Header" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="TabSurface" Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="TabSurface" Property="Background" Value="{StaticResource IdeSurfaceRaisedBrush}" />
+                            <Setter TargetName="TabSurface" Property="BorderBrush" Value="{StaticResource IdeAccentBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                <Setter Property="Background" Value="{StaticResource IdeSurfaceRaisedBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="IdeScrollBarPageButtonStyle" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="{TemplateBinding Background}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="IdeScrollBarThumbStyle" TargetType="Thumb">
+        <Setter Property="Background" Value="{StaticResource IdeBorderStrongBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border
+                        x:Name="ThumbSurface"
+                        Margin="2"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="3" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ThumbSurface" Property="Background" Value="{StaticResource IdeTextMutedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="ThumbSurface" Property="Background" Value="{StaticResource IdeAccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ThumbSurface" Property="Opacity" Value="0.35" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <ControlTemplate x:Key="IdeHorizontalScrollBarTemplate" TargetType="ScrollBar">
+        <Border Background="{StaticResource IdeSurfaceBrush}">
+            <Track x:Name="PART_Track" Orientation="Horizontal">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}" Style="{StaticResource IdeScrollBarPageButtonStyle}" />
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb MinWidth="24" Style="{StaticResource IdeScrollBarThumbStyle}" />
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="{x:Static ScrollBar.PageRightCommand}" Style="{StaticResource IdeScrollBarPageButtonStyle}" />
+                </Track.IncreaseRepeatButton>
+            </Track>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="IdeVerticalScrollBarTemplate" TargetType="ScrollBar">
+        <Border Background="{StaticResource IdeSurfaceBrush}">
+            <Track
+                x:Name="PART_Track"
+                IsDirectionReversed="True"
+                Orientation="Vertical">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Style="{StaticResource IdeScrollBarPageButtonStyle}" />
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb MinHeight="24" Style="{StaticResource IdeScrollBarThumbStyle}" />
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Style="{StaticResource IdeScrollBarPageButtonStyle}" />
+                </Track.IncreaseRepeatButton>
+            </Track>
+        </Border>
+    </ControlTemplate>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="{StaticResource IdeSurfaceBrush}" />
+        <Setter Property="Width" Value="10" />
+        <Setter Property="MinWidth" Value="10" />
+        <Setter Property="Template" Value="{StaticResource IdeVerticalScrollBarTemplate}" />
+        <Setter Property="Focusable" Value="False" />
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Height" Value="10" />
+                <Setter Property="MinHeight" Value="10" />
+                <Setter Property="Template" Value="{StaticResource IdeHorizontalScrollBarTemplate}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="IdeDataGridStyle" TargetType="DataGrid">
+        <Setter Property="Background" Value="{StaticResource IdeSurfaceBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource IdeBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource IdeBorderBrush}" />
+        <Setter Property="RowBackground" Value="{StaticResource IdeSurfaceBrush}" />
+        <Setter Property="AlternatingRowBackground" Value="#1C2025" />
+        <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="RowHeaderWidth" Value="0" />
+        <Setter Property="CanUserAddRows" Value="False" />
+        <Setter Property="CanUserDeleteRows" Value="False" />
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="RowHeight" Value="30" />
+        <Setter Property="ColumnHeaderHeight" Value="32" />
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="SelectionUnit" Value="FullRow" />
+        <Setter Property="ColumnHeaderStyle" Value="{DynamicResource IdeDataGridColumnHeaderStyle}" />
+        <Setter Property="RowStyle" Value="{DynamicResource IdeDataGridRowStyle}" />
+        <Setter Property="CellStyle" Value="{DynamicResource IdeDataGridCellStyle}" />
+    </Style>
+
+    <Style x:Key="IdeResultInspectorGridStyle" TargetType="DataGrid" BasedOn="{StaticResource IdeDataGridStyle}">
+        <Setter Property="Margin" Value="12" />
+        <Setter Property="BorderBrush" Value="{StaticResource IdeBorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="GridLinesVisibility" Value="All" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource IdeBorderBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource IdeBorderBrush}" />
+        <Setter Property="RowHeight" Value="27" />
+        <Setter Property="ColumnHeaderHeight" Value="27" />
+        <Setter Property="SelectionUnit" Value="Cell" />
+        <Setter Property="ColumnHeaderStyle" Value="{DynamicResource IdeResultColumnHeaderStyle}" />
+        <Setter Property="CellStyle" Value="{DynamicResource IdeResultCellStyle}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+    </Style>
+
+    <Style x:Key="IdeDataGridColumnHeaderStyle" TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource IdeSurfaceRaisedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextMutedBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource IdeBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridColumnHeader">
+                    <Border
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="IdeResultColumnHeaderStyle" TargetType="DataGridColumnHeader" BasedOn="{StaticResource IdeDataGridColumnHeaderStyle}">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="IdeDataGridCellStyle" TargetType="DataGridCell">
+        <Setter Property="Padding" Value="9,0" />
+        <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+                <Setter Property="Background" Value="Transparent" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="IdeResultCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource IdeDataGridCellStyle}">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="10,0" />
+    </Style>
+
+    <Style x:Key="IdeResultTextStyle" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+    </Style>
+
+    <Style x:Key="IdeResultMemberTextStyle" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Left" />
+    </Style>
+
+    <Style x:Key="IdeResultMemberCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource IdeDataGridCellStyle}">
+        <Setter Property="Background" Value="#203E55" />
+        <Setter Property="Foreground" Value="#D7E8F5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="IdeDataGridRowStyle" TargetType="DataGridRow">
+        <Setter Property="Foreground" Value="{StaticResource IdeTextBrush}" />
+        <Setter Property="Background" Value="{StaticResource IdeSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource IdeBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridRow">
+                    <Border
+                        x:Name="RowSurface"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <DataGridCellsPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="AlternationIndex" Value="1">
+                            <Setter TargetName="RowSurface" Property="Background" Value="#1C2025" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RowSurface" Property="Background" Value="{StaticResource IdeSurfaceHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="RowSurface" Property="Background" Value="#183A35" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="IdeStatusPillStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Background" Value="#26332F" />
+        <Setter Property="Padding" Value="7,2" />
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,63 @@
+<UserControl x:Class="CsxPad.Wpf.Controls.InstalledPackagesPane"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/WorkFlowCore;component/Nodes/Script/Script/Resources/IdeTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Background="{StaticResource IdeSurfaceBrush}">
+        <Grid.RowDefinitions><RowDefinition Height="40" /><RowDefinition Height="*" /><RowDefinition Height="32" /></Grid.RowDefinitions>
+        <Grid Margin="12,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <TextBlock VerticalAlignment="Center" Style="{StaticResource IdePaneHeaderStyle}" Text="PACKAGES" />
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="11"
+                       Foreground="{StaticResource IdeTextMutedBrush}" Text="{Binding PackageCountText}" />
+        </Grid>
+        <Grid Grid.Row="1">
+            <ListBox Margin="6,0,6,8" Padding="0" Background="Transparent" BorderThickness="0"
+                     ItemsSource="{Binding InstalledPackages}" VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling">
+                <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="0,1" /></Style></ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="10,8" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}">
+                            <Grid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Reference in current CSX"
+                                              Command="{Binding PlacementTarget.Tag.AddPackageToScriptCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                        <MenuItem.Icon><md:PackIcon Style="{StaticResource IdeGlyphStyle}" Kind="LinkVariant" /></MenuItem.Icon>
+                                    </MenuItem>
+                                    <Separator />
+                                    <MenuItem Header="Remove package"
+                                              Command="{Binding PlacementTarget.Tag.RemovePackageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                        <MenuItem.Icon><md:PackIcon Style="{StaticResource IdeGlyphStyle}" Kind="DeleteOutline" /></MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </Grid.ContextMenu>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBlock FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="{StaticResource IdeTextBrush}" Text="{Binding Id}" />
+                            <TextBlock Grid.Row="1" Margin="0,3,0,0" FontSize="11" Foreground="{StaticResource IdeTextMutedBrush}" Text="{Binding Version}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasInstalledPackages}" Value="False"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                <md:PackIcon Width="28" Height="28" HorizontalAlignment="Center" Style="{StaticResource IdeGlyphStyle}"
+                                Foreground="{StaticResource IdeBorderStrongBrush}" Kind="PackageVariantClosed" />
+                <TextBlock Margin="0,10,0,0" FontSize="12" Foreground="{StaticResource IdeTextMutedBrush}" Text="No packages installed" />
+            </StackPanel>
+        </Grid>
+        <Border Grid.Row="2" Background="{StaticResource IdeSurfaceRaisedBrush}" BorderBrush="{StaticResource IdeBorderBrush}" BorderThickness="0,1,0,0">
+            <TextBlock Margin="12,0" VerticalAlignment="Center" FontSize="11" Foreground="{StaticResource IdeTextMutedBrush}"
+                       Text="{Binding NuGetStatus}" TextTrimming="CharacterEllipsis" />
+        </Border>
+    </Grid>
+</UserControl>

@@ -8,4 +8,9 @@
             <loadClass Name="EntranceModule"/>
         </dllModule>
     </unitModules>
+    <unitModules Name="Workflows" LoadMode="SourceGenerator">
+        <dllModule Name="WorkFlow" Dll="WorkFlowCore" Path=".">
+            <loadClass Name="WorkFlowCoreModule"/>
+        </dllModule>
+    </unitModules>
 </wpfModules>

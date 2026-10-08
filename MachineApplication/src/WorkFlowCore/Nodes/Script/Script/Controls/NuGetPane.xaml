@@ -1,0 +1,194 @@
+<UserControl
+    x:Class="CsxPad.Wpf.Controls.NuGetPane"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/WorkFlowCore;component/Nodes/Script/Script/Resources/IdeTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Background="{StaticResource IdeSurfaceBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition Height="46" />
+            <RowDefinition Height="2" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="38" />
+        </Grid.RowDefinitions>
+        <Grid Margin="14,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                VerticalAlignment="Center"
+                Style="{StaticResource IdePaneHeaderStyle}"
+                Text="NUGET" />
+            <ProgressBar
+                Grid.Column="1"
+                Width="48"
+                Height="3"
+                IsIndeterminate="True"
+                Visibility="{Binding IsNuGetBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        </Grid>
+        <Grid Grid.Row="1" Margin="12,0,12,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox
+                Height="33"
+                Padding="30,6,8,6"
+                VerticalContentAlignment="Center"
+                md:HintAssist.Hint="Search NuGet.org"
+                Text="{Binding PackageSearch, UpdateSourceTrigger=PropertyChanged}">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding SearchPackagesCommand}" />
+                </TextBox.InputBindings>
+            </TextBox>
+            <md:PackIcon
+                Width="14"
+                Height="14"
+                Margin="10,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Kind="Magnify"
+                Foreground="{StaticResource IdeTextMutedBrush}"
+                IsHitTestVisible="False"
+                Style="{StaticResource IdeGlyphStyle}" />
+            <Button
+                Grid.Column="1"
+                Width="78"
+                Height="33"
+                Margin="6,0,0,0"
+                Command="{Binding SearchPackagesCommand}"
+                Style="{StaticResource IdePaneActionButtonStyle}"
+                ToolTip="Search packages">
+                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <md:PackIcon
+                        Width="14"
+                        Height="14"
+                        Margin="0,0,6,0"
+                        Kind="Magnify"
+                        Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                        Style="{StaticResource IdeGlyphStyle}" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Text="Search" />
+                </StackPanel>
+            </Button>
+        </Grid>
+        <ProgressBar
+            Grid.Row="2"
+            Height="2"
+            IsIndeterminate="True"
+            Visibility="{Binding IsNuGetBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        <ListBox
+            Grid.Row="3"
+            Margin="6,5,6,8"
+            Padding="0"
+            Background="Transparent"
+            BorderThickness="0"
+            ItemsSource="{Binding PackageResults}"
+            VirtualizingPanel.IsVirtualizing="True"
+            VirtualizingPanel.VirtualizationMode="Recycling">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border
+                        Padding="10"
+                        BorderBrush="{StaticResource IdeBorderBrush}"
+                        BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Foreground="{StaticResource IdeTextBrush}"
+                                Text="{Binding Id}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Margin="8,0,0,0"
+                                FontSize="11"
+                                Foreground="{StaticResource IdeAccentBrush}"
+                                Text="{Binding Version}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.ColumnSpan="2"
+                                MaxHeight="34"
+                                Margin="0,5,0,0"
+                                FontSize="11"
+                                Foreground="{StaticResource IdeTextMutedBrush}"
+                                Text="{Binding Description}"
+                                TextWrapping="Wrap" />
+                            <Grid
+                                Grid.Row="2"
+                                Grid.ColumnSpan="2"
+                                Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="10"
+                                    Foreground="{StaticResource IdeTextMutedBrush}"
+                                    Text="{Binding Authors}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <Button
+                                    Grid.Column="1"
+                                    Height="28"
+                                    MinWidth="70"
+                                    Padding="10,0"
+                                    Command="{Binding DataContext.InstallPackageCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <md:PackIcon
+                                            Width="14"
+                                            Height="14"
+                                            Margin="0,0,6,0"
+                                            Kind="Download"
+                                            Style="{StaticResource IdeGlyphStyle}" />
+                                        <TextBlock FontSize="11" Text="Install" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Border
+            Grid.Row="4"
+            Background="{StaticResource IdeSurfaceRaisedBrush}"
+            BorderBrush="{StaticResource IdeBorderBrush}"
+            BorderThickness="0,1,0,0">
+            <TextBlock
+                Margin="12,0"
+                VerticalAlignment="Center"
+                FontSize="11"
+                Foreground="{StaticResource IdeTextMutedBrush}"
+                Text="{Binding NuGetStatus}"
+                TextTrimming="CharacterEllipsis" />
+        </Border>
+    </Grid>
+</UserControl>

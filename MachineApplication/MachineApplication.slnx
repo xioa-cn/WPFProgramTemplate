@@ -7,12 +7,14 @@
     <Project Path="src/WorkFlowCore/WorkFlowCore.csproj" />
   </Folder>
   <Folder Name="/src/mls/">
+    <Project Path="src/CSharpScriptCore/CSharpScriptCore.csproj" />
     <Project Path="src/ModuleLoadGenerator/ModuleLoadGenerator.csproj" />
     <Project Path="src/ModuleLoadSources/ModuleLoadSources.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/I18n.LangsGenerator.Tests/I18n.LangsGenerator.Tests.csproj" />
     <Project Path="tests/MachineApplication.Entrance.Tests/MachineApplication.Entrance.Tests.csproj" />
+    <Project Path="tests/WorkFlowCore.Tests/WorkFlowCore.Tests.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Machine.ModuleLoad/Machine.ModuleLoad.csproj" />

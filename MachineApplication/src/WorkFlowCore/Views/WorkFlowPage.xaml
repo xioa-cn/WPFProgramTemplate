@@ -1,0 +1,136 @@
+<Page x:Class="WorkFlowCore.Views.WorkFlowPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:local="clr-namespace:WorkFlowCore.Views"
+      xmlns:editor="clr-namespace:ST.Library.UI.NodeEditor"
+      xmlns:vm="clr-namespace:WorkFlowCore.ViewModels"
+      xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+      mc:Ignorable="d" d:DataContext="{d:DesignInstance Type=vm:WorkFlowViewModel}"
+      d:DesignHeight="800" d:DesignWidth="1400" Title="工作流"
+      Background="{DynamicResource MaterialDesign.Brush.Background}"
+      Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Themes/WorkflowTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ToolIcon" TargetType="md:PackIcon">
+                <Setter Property="Width" Value="16" /><Setter Property="Height" Value="16" />
+                <Setter Property="Margin" Value="0,0,7,0" /><Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+        </ResourceDictionary>
+    </Page.Resources>
+    <Page.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.New" Executed="OnNewExecuted" />
+        <CommandBinding Command="ApplicationCommands.Open" Executed="OnOpenExecuted" />
+        <CommandBinding Command="ApplicationCommands.Save" Executed="OnSaveExecuted" />
+        <CommandBinding Command="ApplicationCommands.SaveAs" Executed="OnSaveAsExecuted" />
+        <CommandBinding Command="{x:Static local:WorkFlowPage.AddStartNodeCommand}" Executed="OnAddStartNodeExecuted" />
+    </Page.CommandBindings>
+    <Page.InputBindings>
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="ApplicationCommands.SaveAs" />
+    </Page.InputBindings>
+    <Grid Margin="8" UseLayoutRounding="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <!-- 单层紧凑工具栏承载真实操作，不展示尚未实现的运行入口。 -->
+        <Border Padding="10,8" CornerRadius="8,8,0,0" Background="{DynamicResource Workflow.Toolbar}"
+                BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" BorderThickness="1">
+            <DockPanel LastChildFill="True">
+                <!-- 固定在工具栏右侧，左侧操作按钮在窄窗口内自动换行。 -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="12,0,2,0">
+                    <TextBlock Text="端口布局" Foreground="{DynamicResource Workflow.Muted}" FontSize="11"
+                               VerticalAlignment="Center" Margin="0,0,9,0" />
+                    <ToggleButton Style="{StaticResource Workflow.PortOrientationSwitch}"
+                                  IsChecked="{Binding ElementName=EditorPanel, Path=Editor.VerticalPorts, Mode=TwoWay}"
+                                  AutomationProperties.Name="端口布局：关闭为左右，开启为上下"
+                                  ToolTip="切换所有节点的端口布局：左入右出 / 上入下出（空格键切换）" />
+                </StackPanel>
+                <WrapPanel VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="6,0,18,0" Height="32">
+                        <md:PackIcon Kind="VectorPolyline" Width="22" Height="22"
+                                     Foreground="{DynamicResource Workflow.Accent}" VerticalAlignment="Center"
+                                     Margin="0,0,10,0" />
+                        <TextBlock Text="流程设计" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button Style="{StaticResource Workflow.ToolButton}" Command="ApplicationCommands.New"
+                            ToolTip="新建流程 · Ctrl+N">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="FilePlusOutline" Style="{StaticResource ToolIcon}" />
+                            <TextBlock Text="新建" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Workflow.ToolButton}" Command="ApplicationCommands.Open"
+                            ToolTip="打开流程 · Ctrl+O">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="FolderOpenOutline" Style="{StaticResource ToolIcon}" />
+                            <TextBlock Text="打开" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Workflow.ToolButton}" Command="ApplicationCommands.SaveAs"
+                            ToolTip="另存为 · Ctrl+Shift+S">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="ContentSaveOutline" Style="{StaticResource ToolIcon}" />
+                            <TextBlock Text="另存为" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Workflow.SaveButton}" Command="ApplicationCommands.Save"
+                            ToolTip="保存流程 · Ctrl+S" Margin="8,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="ContentSave" Style="{StaticResource ToolIcon}" /><TextBlock Text="保存" />
+                        </StackPanel>
+                    </Button>
+                    <Border Width="1" Height="18" Background="#43506A" Margin="0,0,12,0" />
+                    <Button Style="{StaticResource Workflow.AddButton}"
+                            Command="{x:Static local:WorkFlowPage.AddStartNodeCommand}" ToolTip="在画布中心添加开始节点">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="Plus" Style="{StaticResource ToolIcon}" /><TextBlock Text="开始节点" />
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </DockPanel>
+        </Border>
+        <Grid Grid.Row="1" Margin="6,10,6,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <DockPanel>
+                <md:PackIcon Kind="FileDocumentOutline" Width="14" Height="14"
+                             Foreground="{DynamicResource Workflow.Muted}" Margin="0,0,8,0" />
+                <TextBlock Text="{Binding DocumentTitle}" FontSize="12" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding FileDescription}" />
+            </DockPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0">
+                <TextBlock Foreground="{DynamicResource Workflow.Muted}" FontSize="11" Margin="0,0,14,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="已保存" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding FilePath}" Value="{x:Null}">
+                                    <Setter Property="Text" Value="尚未保存" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                                    <Setter Property="Text" Value="有未保存的修改" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="●  编辑模式" Foreground="{DynamicResource Workflow.Green}" FontSize="11"
+                           ToolTip="支持编辑与保存，执行引擎尚未接入" />
+            </StackPanel>
+        </Grid>
+        <editor:XTNodeEditorPannel x:Name="EditorPanel" Grid.Row="2" />
+        <DockPanel Grid.Row="3" Margin="6,9,6,2">
+            <md:PackIcon Kind="InformationOutline" Width="13" Height="13" Foreground="{DynamicResource Workflow.Muted}"
+                         Margin="0,0,7,0" />
+            <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="{DynamicResource Workflow.Muted}"
+                       TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusMessage}" />
+        </DockPanel>
+    </Grid>
+</Page>
