@@ -1,5 +1,6 @@
 using CsxPad.Wpf.Helpers;
 using CsxPad.Wpf.ViewModels;
+using Machine.ModuleLoad.Mvvm;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls.Primitives;
@@ -35,7 +36,7 @@ public partial class MainWindow : Window
         Closing += (_, args) =>
         {
             if (!viewModel.IsNodeDocument) return;
-            if (EditedScript is null && viewModel.IsDirty && MessageBox.Show(this,
+            if (EditedScript is null && viewModel.IsDirty && XMessageBox.Show(this,
                     "放弃修改并关闭？如需保存，请先点击“应用到节点”。", "CsxPad", MessageBoxButton.YesNo,
                     MessageBoxImage.Question) != MessageBoxResult.Yes)
             {

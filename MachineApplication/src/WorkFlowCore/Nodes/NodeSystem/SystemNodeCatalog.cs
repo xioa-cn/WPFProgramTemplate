@@ -69,8 +69,10 @@ public static class SystemNodeCatalog
         typeof(PathHasExtensionNode),
         typeof(SerialPortNode),
         typeof(TcpClientNode),
+        typeof(TcpClientSendNode),
         typeof(TcpListenerNode),
         typeof(TcpServerNode),
+        typeof(TcpServerSendNode),
         typeof(UdpClientNode),
     ]);
 

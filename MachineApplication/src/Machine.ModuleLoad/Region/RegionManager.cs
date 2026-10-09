@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
 using Machine.ModuleLoad.ModuleConfig;
+using Machine.ModuleLoad.Mvvm;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Machine.ModuleLoad.Region;
@@ -411,7 +412,7 @@ public sealed class RegionManager : IRegionManager, IDisposable
             catch (Exception ex)
             {
                 Machine.ModuleLoad.Logger.GlobalLogger.Error(ex.ToString());
-                MessageBox.Show(owner, ex.Message, "页面返回失败");
+                XMessageBox.Show(owner, ex.Message, "页面返回失败");
             }
         };
         try

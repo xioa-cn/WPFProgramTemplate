@@ -16,6 +16,9 @@
     <Project Path="tests/MachineApplication.Entrance.Tests/MachineApplication.Entrance.Tests.csproj" />
     <Project Path="tests/WorkFlowCore.Tests/WorkFlowCore.Tests.csproj" />
   </Folder>
+  <Folder Name="/project/">
+    <Project Path="project/PorocoatCellModule/PorocoatCellModule.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Machine.ModuleLoad/Machine.ModuleLoad.csproj" />
     <Project Path="src/MachineApplication.Entrance/MachineApplication.Entrance.csproj" />

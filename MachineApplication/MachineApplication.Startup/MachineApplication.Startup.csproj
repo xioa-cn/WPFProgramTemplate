@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\project\PorocoatCellModule\PorocoatCellModule.csproj" />
       <ProjectReference Include="..\src\Machine.ModuleLoad\Machine.ModuleLoad.csproj" />
       <ProjectReference Include="..\src\MachineApplication.Entrance\MachineApplication.Entrance.csproj" />
       <ProjectReference Include="..\src\WorkFlowCore\WorkFlowCore.csproj" />

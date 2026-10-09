@@ -16,6 +16,48 @@ namespace WorkFlowCore.Tests;
 public sealed class WorkflowPackageTests
 {
     [Fact]
+    public void BackgroundReadDoesNotTouchEditorAndAppliesPreparedScriptsOnOwnerThread()
+    {
+        InWorkspace(root =>
+        {
+            var editor = CreateEditor();
+            var original = new ScriptClassNode { PackageWorkspaceDirectory = Path.Combine(root, "packages") };
+            editor.Nodes.Add(original);
+            var path = Path.Combine(root, "async.workflow.json");
+            WorkflowPackageService.Save(editor, path);
+            File.WriteAllText(original.ScriptFilePath!, "public class WorkflowScript { public static int Execute() => 73; }");
+            var prepared = WorkflowPackageService.ReadAsync(path).GetAwaiter().GetResult();
+            Assert.Same(original, Assert.Single(editor.Nodes.OfType<ScriptClassNode>()));
+            File.Delete(path);
+            File.Delete(original.ScriptFilePath!);
+            prepared.ApplyTo(editor);
+            var loaded = Assert.Single(editor.Nodes.OfType<ScriptClassNode>());
+            Assert.NotSame(original, loaded);
+            Assert.Equal(original.Guid, loaded.Guid);
+            Assert.Contains("=> 73", loaded.ScriptCode);
+            Assert.Equal(original.PackageWorkspaceDirectory, loaded.PackageWorkspaceDirectory);
+        });
+    }
+
+    [Fact]
+    public void PreparedLoadPreservesCanvasWhenNodeTypeValidationFails()
+    {
+        InWorkspace(root =>
+        {
+            var editor = CreateEditor();
+            var original = new ScriptClassNode();
+            editor.Nodes.Add(original);
+            var canvas = JsonNode.Parse(editor.GetCanvasData())!;
+            canvas["Nodes"]![0]!["Type"] = "Unknown:Node";
+            var path = Path.Combine(root, "invalid.workflow.json");
+            File.WriteAllText(path, canvas.ToJsonString());
+            var prepared = WorkflowPackageService.ReadAsync(path).GetAwaiter().GetResult();
+            Assert.Throws<InvalidDataException>(() => prepared.ApplyTo(editor));
+            Assert.Same(original, Assert.Single(editor.Nodes.OfType<ScriptClassNode>()));
+        });
+    }
+
+    [Fact]
     public void DefaultSavePathIsUnderExecutableWorkflowDirectory()
     {
         Assert.Equal(Path.Combine(AppContext.BaseDirectory, "workflow"), WorkflowPackageService.DefaultDirectory);

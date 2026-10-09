@@ -1,0 +1,58 @@
+﻿<Window x:Class="Machine.ModuleLoad.Mvvm.XMessageBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        mc:Ignorable="d"
+        Title="" Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStyle="None" ShowInTaskbar="False" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+        Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        TextOptions.TextFormattingMode="Display" UseLayoutRounding="True"
+        KeyboardNavigation.TabNavigation="Cycle">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="10" />
+    </shell:WindowChrome.WindowChrome>
+    <Border BorderThickness="1" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" CornerRadius="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Background="Transparent" MouseLeftButtonDown="OnTitleMouseDown" Padding="22,18,12,14">
+                    <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"
+                               FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </Border>
+                <Button x:Name="CloseButton" Grid.Column="1" Width="36" Height="36" Margin="0,8,10,4"
+                        Style="{DynamicResource MaterialDesignFlatButton}" Padding="8" Click="OnCloseClick"
+                        Focusable="False" AutomationProperties.Name="Close">
+                    <md:PackIcon Kind="Close" Width="18" Height="18" />
+                </Button>
+            </Grid>
+            <Grid Grid.Row="1" Margin="24,12,24,26">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <md:PackIcon x:Name="MessageIcon" Width="36" Height="36" Margin="0,0,18,0"
+                             VerticalAlignment="Top" Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                <ScrollViewer x:Name="MessageScroller" Grid.Column="1" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                    <TextBlock x:Name="MessageText" FontSize="14" LineHeight="24" TextWrapping="Wrap"
+                               AutomationProperties.LiveSetting="Assertive" />
+                </ScrollViewer>
+            </Grid>
+            <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" Padding="18,14">
+                <WrapPanel x:Name="ButtonPanel" HorizontalAlignment="Right" />
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -13,4 +13,9 @@
             <loadClass Name="WorkFlowCoreModule"/>
         </dllModule>
     </unitModules>
+	<unitModules Name="PorocoatCell" LoadMode="SourceGenerator">
+		<dllModule Name="PorocoatCell" Dll="PorocoatCellModule" Path=".">
+			<loadClass Name="PorocoatCellModule"/>
+		</dllModule>
+	</unitModules>
 </wpfModules>

@@ -47,23 +47,27 @@ public static class WorkflowPackageService
             foreach (var node in editor.Nodes.OfType<ScriptNode>())
             {
                 var sourceDirectory = Path.GetFullPath(string.IsNullOrWhiteSpace(node.ScriptDirectory)
-                    ? Environment.CurrentDirectory : node.ScriptDirectory);
+                    ? Environment.CurrentDirectory
+                    : node.ScriptDirectory);
                 var script = $"scripts/{node.Guid:N}.csx";
                 var code = exporter.Export(node.ScriptCode, sourceDirectory, script);
                 codes.Add(node.Guid, code);
                 var workspaceSource = Path.GetFullPath(node.PackageWorkspaceDirectory ??
-                    Path.Combine(AppContext.BaseDirectory, "Data", "NuGet"));
+                                                       Path.Combine(AppContext.BaseDirectory, "Data", "NuGet"));
                 if (!workspaces.TryGetValue(workspaceSource, out var workspace))
                 {
                     workspace = $"dependencies/nuget-{workspaces.Count + 1}";
                     CopyWorkspace(workspaceSource, ResolveInside(root, workspace));
                     workspaces.Add(workspaceSource, workspace);
                 }
+
                 package.Scripts.Add(node.Guid, new ScriptEntry(script, workspace));
                 var properties = documents[node.Guid]!["Properties"]!.AsObject();
                 properties[nameof(ScriptNode.ScriptCode)] = Convert.ToBase64String(Encoding.UTF8.GetBytes(code));
-                properties[nameof(ScriptNode.ScriptDirectory)] = Convert.ToBase64String(Encoding.UTF8.GetBytes("scripts"));
+                properties[nameof(ScriptNode.ScriptDirectory)] =
+                    Convert.ToBase64String(Encoding.UTF8.GetBytes("scripts"));
             }
+
             canvas["ScriptPackage"] = JsonSerializer.SerializeToNode(package);
             var data = Encoding.UTF8.GetBytes(canvas.ToJsonString(JsonOptions));
             if (data.Length > 32 * 1024 * 1024) throw new InvalidDataException("工作流文件超过 32MB 限制。");
@@ -79,10 +83,22 @@ public static class WorkflowPackageService
         {
             if (File.Exists(temporary)) File.Delete(temporary);
         }
+
         Attach(editor, root, package, codes);
     }
 
     public static void Load(XTNodeEditor editor, string filePath)
+    {
+        editor.VerifyAccess();
+        Read(filePath).ApplyTo(editor);
+    }
+
+    public static Task<PreparedWorkflow> ReadAsync(string filePath) => Task.Run(() => Read(filePath));
+
+    public static Task<PreparedWorkflow?> ReadDefaultAsync() =>
+        Task.Run(() => File.Exists(DefaultFilePath) ? Read(DefaultFilePath) : null);
+
+    private static PreparedWorkflow Read(string filePath)
     {
         var target = Path.GetFullPath(filePath);
         if (new FileInfo(target).Length > 32 * 1024 * 1024)
@@ -92,9 +108,9 @@ public static class WorkflowPackageService
         var package = canvas["ScriptPackage"]?.Deserialize<PackageManifest>();
         if (package is null)
         {
-            editor.LoadCanvas(data);
-            return;
+            return new PreparedWorkflow(XTNodeEditor.ParseCanvasData(data), null, null, new Dictionary<Guid, string>());
         }
+
         if (package.Version != 1) throw new InvalidDataException("不支持的工作流资源版本。");
         var root = ResolveInside(Path.GetDirectoryName(target)!, package.Directory);
         var codes = new Dictionary<Guid, string>();
@@ -110,13 +126,40 @@ public static class WorkflowPackageService
             codes.Add(nodeId, code);
             var properties = document!["Properties"]!.AsObject();
             properties[nameof(ScriptNode.ScriptCode)] = Convert.ToBase64String(Encoding.UTF8.GetBytes(code));
-            properties[nameof(ScriptNode.ScriptDirectory)] = Convert.ToBase64String(Encoding.UTF8.GetBytes(Path.GetDirectoryName(script)!));
+            properties[nameof(ScriptNode.ScriptDirectory)] =
+                Convert.ToBase64String(Encoding.UTF8.GetBytes(Path.GetDirectoryName(script)!));
         }
-        editor.LoadCanvas(Encoding.UTF8.GetBytes(canvas.ToJsonString()));
-        Attach(editor, root, package, codes);
+
+        return new PreparedWorkflow(XTNodeEditor.ParseCanvasData(Encoding.UTF8.GetBytes(canvas.ToJsonString())),
+            root, package, codes);
     }
 
-    private static void Attach(XTNodeEditor editor, string root, PackageManifest package, IReadOnlyDictionary<Guid, string> codes)
+    public sealed class PreparedWorkflow
+    {
+        private readonly XTNodeEditor.CanvasDocument _document;
+        private readonly string? _root;
+        private readonly PackageManifest? _package;
+        private readonly IReadOnlyDictionary<Guid, string> _codes;
+
+        internal PreparedWorkflow(XTNodeEditor.CanvasDocument document, string? root, PackageManifest? package,
+            IReadOnlyDictionary<Guid, string> codes)
+        {
+            _document = document;
+            _root = root;
+            _package = package;
+            _codes = codes;
+        }
+
+        public void ApplyTo(XTNodeEditor editor)
+        {
+            editor.VerifyAccess();
+            editor.LoadCanvas(_document);
+            if (_package is not null) Attach(editor, _root!, _package, _codes);
+        }
+    }
+
+    private static void Attach(XTNodeEditor editor, string root, PackageManifest package,
+        IReadOnlyDictionary<Guid, string> codes)
     {
         foreach (var node in editor.Nodes.OfType<ScriptNode>())
         {
@@ -147,11 +190,14 @@ public static class WorkflowPackageService
         {
             if (library.Value?["type"]?.GetValue<string>() != "package") continue;
             var relativePath = library.Value["path"]!.GetValue<string>();
-            var packageSource = folders.Select(folder => ResolveInside(folder, relativePath)).FirstOrDefault(Directory.Exists)
-                ?? throw new DirectoryNotFoundException($"找不到已安装的脚本包：{library.Key}");
+            var packageSource = folders.Select(folder => ResolveInside(folder, relativePath))
+                                    .FirstOrDefault(Directory.Exists)
+                                ?? throw new DirectoryNotFoundException($"找不到已安装的脚本包：{library.Key}");
             CopyDirectory(packageSource, ResolveInside(Path.Combine(target, "packages"), relativePath));
         }
-        assets["packageFolders"] = new JsonObject { [Path.Combine(target, "packages") + Path.DirectorySeparatorChar] = new JsonObject() };
+
+        assets["packageFolders"] = new JsonObject
+            { [Path.Combine(target, "packages") + Path.DirectorySeparatorChar] = new JsonObject() };
         Directory.CreateDirectory(Path.Combine(target, "obj"));
         File.WriteAllText(Path.Combine(target, "obj", "project.assets.json"), assets.ToJsonString(JsonOptions));
     }
@@ -165,6 +211,7 @@ public static class WorkflowPackageService
                 throw new IOException($"不能打包符号链接：{file}");
             File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true);
         }
+
         foreach (var directory in Directory.EnumerateDirectories(source))
         {
             if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0)
@@ -176,7 +223,7 @@ public static class WorkflowPackageService
     private static string ResolveInside(string root, string relativePath)
     {
         var prefix = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-            + Path.DirectorySeparatorChar;
+                     + Path.DirectorySeparatorChar;
         var fullPath = Path.GetFullPath(Path.Combine(prefix, relativePath));
         if (Path.IsPathRooted(relativePath) || !fullPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("工作流资源路径必须位于资源目录内。");
@@ -189,9 +236,16 @@ public static class WorkflowPackageService
         var ownedRoot = target + ".assets" + Path.DirectorySeparatorChar;
         if (!fullPath.StartsWith(ownedRoot, StringComparison.OrdinalIgnoreCase) ||
             !Guid.TryParseExact(Path.GetFileName(fullPath), "N", out _)) return;
-        try { if (Directory.Exists(fullPath)) Directory.Delete(fullPath, true); }
-        catch (IOException) { }
-        catch (UnauthorizedAccessException) { }
+        try
+        {
+            if (Directory.Exists(fullPath)) Directory.Delete(fullPath, true);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     public sealed class PackageManifest
@@ -209,7 +263,8 @@ public static class WorkflowPackageService
 
         public string Export(string code, string sourceDirectory, string destination)
         {
-            var syntax = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(kind: SourceCodeKind.Script)).GetRoot();
+            var syntax = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(kind: SourceCodeKind.Script))
+                .GetRoot();
             var directives = syntax.DescendantTrivia().Select(trivia => trivia.GetStructure())
                 .OfType<DirectiveTriviaSyntax>().Where(directive => directive.IsActive).Reverse();
             var output = ResolveInside(root, destination);
@@ -234,6 +289,7 @@ public static class WorkflowPackageService
                         !value.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
                     throw new FileNotFoundException("无法保存脚本引用，请检查脚本目录。", source);
                 }
+
                 string relative;
                 if (isLoad)
                 {
@@ -254,14 +310,19 @@ public static class WorkflowPackageService
                         File.Copy(dependency, Path.Combine(targetDirectory, Path.GetFileName(dependency)), true);
                     File.Copy(source, ResolveInside(root, relative), true);
                 }
-                var replacement = Path.GetRelativePath(Path.GetDirectoryName(output)!, ResolveInside(root, relative)).Replace('\\', '/');
-                code = code.Remove(token.SpanStart, token.Span.Length).Insert(token.SpanStart, "\"" + replacement + "\"");
+
+                var replacement = Path.GetRelativePath(Path.GetDirectoryName(output)!, ResolveInside(root, relative))
+                    .Replace('\\', '/');
+                code = code.Remove(token.SpanStart, token.Span.Length)
+                    .Insert(token.SpanStart, "\"" + replacement + "\"");
             }
+
             Directory.CreateDirectory(Path.GetDirectoryName(output)!);
             File.WriteAllText(output, code, new UTF8Encoding(false));
             return code;
         }
 
-        private static string Hash(string path) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path.ToUpperInvariant())))[..20];
+        private static string Hash(string path) =>
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path.ToUpperInvariant())))[..20];
     }
 }

@@ -95,6 +95,11 @@ public partial class XTNodeEditor
     public void LoadCanvas(byte[] data)
     {
         VerifyAccess();
+        LoadCanvas(ParseCanvasData(data));
+    }
+
+    internal static CanvasDocument ParseCanvasData(byte[] data)
+    {
         ArgumentNullException.ThrowIfNull(data);
         if (data.Length > 32 * 1024 * 1024) throw new InvalidDataException("画布文件超过 32MB 限制。");
         if (data.AsSpan().StartsWith("STND"u8))
@@ -106,6 +111,12 @@ public partial class XTNodeEditor
         if (!float.IsFinite(document.Scale) || document.Scale is < .2f or > 3f ||
             !float.IsFinite(document.OffsetX) || !float.IsFinite(document.OffsetY) || document.Nodes.Count > 10000 || document.Connections.Count > 100000)
             throw new InvalidDataException("画布尺寸或节点数量无效。");
+        return document;
+    }
+
+    internal void LoadCanvas(CanvasDocument document)
+    {
+        VerifyAccess();
         var staging = new XTNodeEditor { VerticalPorts = document.VerticalPorts };
         var nodes = new Dictionary<Guid, XTNode>();
         foreach (var item in document.Nodes)

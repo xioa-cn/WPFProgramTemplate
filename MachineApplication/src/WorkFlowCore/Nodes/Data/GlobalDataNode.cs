@@ -17,7 +17,7 @@ public sealed class GlobalDataNode : WorkflowNode, IEditorExecutableNode, IEdito
     public GlobalDataNode()
     {
         // SetNodeTypeTitle("全局数据");
-        TitleColor = Color.FromRgb(65, 139, 218);
+        TitleColor = Color.FromRgb(218, 61, 183);
         Input = InputOptions.Add("写入", typeof(object), true);
         Output = OutputOptions.Add("读取", typeof(object), false);
         Input.DataTransfer += OnInputDataTransfer;

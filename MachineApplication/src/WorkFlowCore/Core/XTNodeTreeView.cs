@@ -61,11 +61,28 @@ public class XTNodeTreeView : UserControl
     /// <summary>登记节点类型，忽略抽象类型和重复登记。</summary>
     public bool AddNode(Type type)
     {
-        if (!typeof(XTNode).IsAssignableFrom(type) || type.IsAbstract || type.ContainsGenericParameters || type.GetConstructor(Type.EmptyTypes) is null) return false;
-        if (!_types.Add(type)) return false;
-        Rebuild();
-        NodeTypeAdded?.Invoke(this, type);
-        return true;
+        return AddNodes([type]) != 0;
+    }
+
+    public int AddNodes(IEnumerable<Type> types)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+        var count = 0;
+        try
+        {
+            foreach (var type in types)
+            {
+                if (!typeof(XTNode).IsAssignableFrom(type) || type.IsAbstract || type.ContainsGenericParameters || type.GetConstructor(Type.EmptyTypes) is null) continue;
+                if (!_types.Add(type)) continue;
+                count++;
+                NodeTypeAdded?.Invoke(this, type);
+            }
+        }
+        finally
+        {
+            if (count > 0) Rebuild();
+        }
+        return count;
     }
     /// <summary>从程序集加载带节点目录特性的可创建类型。</summary>
     public int LoadAssembly(string file)

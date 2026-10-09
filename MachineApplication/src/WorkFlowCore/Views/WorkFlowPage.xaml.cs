@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Machine.ModuleLoad.Region;
+using Machine.ModuleLoad.Mvvm;
 using Microsoft.Win32;
 using ST.Library.UI.NodeEditor;
 using WorkFlowCore.Nodes;
@@ -25,6 +27,8 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
     private const string CanvasFileFilter = "工作流文件 (*.workflow.json)|*.workflow.json|JSON 文件 (*.json)|*.json";
     private readonly WorkFlowViewModel _viewModel;
     private bool _isReplacingDocument;
+    private bool _initialLoadStarted;
+    private bool _isLoading;
     private Window? _ownerWindow;
 
     public static readonly RoutedUICommand AddStartNodeCommand = new("添加开始节点", nameof(AddStartNodeCommand), typeof(WorkFlowPage));
@@ -35,50 +39,51 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         _viewModel = viewModel;
         InitializeComponent();
         DataContext = viewModel;
-        EditorPanel.AddXTNode(typeof(StartNode));
-        EditorPanel.AddXTNode(typeof(DelayNode));
-        EditorPanel.AddXTNode(typeof(EmptyBeatNode));
-        EditorPanel.AddXTNode(typeof(ScriptClassNode));
-        EditorPanel.AddXTNode(typeof(ScriptMethodNode));
-        EditorPanel.AddXTNode(typeof(ConstDataNode));
-        EditorPanel.AddXTNode(typeof(GlobalDataNode));
-        EditorPanel.AddXTNode(typeof(AddNode));
-        EditorPanel.AddXTNode(typeof(SubNode));
-        EditorPanel.AddXTNode(typeof(MulNode));
-        EditorPanel.AddXTNode(typeof(PowNode));
-        EditorPanel.AddXTNode(typeof(DivNode));
-        EditorPanel.AddXTNode(typeof(ModNode));
-        EditorPanel.AddXTNode(typeof(AbsNode));
-        EditorPanel.AddXTNode(typeof(ClampNode));
-        EditorPanel.AddXTNode(typeof(RandomNode));
-        EditorPanel.AddXTNode(typeof(RoundNode));
-        EditorPanel.AddXTNode(typeof(SignNode));
-        EditorPanel.AddXTNode(typeof(FloorNode));
-        EditorPanel.AddXTNode(typeof(CeilingNode));
-        EditorPanel.AddXTNode(typeof(SqrtNode));
-        EditorPanel.AddXTNode(typeof(SinNode));
-        EditorPanel.AddXTNode(typeof(CosNode));
-        EditorPanel.AddXTNode(typeof(TanNode));
-        EditorPanel.AddXTNode(typeof(StrLenNode));
-        EditorPanel.AddXTNode(typeof(StrConcatNode));
-        EditorPanel.AddXTNode(typeof(StrJoinNode));
-        EditorPanel.AddXTNode(typeof(StrSplitNode));
-        EditorPanel.AddXTNode(typeof(StrSubstringNode));
-        EditorPanel.AddXTNode(typeof(StrReplaceNode));
-        EditorPanel.AddXTNode(typeof(StrTrimNode));
-        EditorPanel.AddXTNode(typeof(StrToUpperLowerNode));
-        EditorPanel.AddXTNode(typeof(StrContainsNode));
-        EditorPanel.AddXTNode(typeof(StrStartsWithNode));
-        EditorPanel.AddXTNode(typeof(StrEndsWithNode));
-        EditorPanel.AddXTNode(typeof(StrIndexOfNode));
-        EditorPanel.AddXTNode(typeof(StrLastIndexOfNode));
-        EditorPanel.AddXTNode(typeof(StrCompareNode));
-        EditorPanel.AddXTNode(typeof(StrIsEmptyNode));
-        EditorPanel.AddXTNode(typeof(StrIsWhiteSpaceNode));
-        EditorPanel.AddXTNode(typeof(StrPadLeftNode));
-        EditorPanel.AddXTNode(typeof(StrPadRightNode));
-        OperationNodeCatalog.Register(EditorPanel);
-        SystemNodeCatalog.Register(EditorPanel);
+        EditorPanel.TreeView.AddNodes(new Type[]
+        {
+            typeof(StartNode),
+            typeof(DelayNode),
+            typeof(EmptyBeatNode),
+            typeof(ScriptClassNode),
+            typeof(ScriptMethodNode),
+            typeof(ConstDataNode),
+            typeof(GlobalDataNode),
+            typeof(AddNode),
+            typeof(SubNode),
+            typeof(MulNode),
+            typeof(PowNode),
+            typeof(DivNode),
+            typeof(ModNode),
+            typeof(AbsNode),
+            typeof(ClampNode),
+            typeof(RandomNode),
+            typeof(RoundNode),
+            typeof(SignNode),
+            typeof(FloorNode),
+            typeof(CeilingNode),
+            typeof(SqrtNode),
+            typeof(SinNode),
+            typeof(CosNode),
+            typeof(TanNode),
+            typeof(StrLenNode),
+            typeof(StrConcatNode),
+            typeof(StrJoinNode),
+            typeof(StrSplitNode),
+            typeof(StrSubstringNode),
+            typeof(StrReplaceNode),
+            typeof(StrTrimNode),
+            typeof(StrToUpperLowerNode),
+            typeof(StrContainsNode),
+            typeof(StrStartsWithNode),
+            typeof(StrEndsWithNode),
+            typeof(StrIndexOfNode),
+            typeof(StrLastIndexOfNode),
+            typeof(StrCompareNode),
+            typeof(StrIsEmptyNode),
+            typeof(StrIsWhiteSpaceNode),
+            typeof(StrPadLeftNode),
+            typeof(StrPadRightNode)
+        }.Concat(OperationNodeCatalog.NodeTypes).Concat(SystemNodeCatalog.NodeTypes));
         EditorPanel.Editor.NodeAdded += OnNodeAdded;
         EditorPanel.Editor.NodeRemoved += OnNodeRemoved;
         EditorPanel.Editor.OptionConnected += OnConnectionChanged;
@@ -90,34 +95,47 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
         CreateDocument();
-        if (File.Exists(WorkflowPackageService.DefaultFilePath))
-            LoadDocument(WorkflowPackageService.DefaultFilePath);
     }
 
     /// <summary>确认未保存修改后，新建含一个开始节点的流程。</summary>
     private void OnNewExecuted(object sender, ExecutedRoutedEventArgs args)
     {
         args.Handled = true;
-        if (ConfirmUnsavedChanges()) CreateDocument();
+        if (!_isLoading && ConfirmUnsavedChanges()) CreateDocument();
     }
 
     /// <summary>选择并加载流程文件；只有加载成功才替换当前文件路径和修改状态。</summary>
-    private void OnOpenExecuted(object sender, ExecutedRoutedEventArgs args)
+    private async void OnOpenExecuted(object sender, ExecutedRoutedEventArgs args)
     {
         args.Handled = true;
+        if (_isLoading) return;
         var dialog = new OpenFileDialog { Title = "打开工作流", Filter = CanvasFileFilter, CheckFileExists = true,
             InitialDirectory = Directory.Exists(WorkflowPackageService.DefaultDirectory) ? WorkflowPackageService.DefaultDirectory : AppContext.BaseDirectory };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true || !ConfirmUnsavedChanges()) return;
-        LoadDocument(dialog.FileName);
+        await LoadDocumentAsync(dialog.FileName);
     }
 
-    private void LoadDocument(string filePath)
+    private async Task LoadDocumentAsync(string filePath, bool defaultFile = false)
     {
+        if (_isLoading) return;
+        _isLoading = true;
+        SetCurrentValue(IsEnabledProperty, false);
+        var previousStatus = _viewModel.StatusMessage;
+        _viewModel.StatusMessage = "正在加载流程及脚本依赖…";
         try
         {
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            var prepared = defaultFile
+                ? await WorkflowPackageService.ReadDefaultAsync()
+                : await WorkflowPackageService.ReadAsync(filePath);
+            if (prepared is null)
+            {
+                _viewModel.StatusMessage = previousStatus;
+                return;
+            }
             _isReplacingDocument = true;
             // 底层先在临时画布校验节点及连接，损坏文件不会提前清空当前画布。
-            WorkflowPackageService.Load(EditorPanel.Editor, filePath);
+            prepared.ApplyTo(EditorPanel.Editor);
             EditorPanel.PropertyGrid.SetNode(null);
             _viewModel.AcceptDocument(filePath, $"已加载流程及脚本依赖，共 {EditorPanel.Editor.Nodes.Count} 个节点。");
         }
@@ -128,6 +146,8 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
         finally
         {
             _isReplacingDocument = false;
+            _isLoading = false;
+            SetCurrentValue(IsEnabledProperty, true);
         }
     }
 
@@ -148,6 +168,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
     /// <summary>提交属性编辑并保存画布；取消或保存失败时保留原路径和未保存标记。</summary>
     private bool SaveDocument(bool saveAs)
     {
+        if (_isLoading) return false;
         // 快捷键可能来自属性文本框，先移出焦点以触发属性面板提交输入。
         EditorPanel.Editor.Focus();
         try
@@ -208,6 +229,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
     /// <summary>在可见画布中心添加开始节点，并切换属性面板到该节点。</summary>
     private void OnAddStartNodeExecuted(object sender, ExecutedRoutedEventArgs args)
     {
+        if (_isLoading) { args.Handled = true; return; }
         args.Handled = true;
         var editor = EditorPanel.Editor;
         editor.Focus();
@@ -261,7 +283,7 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
     {
         EditorPanel.Editor.Focus();
         if (!_viewModel.IsDirty) return true;
-        var result = MessageBox.Show(Window.GetWindow(this), "当前流程有未保存的修改，是否先保存？", "工作流",
+        var result = XMessageBox.Show(Window.GetWindow(this), "当前流程有未保存的修改，是否先保存？", "工作流",
             MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
         return result == MessageBoxResult.No || result == MessageBoxResult.Yes && SaveDocument(false);
     }
@@ -270,15 +292,19 @@ public partial class WorkFlowPage : Page, IConfirmNavigationRequest
     private void ShowFileError(string operation, Exception exception)
     {
         _viewModel.StatusMessage = $"{operation}失败：{exception.Message}";
-        MessageBox.Show(Window.GetWindow(this), _viewModel.StatusMessage, "工作流", MessageBoxButton.OK, MessageBoxImage.Error);
+        if (IsLoaded)
+            XMessageBox.Show(Window.GetWindow(this), _viewModel.StatusMessage, "工作流", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     /// <summary>页面显示时订阅宿主关闭事件，避免直接关闭窗口丢失编辑内容。</summary>
-    private void OnPageLoaded(object sender, RoutedEventArgs args)
+    private async void OnPageLoaded(object sender, RoutedEventArgs args)
     {
         if (_ownerWindow is not null) _ownerWindow.Closing -= OnOwnerWindowClosing;
         _ownerWindow = Window.GetWindow(this);
         if (_ownerWindow is not null) _ownerWindow.Closing += OnOwnerWindowClosing;
+        if (_initialLoadStarted) return;
+        _initialLoadStarted = true;
+        await LoadDocumentAsync(WorkflowPackageService.DefaultFilePath, true);
     }
 
     /// <summary>页面卸载时解除宿主订阅，浮动或重新挂载后由加载事件重新绑定。</summary>

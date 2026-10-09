@@ -18,7 +18,7 @@ public sealed class ConstDataNode : WorkflowNode, IEditorExecutableNode, IEditor
     public ConstDataNode()
     {
         // SetNodeTypeTitle("常量");
-        TitleColor = Color.FromRgb(151, 111, 235);
+        TitleColor = Color.FromRgb(212, 10, 235);
         Output = OutputOptions.Add("值", typeof(string), false);
         RefreshOutputValue();
     }

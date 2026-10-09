@@ -18,6 +18,30 @@ namespace WorkFlowCore.Tests;
 public sealed class NodeLibraryTests
 {
     [Fact]
+    public void BatchRegistrationBuildsLibraryOnceAndRegistersEditorTypes()
+    {
+        RunSta(() =>
+        {
+            var panel = new XTNodeEditorPannel();
+            var tree = FindTree(panel.TreeView);
+            var registered = new List<Type>();
+            panel.TreeView.NodeTypeAdded += (_, type) =>
+            {
+                Assert.Empty(tree.Items);
+                registered.Add(type);
+            };
+            Assert.Equal(2, panel.TreeView.AddNodes([
+                typeof(StrLenNode), typeof(StrContainsNode), typeof(StrLenNode), typeof(StringNode), typeof(string)]));
+            Assert.Equal(new[] { typeof(StrLenNode), typeof(StrContainsNode) }, registered);
+            Assert.Equal(2, FindCategory(tree, "字符串").Items.Count);
+            Assert.All(registered, type => Assert.Contains(type, panel.Editor.GetTypes()));
+            var category = tree.Items[0];
+            Assert.Equal(0, panel.TreeView.AddNodes(registered));
+            Assert.Same(category, tree.Items[0]);
+        });
+    }
+
+    [Fact]
     public void CategoryCountsTrackRegistrationRemovalAndSearch()
     {
         RunSta(() =>
