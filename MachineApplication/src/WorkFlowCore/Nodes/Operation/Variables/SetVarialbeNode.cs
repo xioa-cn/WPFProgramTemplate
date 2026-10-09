@@ -13,7 +13,7 @@ public sealed class SetVarialbeNode : VariableNode
         Completed = OutputOptions.Add("完成", typeof(object), false);
     }
 
-    [XTNodeProperty("值（JSON）", "未连接时使用，支持 null；例如 123 或带双引号的文本。")]
+    [XTNodeProperty("值", "未连接时使用，支持 null；例如 123 或带双引号的文本。")]
     public string ValueJson { get; set; } = "null";
 
     public XTNodeOption ValueInput { get; }

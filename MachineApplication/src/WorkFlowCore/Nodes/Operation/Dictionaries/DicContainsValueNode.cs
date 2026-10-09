@@ -12,7 +12,7 @@ public sealed class DicContainsValueNode : DictionaryOperationNode
         ValueInput = AddInput("值", () => OperationValues.Parse(ValueJson));
     }
 
-    [XTNodeProperty("值（JSON）", "例如 123、true、null 或带双引号的文本。")]
+    [XTNodeProperty("值", "例如 123、true、null 或带双引号的文本。")]
     public string ValueJson { get; set; } = "null";
 
     public XTNodeOption ValueInput { get; }

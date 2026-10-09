@@ -9,7 +9,7 @@ public abstract class ValueNode : SystemNode
         ValueInput = AddInput("值", () => SystemValues.JsonValue(ValueJson));
     }
 
-    [XTNodeProperty("值（JSON）", "未连接时使用，如 123、true、null 或带双引号的文本。")]
+    [XTNodeProperty("值", "未连接时使用，如 123、true、null 或带双引号的文本。")]
     public string ValueJson { get; set; } = "null";
 
     public XTNodeOption ValueInput { get; }
