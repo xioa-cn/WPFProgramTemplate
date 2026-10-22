@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Machine.ModuleLoad\Machine.ModuleLoad.csproj" />
+    <ProjectReference Include="..\I18n.LangsGenerator\I18n.LangsGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="**/lang.*.json" Exclude="bin/**;obj/**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\MachineApplication.Entrance\AppResources.xaml">
+      <Link>Design/SharedStyles.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.24.0" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.24.0" />
+    <PackageReference Include="Markdig" Version="1.1.2" />
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\" />
+    <InternalsVisibleTo Include="AIAgentFrameworkModule.Tests" />
+  </ItemGroup>
+</Project>

@@ -18,4 +18,10 @@
 			<loadClass Name="PorocoatCellModule"/>
 		</dllModule>
 	</unitModules>
+    <!-- AI 调试模块：模型配置与对话页面共用同一个模块工作区。 -->
+    <unitModules Name="AIAgent" LoadMode="SourceGenerator">
+        <dllModule Name="AIAgent" Dll="AIAgentFrameworkModule" Path=".">
+            <loadClass Name="AgentFrameworkModule"/>
+        </dllModule>
+    </unitModules>
 </wpfModules>

@@ -1,0 +1,172 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  颜色全部引用宿主 MaterialDesign 主题资源，跟随明暗基色与主色一起切换，模块内不再固定深色。  -->
+    <BooleanToVisibilityConverter x:Key="AI.Visible" />
+
+    <Style x:Key="AI.Button" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="Surface"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="9">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Surface" Property="Opacity" Value="0.75" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Surface" Property="BorderThickness" Value="2" />
+                            <Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.35" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style
+        x:Key="AI.PrimaryButton"
+        BasedOn="{StaticResource AI.Button}"
+        TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+    </Style>
+    <Style x:Key="AI.Field" TargetType="TextBox">
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.TextBox.FilledBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border
+                        x:Name="Frame"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="9">
+                        <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Top" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="AI.Password" TargetType="PasswordBox">
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.PasswordBox.FilledBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border
+                        x:Name="Frame"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="9">
+                        <ScrollViewer x:Name="PART_ContentHost" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!--  下拉框直接复用 MaterialDesign 的填充样式，不再自写模板：避免与宿主其余控件视觉、交互不一致。  -->
+    <Style
+        x:Key="AI.Combo"
+        BasedOn="{StaticResource MaterialDesignFilledComboBox}"
+        TargetType="ComboBox" />
+    <!--  下拉框的列表项与选择框共用同一模板：显示配置名称，过长时省略并保留完整提示。  -->
+    <DataTemplate x:Key="AI.ProfileItem">
+        <TextBlock
+            VerticalAlignment="Center"
+            Text="{Binding Name}"
+            TextTrimming="CharacterEllipsis"
+            ToolTip="{Binding Name}" />
+    </DataTemplate>
+    <Style x:Key="AI.Card" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="22" />
+    </Style>
+    <Style x:Key="AI.Label" TargetType="TextBlock">
+        <Setter Property="Margin" Value="0,0,0,8" />
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+    </Style>
+    <Style x:Key="AI.Hint" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.ForegroundLight}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,6,0,0" />
+    </Style>
+    <!--  卡片内的浅色标签块，跟随主题的芯片底色，标记 01/02/03 分组。  -->
+    <Style x:Key="AI.Chip" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Chip.Background}" />
+        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+    <!--  用户消息气泡：主色底 + 主色前景色，右侧贴边，和微信一样一眼区分双方。  -->
+    <Style x:Key="AI.UserBubble" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="14,10" />
+    </Style>
+    <!--  助手消息气泡：卡片底色 + 细边框，明暗主题下都能和页面背景区分开。  -->
+    <Style x:Key="AI.AssistantBubble" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Card.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="16,13" />
+    </Style>
+    <!--  气泡内的可选择文本：去掉输入框自带底色和边框，只保留文本的复制能力。  -->
+    <Style
+        x:Key="AI.BubbleText"
+        BasedOn="{StaticResource AI.Field}"
+        TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+</ResourceDictionary>

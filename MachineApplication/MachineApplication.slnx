@@ -4,6 +4,7 @@
     <Project Path="src/I18nExtensions/I18nExtensions.csproj" />
   </Folder>
   <Folder Name="/modules/">
+    <Project Path="src/AIAgentFrameworkModule/AIAgentFrameworkModule.csproj" />
     <Project Path="src/WorkFlowCore/WorkFlowCore.csproj" />
   </Folder>
   <Folder Name="/src/mls/">
@@ -20,6 +21,7 @@
     <Project Path="project/PorocoatCellModule/PorocoatCellModule.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/DataRepository/DataRepository.csproj" />
     <Project Path="src/Machine.ModuleLoad/Machine.ModuleLoad.csproj" />
     <Project Path="src/MachineApplication.Entrance/MachineApplication.Entrance.csproj" />
     <Project Path="src/RestSharp/RestSharp.csproj" />

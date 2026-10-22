@@ -1,0 +1,705 @@
+<Page x:Class="AIAgentFrameworkModule.Views.AgentWorkflowPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:controls="clr-namespace:AIAgentFrameworkModule.Views.Controls"
+      xmlns:models="clr-namespace:AIAgentFrameworkModule.Models"
+      xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:utils="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
+      utils:ViewDesignInclude.Source="/AIAgentFrameworkModule;component/Design/SharedStyles.xaml"
+      Title="多模型协同" FontFamily="Segoe UI, Microsoft YaHei UI" FontSize="13"
+      Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+      Background="{DynamicResource MaterialDesign.Brush.Background}"
+      Loaded="OnLoaded" Unloaded="OnUnloaded" SizeChanged="OnPageSizeChanged">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="AgentWorkflowTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+    <Grid x:Name="Workspace" Margin="20,16" UseLayoutRounding="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <md:PackIcon Kind="SourceBranch" Width="14" Height="14"
+                                 Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                    <TextBlock Text="工作空间  /  团队构建" FontSize="11" Margin="7,0,0,0"
+                               Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="多模型协同" FontSize="22" FontWeight="SemiBold" />
+                    <Border Style="{StaticResource Workflow.Badge}" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="TEAM BUILDER" FontSize="9" />
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+            <Border x:Name="HeaderBadge" Grid.Column="1" Style="{StaticResource Workflow.Badge}"
+                    VerticalAlignment="Center" Padding="12,7">
+                <StackPanel Orientation="Horizontal">
+                    <md:PackIcon Kind="ShieldCheckOutline" Width="15" Height="15" Margin="0,0,6,0" />
+                    <TextBlock Text="独立会话 · 可控执行" FontSize="12" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="ConfigurationColumn" Width="320" />
+                <ColumnDefinition x:Name="GapColumn" Width="14" /><ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Border x:Name="ConfigurationPanel" Grid.Row="1" Style="{StaticResource Workflow.Surface}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Border BorderThickness="0,0,0,1"
+                            BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" Padding="18,14">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Right" Style="{StaticResource Workflow.Badge}" Padding="7,3">
+                                <TextBlock Text="3 个成员" FontSize="10" />
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="团队配置" FontWeight="SemiBold" FontSize="14" />
+                                <TextBlock Text="定义任务、模型与协作方式" Style="{StaticResource Workflow.Caption}" FontSize="11"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <ScrollViewer x:Name="ConfigurationScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="18,16,18,18" IsEnabled="{Binding CanEditConfiguration}">
+                            <TextBlock Text="协作方式" Style="{StaticResource Workflow.Label}" />
+                            <Border Background="{DynamicResource MaterialDesign.Brush.TextBox.FilledBackground}"
+                                    CornerRadius="9" Padding="3">
+                                <ListBox x:Name="TemplateSelector" SelectedIndex="{Binding TemplateIndex}"
+                                         BorderThickness="0" Background="Transparent" Padding="0"
+                                         ItemContainerStyle="{StaticResource Workflow.Segment}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         AutomationProperties.Name="协同流程模板">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="1" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <TextBlock Text="并行分析" ToolTip="方案分析员与风险审查员并行工作，然后汇总" />
+                                    <TextBlock Text="串行审查" ToolTip="依次生成方案、审查方案、汇总定稿" />
+                                </ListBox>
+                            </Border>
+                            <TextBlock Margin="0,8,0,16">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Workflow.Caption}">
+                                        <Setter Property="Text" Value="双路独立分析，汇合后形成最终答案。" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                <Setter Property="Text" Value="方案逐步交接，审查后完善最终答案。" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock DockPanel.Dock="Right"
+                                           Text="{Binding TaskText.Length, StringFormat={}{0:N0} / 16k}" FontSize="10"
+                                           Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="任务描述" FontWeight="SemiBold" />
+                            </DockPanel>
+                            <Grid>
+                                <TextBox x:Name="TaskInput"
+                                         Text="{Binding TaskText, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" TextWrapping="Wrap" Height="108" MaxLength="16000"
+                                         VerticalScrollBarVisibility="Auto" Style="{StaticResource AI.Field}"
+                                         VerticalContentAlignment="Top" AutomationProperties.Name="协同任务描述" />
+                                <TextBlock Text="描述目标、约束和期望交付物…" Margin="13,12" IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource Workflow.Caption}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TaskText}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                            <Border Height="1" Background="{DynamicResource MaterialDesign.Brush.Separator.Background}"
+                                    Margin="0,20,0,18" />
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Right" Text="3 AGENTS" FontSize="10"
+                                           Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="协作成员" FontWeight="SemiBold" />
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Roles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,10" Padding="12" CornerRadius="10" BorderThickness="1"
+                                                BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,10">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="32" /><ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Style="{StaticResource Workflow.Badge}" Padding="0"
+                                                            Width="26" Height="26" VerticalAlignment="Top">
+                                                        <TextBlock Text="{Binding Number}" FontFamily="Consolas"
+                                                                   FontSize="11" HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding Description}"
+                                                                   Style="{StaticResource Workflow.Caption}"
+                                                                   FontSize="11" Margin="0,2,0,0" />
+                                                    </StackPanel>
+                                                </Grid>
+                                                <ComboBox
+                                                    ItemsSource="{Binding DataContext.Profiles, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    SelectedItem="{Binding Profile}" DisplayMemberPath="Name"
+                                                    Style="{StaticResource AI.Combo}" Padding="10,6" MinHeight="34"
+                                                    FontSize="12" ToolTip="{Binding Profile.Model}"
+                                                    AutomationProperties.Name="角色使用的模型配置" />
+                                                <Expander Header="编辑角色指令" Style="{StaticResource Workflow.Expander}"
+                                                          Margin="0,3,0,0">
+                                                    <TextBox
+                                                        Text="{Binding Instructions, UpdateSourceTrigger=PropertyChanged}"
+                                                        AcceptsReturn="True" TextWrapping="Wrap" MinHeight="86"
+                                                        MaxHeight="160" MaxLength="8000"
+                                                        VerticalScrollBarVisibility="Auto"
+                                                        Style="{StaticResource AI.Field}" FontSize="12"
+                                                        AutomationProperties.Name="角色提示词" />
+                                                </Expander>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="复用模型配置，可为多个角色选择同一模型。角色指令仅用于本次协同，不修改原配置。"
+                                       Style="{StaticResource Workflow.Caption}" FontSize="11" />
+                            <Border Height="1" Background="{DynamicResource MaterialDesign.Brush.Separator.Background}"
+                                    Margin="0,18,0,10" />
+                            <Expander Header="工具与工作目录" Style="{StaticResource Workflow.Expander}">
+                                <StackPanel Margin="0,4,0,0">
+                                    <CheckBox IsChecked="{Binding GenerateFiles}" Margin="0,0,0,10">
+                                        <TextBlock Text="生成项目文件（确认后写入）" TextWrapping="Wrap" />
+                                    </CheckBox>
+                                    <CheckBox IsChecked="{Binding EnableCommands}" Margin="0,0,0,10">
+                                        <TextBlock Text="命令工具（每次执行前确认）" TextWrapping="Wrap" />
+                                    </CheckBox>
+                                    <StackPanel
+                                        Visibility="{Binding NeedsWorkspace, Converter={StaticResource AI.Visible}}">
+                                        <Button Content="选择授权工作目录" Click="OnSelectWorkspace"
+                                                Style="{StaticResource Workflow.Button}" />
+                                        <TextBlock Text="{Binding WorkspacePath}" TextWrapping="Wrap" Margin="0,6,0,6" />
+                                        <TextBlock
+                                            Text="两种模式互斥。文件模式先预览；命令模式支持 dotnet / node / npm / python / pip 等本机工具，由定稿员调用。命令可以直接修改文件，不能视为沙箱。"
+                                            Style="{StaticResource Workflow.Caption}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+            <Grid x:Name="ResultsPanel" Grid.Row="1" Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Style="{StaticResource Workflow.Surface}" Padding="8" Margin="0,0,0,10">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" Style="{StaticResource Workflow.Badge}"
+                                VerticalAlignment="Center" Margin="8,0">
+                            <TextBlock FontSize="11">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="就绪" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasResumeCheckpoint}" Value="True">
+                                                <Setter Property="Text" Value="可继续运行" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                                <Setter Property="Text" Value="运行中" />
+                                                <Setter Property="Foreground"
+                                                        Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <ListBox x:Name="WorkspaceTabs" SelectedIndex="0" BorderThickness="0" Background="Transparent"
+                                 Padding="0" HorizontalAlignment="Left"
+                                 ItemContainerStyle="{StaticResource Workflow.Segment}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="工作区视图">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <StackPanel Orientation="Horizontal" Margin="8,0">
+                                <md:PackIcon Kind="SourceBranch" Width="15" Height="15" Margin="0,0,7,0" />
+                                <TextBlock Text="团队画布" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="8,0">
+                                <md:PackIcon Kind="Play" Width="15" Height="15" Margin="0,0,7,0" />
+                                <TextBlock Text="运行结果" />
+                            </StackPanel>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+                <Border Grid.Row="1">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource Workflow.Surface}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=WorkspaceTabs}" Value="1">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid ClipToBounds="True">
+                        <Rectangle Fill="{StaticResource Workflow.CanvasGrid}" Opacity="0.18" IsHitTestVisible="False"
+                                   Margin="1" />
+                        <Grid Margin="20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="协作流程" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock Text="在左侧配置成员，画布同步展示模型与交接关系。" Style="{StaticResource Workflow.Caption}"
+                                           Margin="0,5,0,0" />
+                            </StackPanel>
+                            <Viewbox Grid.Row="1" Stretch="Uniform" StretchDirection="DownOnly" Margin="0,16">
+                                <Canvas Width="800" Height="370" AutomationProperties.Name="团队协作流程预览">
+                                    <Path Stroke="{DynamicResource MaterialDesign.Brush.Primary}" StrokeThickness="1.5"
+                                          Opacity="0.65">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Data"
+                                                        Value="M 62,185 L 112,185 L 112,88 L 158,88 M 112,185 L 112,282 L 158,282 M 382,88 L 442,88 L 442,185 L 524,185 M 382,282 L 442,282 L 442,185 M 514,180 L 524,185 L 514,190" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                        <Setter Property="Data"
+                                                                Value="M 32,185 L 46,185 M 270,185 L 294,185 M 284,180 L 294,185 L 284,190 M 518,185 L 542,185 M 532,180 L 542,185 L 532,190" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                    <Border Width="32" Height="32" Canvas.Top="169"
+                                            Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                                            CornerRadius="16">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Canvas.Left" Value="30" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                        <Setter Property="Canvas.Left" Value="0" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <md:PackIcon Kind="Play"
+                                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary.Foreground}"
+                                                     Width="18" Height="18" HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center" />
+                                    </Border>
+                                    <ContentControl Content="{Binding Roles[0]}"
+                                                    ContentTemplate="{StaticResource Workflow.AgentNode}">
+                                        <ContentControl.Style>
+                                            <Style TargetType="ContentControl">
+                                                <Setter Property="Canvas.Left" Value="158" />
+                                                <Setter Property="Canvas.Top" Value="16" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                        <Setter Property="Canvas.Left" Value="46" />
+                                                        <Setter Property="Canvas.Top" Value="113" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ContentControl.Style>
+                                    </ContentControl>
+                                    <ContentControl Content="{Binding Roles[1]}"
+                                                    ContentTemplate="{StaticResource Workflow.AgentNode}">
+                                        <ContentControl.Style>
+                                            <Style TargetType="ContentControl">
+                                                <Setter Property="Canvas.Left" Value="158" />
+                                                <Setter Property="Canvas.Top" Value="210" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                        <Setter Property="Canvas.Left" Value="294" />
+                                                        <Setter Property="Canvas.Top" Value="113" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ContentControl.Style>
+                                    </ContentControl>
+                                    <ContentControl Content="{Binding Roles[2]}"
+                                                    ContentTemplate="{StaticResource Workflow.AgentNode}"
+                                                    Canvas.Top="113">
+                                        <ContentControl.Style>
+                                            <Style TargetType="ContentControl">
+                                                <Setter Property="Canvas.Left" Value="524" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                        <Setter Property="Canvas.Left" Value="542" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ContentControl.Style>
+                                    </ContentControl>
+                                </Canvas>
+                            </Viewbox>
+                            <Border Grid.Row="2" Style="{StaticResource Workflow.Surface}" Padding="14,10"
+                                    HorizontalAlignment="Left">
+                                <StackPanel>
+                                    <TextBlock FontSize="12" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="并行分析 → 汇总定稿" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                        <Setter Property="Text" Value="方案分析 → 风险审查 → 汇总定稿" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="3 个成员 · 独立模型配置 · 执行前授权" Style="{StaticResource Workflow.Caption}"
+                                               FontSize="11" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+                <Grid Grid.Row="1">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=WorkspaceTabs}" Value="1">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Margin="0,0,0,10">
+                        <StackPanel x:Name="PreviewFlow" Margin="0,2,0,0">
+                            <TextBlock Text="协作路径" Style="{StaticResource Workflow.Label}" />
+                            <Border Style="{StaticResource Workflow.Surface}" Padding="18,14">
+                                <StackPanel>
+                                    <TextBlock TextWrapping="Wrap" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="01 方案分析   /   02 风险审查   →   03 汇总定稿" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TemplateIndex}" Value="1">
+                                                        <Setter Property="Text"
+                                                                Value="01 方案分析   →   02 风险审查   →   03 汇总定稿" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="开始后，每个成员的进度与输出会独立呈现。" Style="{StaticResource Workflow.Caption}"
+                                               Margin="0,6,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Steps.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                        </StackPanel>
+                        <ListBox x:Name="StepList" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}"
+                                 BorderThickness="0" Background="Transparent" Padding="0" Margin="0,0,-8,0"
+                                 ItemContainerStyle="{StaticResource Workflow.Step}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="协同步骤">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="1" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <DockPanel Margin="0,0,0,8">
+                                            <TextBlock Text="{Binding Number}" FontFamily="Consolas" FontSize="11"
+                                                       Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                                                       DockPanel.Dock="Left" />
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <md:PackIcon Width="12" Height="12" Margin="0,2,4,0">
+                                                    <md:PackIcon.Style>
+                                                        <Style TargetType="md:PackIcon">
+                                                            <Setter Property="Kind" Value="ClockOutline" />
+                                                            <Setter Property="Foreground"
+                                                                    Value="{DynamicResource MaterialDesign.Brush.ForegroundLight}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding State}"
+                                                                             Value="{x:Static models:AgentStepStatus.Running}">
+                                                                    <Setter Property="Kind" Value="ProgressClock" />
+                                                                    <Setter Property="Foreground"
+                                                                            Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}"
+                                                                             Value="{x:Static models:AgentStepStatus.Completed}">
+                                                                    <Setter Property="Kind" Value="CheckCircleOutline" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}"
+                                                                             Value="{x:Static models:AgentStepStatus.Failed}">
+                                                                    <Setter Property="Kind" Value="AlertCircleOutline" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}"
+                                                                             Value="{x:Static models:AgentStepStatus.Cancelled}">
+                                                                    <Setter Property="Kind" Value="StopCircleOutline" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </md:PackIcon.Style>
+                                                </md:PackIcon>
+                                                <TextBlock Text="{Binding StatusText}" FontSize="10" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Model}" FontSize="11"
+                                                   Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Model}"
+                                                   Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                    <Border Grid.Row="1" Style="{StaticResource Workflow.Surface}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Border BorderThickness="0,0,0,1"
+                                    BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}"
+                                    Padding="18,12">
+                                <DockPanel>
+                                    <Button x:Name="CopyStepButton" DockPanel.Dock="Right" Click="OnCopyStep"
+                                            Style="{StaticResource Workflow.Button}" ToolTip="复制当前步骤的原始 Markdown"
+                                            AutomationProperties.Name="复制当前步骤">
+                                        <Button.IsEnabled>
+                                            <Binding Path="SelectedStep.HasOutput" FallbackValue="False"
+                                                     TargetNullValue="False" />
+                                        </Button.IsEnabled>
+                                        <StackPanel Orientation="Horizontal">
+                                            <md:PackIcon Kind="ContentCopy" Width="14" Height="14" Margin="0,0,6,0" />
+                                            <TextBlock Text="复制" />
+                                        </StackPanel>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedStep.Name, TargetNullValue=输出工作区}"
+                                                   FontWeight="SemiBold" FontSize="14" />
+                                        <TextBlock Text="{Binding SelectedStep.Model, TargetNullValue=准备好后，开始你的第一次协作}"
+                                                   Style="{StaticResource Workflow.Caption}" FontSize="11"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                            <Grid Grid.Row="1">
+                                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            MaxWidth="380" Margin="28">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Steps.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <Border Width="64" Height="64" CornerRadius="18"
+                                            Background="{DynamicResource MaterialDesign.Brush.Chip.Background}"
+                                            HorizontalAlignment="Center" Margin="0,0,0,20">
+                                        <md:PackIcon Kind="SourceBranch" Width="28" Height="28"
+                                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Text="一个任务，多个视角" FontSize="21" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="描述你要解决的问题，分配合适的模型。&#10;让分析、审查与汇总各司其职。"
+                                               Style="{StaticResource Workflow.Caption}" TextAlignment="Center"
+                                               Margin="0,10,0,20" />
+                                    <Button Content="试试：设计一个设备数据采集方案" Click="OnUseExample"
+                                            Style="{StaticResource Workflow.Button}" IsEnabled="{Binding IsIdle}" />
+                                </StackPanel>
+                                <ScrollViewer x:Name="OutputScroll" VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled" Padding="22,18"
+                                              ScrollChanged="OnOutputScrollChanged">
+                                    <ScrollViewer.Style>
+                                        <Style TargetType="ScrollViewer">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Steps.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ScrollViewer.Style>
+                                    <StackPanel>
+                                        <Border Padding="12" Margin="0,0,0,14" CornerRadius="8"
+                                                Background="{DynamicResource MaterialDesign.Brush.Chip.Background}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedStep.Error}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SelectedStep.Error}"
+                                                                     Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding SelectedStep.Error}" TextWrapping="Wrap" />
+                                                <TextBlock Text="已完成步骤会保留，重试只重新生成未完成步骤的完整输出。"
+                                                           Style="{StaticResource Workflow.Caption}" Margin="0,8,0,0" />
+                                                <Button Content="重试并继续" Command="{Binding RetryCommand}"
+                                                        Style="{StaticResource Workflow.PrimaryButton}"
+                                                        HorizontalAlignment="Left" Margin="0,10,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <TextBlock Text="正在等待模型返回内容…" Style="{StaticResource Workflow.Caption}"
+                                                   Margin="0,0,0,8"
+                                                   Visibility="{Binding SelectedStep.IsWaiting, Converter={StaticResource AI.Visible}}" />
+                                        <controls:MarkdownMessageView
+                                            MarkdownText="{Binding SelectedStep.Output, Mode=OneWay}"
+                                            IsGenerating="{Binding SelectedStep.IsGenerating, Mode=OneWay}"
+                                            AutomationProperties.Name="当前协同步骤输出" />
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                            <Border Grid.Row="2" BorderThickness="0,1,0,0"
+                                    BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}"
+                                    Padding="18,10">
+                                <StackPanel>
+                                    <Border
+                                        Visibility="{Binding HasPendingCommand, Converter={StaticResource AI.Visible}}"
+                                        Background="{DynamicResource MaterialDesign.Brush.TextBox.FilledBackground}"
+                                        CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                                        <StackPanel>
+                                            <TextBlock Text="待批准的命令" FontWeight="SemiBold" />
+                                            <TextBox Text="{Binding PendingCommand.Preview, Mode=OneWay}"
+                                                     IsReadOnly="True" TextWrapping="Wrap" MaxHeight="150"
+                                                     VerticalScrollBarVisibility="Auto" FontFamily="Consolas"
+                                                     Margin="0,6" />
+                                            <TextBlock
+                                                Text="以当前用户权限执行，可能安装依赖、修改/删除文件、访问目录外资源或网络；输出会发送给模型。不是沙箱，不自动回滚。仅批准你理解并信任的命令。"
+                                                TextWrapping="Wrap" Style="{StaticResource Workflow.Caption}" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                <Button Content="拒绝" Command="{Binding RejectCommand}"
+                                                        Style="{StaticResource Workflow.Button}" Margin="0,0,8,0" />
+                                                <Button Content="批准本次执行" Command="{Binding ApproveCommand}"
+                                                        Style="{StaticResource Workflow.Button}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Text="WORKSPACE" FontSize="9"
+                                                   Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}" />
+                                        <TextBlock Text="文件清单先预览；命令逐次确认，输出实时记录"
+                                                   Style="{StaticResource Workflow.Caption}" FontSize="11" />
+                                    </DockPanel>
+                                    <Expander Header="实际操作记录" IsExpanded="True"
+                                              Style="{StaticResource Workflow.Expander}">
+                                        <ListBox ItemsSource="{Binding Operations}" MaxHeight="130"
+                                                 FontFamily="Consolas" FontSize="11"
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+                                    </Expander>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+        <Border Grid.Row="2" Style="{StaticResource Workflow.Surface}" Margin="0,12,0,0" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" /><ColumnDefinition x:Name="ActionsColumn" Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel x:Name="ConsentPanel" Margin="0,0,16,0" VerticalAlignment="Center">
+                    <CheckBox IsChecked="{Binding Consent}" IsEnabled="{Binding IsIdle}" FontSize="12" Padding="0"
+                              ToolTip="任务及必要的上游结果将发送给所选服务商，可能产生多次调用费用。">
+                        <TextBlock Text="允许跨模型传递任务与结果（可能产生费用）" TextWrapping="Wrap" />
+                    </CheckBox>
+                    <TextBlock Text="{Binding Status}" Style="{StaticResource Workflow.Caption}" FontSize="11"
+                               Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite" MaxHeight="40"
+                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Status}" />
+                </StackPanel>
+                <StackPanel x:Name="ActionsPanel" Grid.Column="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8"
+                                Visibility="{Binding HasResumeCheckpoint, Converter={StaticResource AI.Visible}}">
+                        <Button Content="新任务" Click="OnNewTask" IsEnabled="{Binding IsIdle}"
+                                Style="{StaticResource Workflow.Button}" Margin="0,0,8,0" ToolTip="放弃续跑，重新编辑任务配置" />
+                        <Button Content="重试并继续" Command="{Binding RetryCommand}"
+                                Style="{StaticResource Workflow.PrimaryButton}" ToolTip="使用原任务与原配置快照，复用成功结果，只重试未完成步骤" />
+                    </StackPanel>
+                    <Button Content="预览并写入" Click="OnPreviewFiles" IsEnabled="{Binding CanPreviewFiles}"
+                            Style="{StaticResource Workflow.Button}" Margin="0,0,0,8"
+                            Visibility="{Binding GenerateFiles, Converter={StaticResource AI.Visible}}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Command="{Binding StopCommand}" Style="{StaticResource Workflow.Button}"
+                                Margin="0,0,8,0" Visibility="{Binding IsBusy, Converter={StaticResource AI.Visible}}">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Stop" Width="14" Height="14" Margin="0,0,6,0" />
+                                <TextBlock Text="停止" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="StartTaskButton" Command="{Binding StartCommand}" ToolTip="选择模型、填写任务并确认数据传递后开始">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource Workflow.PrimaryButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasResumeCheckpoint}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Play" Width="16" Height="16" Margin="0,0,7,0" />
+                                <TextBlock Text="开始协作" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <TextBlock Text="并发 ≤ 2   ·   总时长不限" Style="{StaticResource Workflow.Caption}" FontSize="10"
+                               HorizontalAlignment="Right" Margin="0,6,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

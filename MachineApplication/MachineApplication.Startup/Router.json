@@ -1,6 +1,37 @@
 {
   "NavigationItems": [
     {
+      "LanguageKey": "AI_Debug",
+      "Icon": "MessageTextOutline",
+      "Titles": { "zh": "AI 调试", "en": "AI Debug" },
+      "Children": [
+        {
+          "LanguageKey": "AI_ModelConfiguration",
+          "Icon": "Tune",
+          "Url": "ai/models",
+          "Titles": { "zh": "模型配置", "en": "Model configuration" }
+        },
+        {
+          "LanguageKey": "AI_Chat",
+          "Icon": "MessageTextOutline",
+          "Url": "ai/chat",
+          "Titles": { "zh": "对话调试", "en": "Chat debug" }
+        },
+        {
+          "LanguageKey": "AI_Workflow",
+          "Icon": "AccountGroup",
+          "Url": "ai/workflow",
+          "Titles": { "zh": "多 AI 聊天室", "en": "AI group chat" }
+        },
+        {
+          "LanguageKey": "AI_GroupChatSettings",
+          "Icon": "Tune",
+          "Url": "ai/group-chat/settings",
+          "Titles": { "zh": "群聊配置", "en": "Group chat settings" }
+        }
+      ]
+    },
+    {
       "LanguageKey": "MainWindow_Home",
       "Icon": "ViewDashboardOutline",
       "Url": "home"

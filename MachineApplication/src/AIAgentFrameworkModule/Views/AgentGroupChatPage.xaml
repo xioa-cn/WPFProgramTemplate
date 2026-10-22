@@ -1,0 +1,175 @@
+<Page x:Class="AIAgentFrameworkModule.Views.AgentGroupChatPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:controls="clr-namespace:AIAgentFrameworkModule.Views.Controls"
+      xmlns:utils="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
+      utils:ViewDesignInclude.Source="/AIAgentFrameworkModule;component/Design/SharedStyles.xaml"
+      Title="多 AI 聊天室" FontFamily="Microsoft YaHei UI" FontSize="13"
+      Foreground="{DynamicResource MaterialDesign.Brush.Foreground}" Background="{DynamicResource MaterialDesign.Brush.Background}"
+      UseLayoutRounding="True" Loaded="OnLoaded" Unloaded="OnUnloaded" SizeChanged="OnSizeChanged">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="AgentGroupChatTheme.xaml" /></ResourceDictionary.MergedDictionaries>
+            <DataTemplate x:Key="Chat.Message">
+                <Grid Margin="0,0,0,18">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <Border Grid.Row="0" HorizontalAlignment="Center" Margin="0,4,0,22" Padding="10,3" CornerRadius="5"
+                            Visibility="{Binding ShowTimestamp, Converter={StaticResource AI.Visible}}" Background="{DynamicResource MaterialDesign.Brush.Chip.Background}">
+                        <TextBlock Text="{Binding CreatedAt, StringFormat={}{0:MM-dd HH:mm}}" Style="{StaticResource Chat.Caption}" />
+                    </Border>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="48" /><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
+                        <Border x:Name="Avatar" Grid.Column="0" HorizontalAlignment="Left" TextElement.Foreground="White">
+                            <Border.Style><Style TargetType="Border" BasedOn="{StaticResource Chat.Avatar}"><Setter Property="Background" Value="{Binding Speaker, Converter={StaticResource Chat.AvatarText}, ConverterParameter=Background}" /></Style></Border.Style>
+                            <TextBlock Text="{Binding Speaker, Converter={StaticResource Chat.AvatarText}}" FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel x:Name="MessageBody" Grid.Column="1" HorizontalAlignment="Left"
+                                    MaxWidth="{Binding MessageBubbleMaxWidth, RelativeSource={RelativeSource AncestorType=Page}}">
+                            <TextBlock x:Name="SpeakerName" Text="{Binding Speaker}" Style="{StaticResource Chat.Caption}" FontSize="12" Margin="1,0,0,6" ToolTip="{Binding Model}" />
+                            <Grid>
+                                <Path x:Name="BubbleTail" Data="M 0,0 L 7,6 L 7,-6 Z" Fill="{DynamicResource MaterialDesign.Brush.Card.Background}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-6,16,0,0" />
+                                <Border x:Name="Bubble" Background="{DynamicResource MaterialDesign.Brush.Card.Background}" CornerRadius="7" Padding="14,10">
+                                    <Grid>
+                                        <controls:BubbleWidthSizer x:Name="AssistantText">
+                                            <controls:MarkdownMessageView MarkdownText="{Binding Text}" IsGenerating="{Binding IsGenerating}" FontSize="14" CompactTypography="True" />
+                                        </controls:BubbleWidthSizer>
+                                        <TextBox x:Name="UserText" Visibility="Collapsed" Text="{Binding Text, Mode=OneWay}" IsReadOnly="True"
+                                                 Style="{StaticResource Chat.TextInput}" Foreground="{StaticResource Chat.UserInk}" CaretBrush="{StaticResource Chat.UserInk}"
+                                                 AutomationProperties.Name="我发送的消息" />
+                                        <TextBlock x:Name="TypingPlaceholder" Text="正在输入…" Style="{StaticResource Chat.Caption}" Visibility="Collapsed" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="MessageStatus" Text="{Binding Status}" Style="{StaticResource Chat.Caption}" Margin="0,6,0,0" MaxWidth="480" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding IsUser}" Value="True">
+                        <Setter TargetName="Avatar" Property="Grid.Column" Value="2" />
+                        <Setter TargetName="Avatar" Property="HorizontalAlignment" Value="Right" />
+                        <Setter TargetName="Avatar" Property="Background" Value="{StaticResource Chat.Green}" />
+                        <Setter TargetName="Avatar" Property="TextElement.Foreground" Value="White" />
+                        <Setter TargetName="MessageBody" Property="HorizontalAlignment" Value="Right" />
+                        <Setter TargetName="SpeakerName" Property="Visibility" Value="Collapsed" />
+                        <Setter TargetName="Bubble" Property="Background" Value="{StaticResource Chat.UserBubble}" />
+                        <Setter TargetName="BubbleTail" Property="Fill" Value="{StaticResource Chat.UserBubble}" />
+                        <Setter TargetName="BubbleTail" Property="Data" Value="M 7,0 L 0,6 L 0,-6 Z" />
+                        <Setter TargetName="BubbleTail" Property="HorizontalAlignment" Value="Right" />
+                        <Setter TargetName="BubbleTail" Property="Margin" Value="0,16,-6,0" />
+                        <Setter TargetName="AssistantText" Property="Visibility" Value="Collapsed" />
+                        <Setter TargetName="UserText" Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Status}" Value=""><Setter TargetName="MessageStatus" Property="Visibility" Value="Collapsed" /></DataTrigger>
+                    <DataTrigger Binding="{Binding IsGenerating}" Value="True"><Setter TargetName="MessageStatus" Property="Visibility" Value="Collapsed" /></DataTrigger>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions><Condition Binding="{Binding IsGenerating}" Value="True" /><Condition Binding="{Binding Text}" Value="" /></MultiDataTrigger.Conditions>
+                        <Setter TargetName="AssistantText" Property="Visibility" Value="Collapsed" />
+                        <Setter TargetName="TypingPlaceholder" Property="Visibility" Value="Visible" />
+                    </MultiDataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Page.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition x:Name="MembersColumn" Width="264" /></Grid.ColumnDefinitions>
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="76" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" BorderThickness="0,0,0,1" Padding="28,12">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Click="OnConfigure" Style="{StaticResource Chat.Button}" ToolTip="群聊设置" AutomationProperties.Name="打开群聊设置" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <StackPanel Orientation="Horizontal"><md:PackIcon Kind="Tune" Width="18" Height="18" Margin="0,0,6,0" /><TextBlock Text="群设置" /></StackPanel>
+                    </Button>
+                    <Border DockPanel.Dock="Left" Width="42" Height="42" CornerRadius="11" Background="{StaticResource Chat.Green}" Margin="0,0,12,0">
+                        <md:PackIcon Kind="AccountGroup" Width="25" Height="25" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding RoomName}" FontSize="19" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding RunSummary}" Style="{StaticResource Chat.Caption}" Margin="0,5,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+            <Grid Grid.Row="1">
+                <ScrollViewer x:Name="ChatScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" ScrollChanged="OnScrollChanged">
+                    <ItemsControl ItemsSource="{Binding Messages}" ItemTemplate="{StaticResource Chat.Message}" Margin="28,20,28,8" MaxWidth="1120" HorizontalAlignment="Stretch" />
+                </ScrollViewer>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="330" Margin="28">
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Messages.Count}" Value="0"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <Border Width="66" Height="66" CornerRadius="16" Background="{DynamicResource MaterialDesign.Brush.Chip.Background}" Margin="0,0,0,20">
+                        <md:PackIcon Kind="AccountGroup" Width="34" Height="34" Foreground="{StaticResource Chat.Green}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="从一句「大家好」开始" FontSize="20" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" />
+                    <TextBlock Text="这里的每位群友都有自己的性格。&#x0a;聊聊日常，也听听不同的想法。" Style="{StaticResource Chat.Caption}" TextAlignment="Center" Margin="0,12,0,18" />
+                    <Button Content="填入开场白" Click="OnExample" Style="{StaticResource Chat.Button}" HorizontalAlignment="Center" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" />
+                    <Button Content="先设置群友与模型" Click="OnConfigure" Style="{StaticResource Chat.Button}" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                </StackPanel>
+            </Grid>
+            <Border Grid.Row="2" Background="{DynamicResource MaterialDesign.Brush.Card.Background}" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" BorderThickness="0,1,0,0" Padding="24,8,24,12">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="62" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <DockPanel Margin="0,0,0,6" LastChildFill="False">
+                        <Button Click="OnExample" Style="{StaticResource Chat.Button}" ToolTip="填入开场白" AutomationProperties.Name="填入开场白" Padding="6" IsEnabled="{Binding IsIdle}"><md:PackIcon Kind="MessageTextOutline" Width="20" Height="20" /></Button>
+                        <Button Click="OnClear" IsEnabled="{Binding IsIdle}" Style="{StaticResource Chat.Button}" ToolTip="清空聊天记录" AutomationProperties.Name="清空聊天记录" Padding="6" Margin="6,0,0,0"><md:PackIcon Kind="DeleteOutline" Width="20" Height="20" /></Button>
+                        <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding ContinuousChat, Mode=TwoWay}" Content="{Binding ContinuousChatLabel}"
+                                      IsEnabled="{Binding CanToggleContinuousChat}" Style="{StaticResource Chat.ToggleButton}" AutomationProperties.Name="开始或停止连续聊天"
+                                      ToolTip="开启后持续调用群友模型并可能产生费用；关闭即可取消。空聊天会按人设自动开场，有草稿时先发送草稿。" />
+                        <Button DockPanel.Dock="Right" Content="停止回复" Command="{Binding StopCommand}" Margin="0,0,8,0">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource Chat.Button}"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers>
+                                <MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding IsBusy}" Value="True" /><Condition Binding="{Binding ContinuousChat}" Value="False" /></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible" /></MultiDataTrigger>
+                            </Style.Triggers></Style></Button.Style>
+                        </Button>
+                    </DockPanel>
+                    <Grid Grid.Row="1" Margin="2,5,2,8">
+                        <TextBox x:Name="MessageInput" Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Chat.TextInput}"
+                                 AcceptsReturn="True" VerticalScrollBarVisibility="Auto" MaxLength="4000" PreviewKeyDown="OnInputKeyDown" AutomationProperties.Name="群聊消息，Ctrl+Enter 发送" />
+                        <TextBlock Text="发消息，和群友聊聊…" IsHitTestVisible="False" FontSize="14">
+                            <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource Chat.Caption}"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Draft}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                    <CheckBox Grid.Row="2" IsChecked="{Binding Consent}" IsEnabled="{Binding IsIdle}" Margin="2,0,0,8" VerticalContentAlignment="Center">
+                        <TextBlock Text="允许群友模型接收聊天记录；连续聊天将持续调用并可能产生费用，直到停止" Style="{StaticResource Chat.Caption}" />
+                    </CheckBox>
+                    <Grid Grid.Row="3">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Status}" Style="{StaticResource Chat.Caption}" VerticalAlignment="Center" Margin="0,0,14,0" MaxHeight="36" TextTrimming="CharacterEllipsis" ToolTip="{Binding Status}" AutomationProperties.LiveSetting="Polite" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="SendHint" Text="Enter 换行 · Ctrl+Enter 发送" Style="{StaticResource Chat.Caption}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <Button Content="发送" Command="{Binding SendCommand}" Style="{StaticResource Chat.SendButton}" ToolTip="Ctrl+Enter 发送" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+        <Border x:Name="MembersPanel" Grid.Column="1" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" BorderThickness="1,0,0,0" Background="{DynamicResource MaterialDesign.Brush.Card.Background}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="22,24,22,24">
+                    <DockPanel Margin="0,0,0,22"><TextBlock Text="群聊信息" FontSize="15" FontWeight="SemiBold" /><TextBlock Text="{Binding Members.Count, StringFormat={}AI 成员 · {0}}" Style="{StaticResource Chat.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" /></DockPanel>
+                    <Border Style="{StaticResource Chat.Avatar}" Background="{StaticResource Chat.Green}" HorizontalAlignment="Left" Margin="0,0,0,6"><TextBlock Text="我" Foreground="White" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                    <TextBlock Text="我 · 群主" Style="{StaticResource Chat.Caption}" Margin="0,0,0,20" />
+                    <ItemsControl ItemsSource="{Binding Members}">
+                        <ItemsControl.ItemTemplate><DataTemplate>
+                            <Grid Margin="0,0,0,18">
+                                <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding Enabled}" Value="False"><Setter Property="Opacity" Value="0.55" /></DataTrigger></Style.Triggers></Style></Grid.Style>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="48" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource Chat.Avatar}" HorizontalAlignment="Left" Background="{Binding Name, Converter={StaticResource Chat.AvatarText}, ConverterParameter=Background}"><TextBlock Text="{Binding Name, Converter={StaticResource Chat.AvatarText}}" Foreground="White" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Persona}" />
+                                    <TextBlock Text="{Binding Profile.Name, TargetNullValue=未配置模型}" Style="{StaticResource Chat.Caption}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                    <TextBlock FontSize="10" Margin="0,3,0,0"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Text" Value="参与聊天" /><Setter Property="Foreground" Value="{StaticResource Chat.Green}" /><Style.Triggers><DataTrigger Binding="{Binding Enabled}" Value="False"><Setter Property="Text" Value="暂不发言" /><Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.ForegroundLight}" /></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="管理群友" Click="OnConfigure" Style="{StaticResource Chat.Button}" BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}" Margin="0,0,0,22" />
+                    <Border Height="1" Background="{DynamicResource MaterialDesign.Brush.Separator.Background}" Margin="0,0,0,20" />
+                    <TextBlock Text="群公告" FontWeight="SemiBold" Margin="0,0,0,10" />
+                    <Border Background="{DynamicResource MaterialDesign.Brush.Background}" CornerRadius="8" Padding="12">
+                        <TextBlock Text="{Binding Topic}" Style="{StaticResource Chat.Caption}" FontSize="12" LineHeight="22" />
+                    </Border>
+                    <TextBlock Text="这是 AI 文字聊天室。&#x0a;聊天记录仅保留在本次运行中。" Style="{StaticResource Chat.Caption}" LineHeight="19" Margin="0,24,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Page>

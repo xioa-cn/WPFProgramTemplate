@@ -13,6 +13,7 @@
       <ProjectReference Include="..\src\Machine.ModuleLoad\Machine.ModuleLoad.csproj" />
       <ProjectReference Include="..\src\MachineApplication.Entrance\MachineApplication.Entrance.csproj" />
       <ProjectReference Include="..\src\WorkFlowCore\WorkFlowCore.csproj" />
+      <ProjectReference Include="..\src\AIAgentFrameworkModule\AIAgentFrameworkModule.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,0 +1,385 @@
+<Page
+    x:Class="AIAgentFrameworkModule.Views.AgentModelConfigPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:utils="clr-namespace:Machine.ModuleLoad.Utils;assembly=Machine.ModuleLoad"
+    Title="AI 模型配置"
+    d:DesignHeight="900"
+    d:DesignWidth="1200"
+    utils:ViewDesignInclude.Source="/AIAgentFrameworkModule;component/Design/SharedStyles.xaml"
+    Background="{DynamicResource MaterialDesign.Brush.Background}"
+    FontFamily="Segoe UI, Microsoft YaHei UI"
+    Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+    Loaded="OnLoaded"
+    SizeChanged="OnPageSizeChanged"
+    Unloaded="OnUnloaded"
+    mc:Ignorable="d">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="AgentTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ProfileItem" TargetType="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="13,12" />
+                <Setter Property="Margin" Value="0,3" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border
+                                x:Name="ItemBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                                <ContentPresenter />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource MaterialDesign.Brush.ListView.Hover}" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource MaterialDesign.Brush.ListView.Selected}" />
+                                    <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                    <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Page.Resources>
+    <Grid Margin="24,20" UseLayoutRounding="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,22">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock
+                    FontSize="26"
+                    FontWeight="SemiBold"
+                    Text="模型工作区" />
+                <TextBlock
+                    Margin="0,8,12,0"
+                    Style="{StaticResource AI.Hint}"
+                    Text="管理连接与助手行为，让不同模型使用同一套对话方式。" />
+            </StackPanel>
+            <Button
+                Grid.Column="1"
+                Padding="16,10"
+                VerticalAlignment="Center"
+                Click="OnOpenChat"
+                Content="开始对话 →"
+                IsEnabled="{Binding IsIdle}"
+                Style="{StaticResource AI.PrimaryButton}" />
+        </Grid>
+
+        <Grid x:Name="WorkspaceGrid" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="ProfileColumn" Width="235" />
+                <ColumnDefinition x:Name="GapColumn" Width="20" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border
+                x:Name="ProfilesPanel"
+                Grid.Row="1"
+                Padding="10"
+                Style="{StaticResource AI.Card}">
+                <DockPanel>
+                    <StackPanel Margin="4,4,4,12" DockPanel.Dock="Top">
+                        <DockPanel>
+                            <TextBlock
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Text="我的模型" />
+                            <TextBlock Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}" Text="{Binding Profiles.Count, StringFormat={}  ·  {0}}" />
+                        </DockPanel>
+                        <Button
+                            Margin="0,14,0,0"
+                            HorizontalContentAlignment="Center"
+                            Background="{DynamicResource MaterialDesign.Brush.TextBox.FilledBackground}"
+                            Command="{Binding AddProfileCommand}"
+                            Content="＋ 添加模型"
+                            Style="{StaticResource AI.Button}" />
+                    </StackPanel>
+                    <StackPanel Margin="4,10,4,4" DockPanel.Dock="Bottom">
+                        <TextBlock
+                            FontSize="11"
+                            Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                            Text="Chat Completions" />
+                        <TextBlock
+                            FontSize="11"
+                            Style="{StaticResource AI.Hint}"
+                            Text="官方服务 · 兼容服务 · 中转站" />
+                    </StackPanel>
+                    <ListBox
+                        AutomationProperties.Name="模型配置列表"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        IsEnabled="{Binding IsIdle}"
+                        ItemContainerStyle="{StaticResource ProfileItem}"
+                        ItemsSource="{Binding Profiles}"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        SelectedItem="{Binding SelectedProfile, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Text="{Binding Name}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Margin="0,5,0,0"
+                                        FontSize="11"
+                                        Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                                        Text="{Binding Model}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <ScrollViewer
+                x:Name="EditorScroll"
+                Grid.Row="1"
+                Grid.Column="2"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <StackPanel MaxWidth="900" Margin="0,0,8,0">
+                    <Border Margin="0,0,0,14" Style="{StaticResource AI.Card}">
+                        <StackPanel IsEnabled="{Binding CanEditProfile}">
+                            <DockPanel Margin="0,0,0,20">
+                                <Border
+                                    Margin="0,0,12,0"
+                                    DockPanel.Dock="Left"
+                                    Style="{StaticResource AI.Chip}">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                        Text="01" />
+                                </Border>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
+                                    Text="连接设置" />
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource AI.Label}" Text="配置名称" />
+                            <TextBox
+                                AutomationProperties.Name="配置名称"
+                                Style="{StaticResource AI.Field}"
+                                Text="{Binding SelectedProfile.Name, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="例如：开发助手、本地模型、备用中转。只用于区分，不是模型编号。" />
+                            <TextBlock
+                                Margin="0,18,0,8"
+                                Style="{StaticResource AI.Label}"
+                                Text="API 基础地址" />
+                            <TextBox
+                                AutomationProperties.Name="API 基础地址"
+                                Style="{StaticResource AI.Field}"
+                                Text="{Binding SelectedProfile.Endpoint, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="填写服务商给出的基础地址，不包含 /chat/completions。远程地址必须使用 HTTPS。" />
+                            <TextBlock
+                                Margin="0,18,0,8"
+                                Style="{StaticResource AI.Label}"
+                                Text="模型编号" />
+                            <TextBox
+                                AutomationProperties.Name="模型编号"
+                                Style="{StaticResource AI.Field}"
+                                Text="{Binding SelectedProfile.Model, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="按服务商控制台提供的编号填写，区分大小写；不会自动猜测可用模型。" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,0,0,14" Style="{StaticResource AI.Card}">
+                        <StackPanel IsEnabled="{Binding CanEditProfile}">
+                            <DockPanel Margin="0,0,0,20">
+                                <Border
+                                    Margin="0,0,12,0"
+                                    DockPanel.Dock="Left"
+                                    Style="{StaticResource AI.Chip}">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                        Text="02" />
+                                </Border>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
+                                    Text="访问凭据" />
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource AI.Label}" Text="方式一：直接输入 API Key · 仅本次运行" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox
+                                    x:Name="ApiKeyBox"
+                                    AutomationProperties.Name="API 密钥（仅内存）"
+                                    PasswordChanged="OnApiKeyChanged"
+                                    Style="{StaticResource AI.Password}" />
+                                <Button
+                                    Grid.Column="1"
+                                    Margin="8,0,0,0"
+                                    Click="OnClearApiKey"
+                                    Content="清空"
+                                    Style="{StaticResource AI.Button}"
+                                    ToolTip="清空直接输入的密钥，转为读取环境变量" />
+                            </Grid>
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="与下方环境变量方式二选一，不会写入配置文件。无需鉴权的本机服务可填 local。" />
+                            <TextBlock
+                                Margin="0,18,0,8"
+                                Style="{StaticResource AI.Label}"
+                                Text="方式二：环境变量名称 · 不是密钥本身" />
+                            <TextBox
+                                AutomationProperties.Name="密钥环境变量名"
+                                Style="{StaticResource AI.Field}"
+                                Text="{Binding SelectedProfile.ApiKeyEnvironmentVariable, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="例如填写 DEMOKEY：请先在 Windows 环境变量中创建名为 DEMOKEY 的变量，将它的值设为真实 API Key。这里只填写名称，不会自动创建变量。" />
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="上方 API Key 留空即可。读取顺序：当前进程 → 当前 Windows 用户 → 系统；配置文件仅保存变量名。" />
+                            <Border
+                                Margin="0,18,0,0"
+                                Padding="12"
+                                Background="{DynamicResource MaterialDesign.Brush.Chip.Background}"
+                                CornerRadius="8">
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                    Text="密钥只应交给你信任的服务商；中转站可能接触请求中的密钥与聊天内容。"
+                                    TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,0,0,14" Style="{StaticResource AI.Card}">
+                        <StackPanel IsEnabled="{Binding CanEditProfile}">
+                            <DockPanel Margin="0,0,0,20">
+                                <Border
+                                    Margin="0,0,12,0"
+                                    DockPanel.Dock="Left"
+                                    Style="{StaticResource AI.Chip}">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                        Text="03" />
+                                </Border>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
+                                    Text="助手行为" />
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource AI.Label}" Text="系统提示词" />
+                            <TextBox
+                                MinHeight="130"
+                                MaxHeight="260"
+                                AcceptsReturn="True"
+                                AutomationProperties.Name="系统提示词"
+                                Style="{StaticResource AI.Field}"
+                                Text="{Binding SelectedProfile.Instructions, UpdateSourceTrigger=PropertyChanged}"
+                                TextWrapping="Wrap"
+                                VerticalScrollBarVisibility="Auto" />
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="定义角色、语气和回答格式。普通提问请放到对话页；修改配置后会开始新的上下文。" />
+                            <TextBlock
+                                Margin="0,18,0,8"
+                                Style="{StaticResource AI.Label}"
+                                Text="网络超时（秒）" />
+                            <TextBox
+                                Width="150"
+                                HorizontalAlignment="Left"
+                                AutomationProperties.Name="网络超时秒数"
+                                Style="{StaticResource AI.Field}"
+                                Text="{Binding SelectedProfile.TimeoutSeconds, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource AI.Hint}" Text="单次网络操作的等待上限。取消整个请求请使用“停止”。" />
+                        </StackPanel>
+                    </Border>
+                    <Button
+                        Margin="0,0,0,12"
+                        HorizontalAlignment="Left"
+                        Click="OnDeleteProfile"
+                        Content="删除当前模型配置"
+                        Foreground="{DynamicResource MaterialDesign.Brush.ValidationError}"
+                        IsEnabled="{Binding CanEditProfile}"
+                        Style="{StaticResource AI.Button}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Border
+            Grid.Row="2"
+            Margin="0,16,0,0"
+            Padding="0,14,0,0"
+            BorderBrush="{DynamicResource MaterialDesign.Brush.Separator.Background}"
+            BorderThickness="0,1,0,0">
+            <StackPanel>
+                <WrapPanel Margin="0,0,0,10">
+                    <Button
+                        Margin="0,0,10,6"
+                        Command="{Binding SaveProfilesCommand}"
+                        Content="保存配置"
+                        Style="{StaticResource AI.PrimaryButton}" />
+                    <Button
+                        Margin="0,0,10,6"
+                        Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                        Command="{Binding ValidateCommand}"
+                        Content="检查格式"
+                        Style="{StaticResource AI.Button}" />
+                    <Button
+                        Margin="0,0,10,6"
+                        Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                        Command="{Binding TestConnectionCommand}"
+                        Content="测试连接"
+                        Style="{StaticResource AI.Button}"
+                        ToolTip="发送真实测试请求，可能产生费用" />
+                    <Button
+                        Margin="0,0,10,6"
+                        Command="{Binding StopCommand}"
+                        Content="停止请求"
+                        Style="{StaticResource AI.Button}"
+                        Visibility="{Binding IsBusy, Converter={StaticResource AI.Visible}}" />
+                    <TextBlock
+                        Margin="0,0,0,6"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                        Text="测试连接会发送真实请求，可能计费。" />
+                </WrapPanel>
+                <TextBlock
+                    AutomationProperties.LiveSetting="Polite"
+                    FontSize="12"
+                    Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                    Text="{Binding Status}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Margin="0,6,0,0"
+                    FontSize="11"
+                    Foreground="{DynamicResource MaterialDesign.Brush.ForegroundLight}"
+                    Text="{Binding ConfigurationPath}"
+                    TextTrimming="CharacterEllipsis"
+                    ToolTip="{Binding ConfigurationPath}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>
