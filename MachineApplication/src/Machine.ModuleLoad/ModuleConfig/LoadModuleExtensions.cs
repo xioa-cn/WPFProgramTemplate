@@ -163,7 +163,7 @@ internal sealed class ModuleAssemblyLoadContext : AssemblyLoadContext
     protected override Assembly? Load(AssemblyName assemblyName)
     {
         // 这些程序集定义了宿主与模块之间的公共类型，必须共享默认上下文中的实例。
-        if (assemblyName.Name is "Machine.ModuleLoad" or "ModuleLoadSources" or "RestSharp")
+        if (assemblyName.Name is "Machine.ModuleLoad" or "ModuleLoadSources" or "RustSharp")
             return AssemblyLoadContext.Default.Assemblies.FirstOrDefault(a =>
                 string.Equals(a.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase));
 

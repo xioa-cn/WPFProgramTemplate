@@ -1,7 +1,7 @@
 ﻿using System;
 
 // Result 将成功值与错误值封装在同一个不可变结构体中，避免使用异常表示预期失败。
-namespace RestSharp;
+namespace RustSharp;
 
 #nullable enable
 

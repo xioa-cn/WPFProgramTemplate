@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 #nullable enable
 
-namespace RestSharp
+namespace RustSharp
 {
    /// <summary>表示一个可能包含值（Some）或不包含值（None）的结果。</summary>
    public readonly struct Option<T>

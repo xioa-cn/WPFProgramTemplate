@@ -19,12 +19,14 @@
   </Folder>
   <Folder Name="/project/">
     <Project Path="project/PorocoatCellModule/PorocoatCellModule.csproj" />
+    <Project Path="project/ProjectCommonNuget/ProjectCommonNuget.csproj" />
+    <Project Path="project/XinjieThrustTest/XinjieThrustTest.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/DataRepository/DataRepository.csproj" />
     <Project Path="src/Machine.ModuleLoad/Machine.ModuleLoad.csproj" />
     <Project Path="src/MachineApplication.Entrance/MachineApplication.Entrance.csproj" />
-    <Project Path="src/RestSharp/RestSharp.csproj" />
+    <Project Path="src/RustSharp/RustSharp.csproj" />
   </Folder>
   <Project Path="MachineApplication.Create/MachineApplication.Create.csproj" />
   <Project Path="MachineApplication.Startup/MachineApplication.Startup.csproj" />

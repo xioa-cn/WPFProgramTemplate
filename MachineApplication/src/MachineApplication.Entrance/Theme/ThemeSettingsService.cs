@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using Machine.ModuleLoad.Utils;
 using MaterialDesignThemes.Wpf;
-using RestSharp;
+using RustSharp;
 
 namespace MachineApplication.Entrance.Theme;
 

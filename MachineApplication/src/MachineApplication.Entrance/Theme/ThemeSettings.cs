@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
-using RestSharp;
+using RustSharp;
 
 namespace MachineApplication.Entrance.Theme;
 

@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Machine.ModuleLoad.Region;
-using RestSharp;
+using RustSharp;
 
 namespace MachineApplication.Entrance.Components;
 

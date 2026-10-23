@@ -24,7 +24,7 @@
     <ItemGroup>
       <ProjectReference Include="..\I18nExtensions\I18nExtensions.csproj" />
       <ProjectReference Include="..\ModuleLoadSources\ModuleLoadSources.csproj" />
-      <ProjectReference Include="..\RestSharp\RestSharp.csproj" />
+      <ProjectReference Include="..\RustSharp\RustSharp.csproj" />
     </ItemGroup>
 
     <ItemGroup>

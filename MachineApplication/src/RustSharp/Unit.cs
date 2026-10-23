@@ -1,4 +1,4 @@
-﻿namespace RestSharp;
+﻿namespace RustSharp;
 
 public readonly struct Unit : System.IEquatable<Unit>
 {

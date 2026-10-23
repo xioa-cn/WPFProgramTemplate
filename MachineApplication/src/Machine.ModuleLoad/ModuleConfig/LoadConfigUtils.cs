@@ -1,6 +1,6 @@
 using System.IO;
 using System.Xml.Serialization;
-using RestSharp;
+using RustSharp;
 
 namespace Machine.ModuleLoad.ModuleConfig;
 
