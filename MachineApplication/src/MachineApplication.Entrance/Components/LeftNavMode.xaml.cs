@@ -43,6 +43,7 @@ public partial class LeftNavMode : UserControl
         menu.IsOpen = true;
     }
     private Button? _visibleSelection;
+    private bool _keyboardNavigation;
     /// <summary>初始化视图，运行时 DataContext 由父窗口提供。</summary>
     public LeftNavMode()
     {
@@ -50,7 +51,14 @@ public partial class LeftNavMode : UserControl
         AddHandler(Button.ClickEvent, new RoutedEventHandler(OpenCollapsedMenu));
         // 这里只同步视觉坐标，导航与选中状态仍由 VM 的 Command 管理。
         LayoutUpdated += UpdateSelectionArrow;
-        MouseMove += (_, _) => UpdateHoverBackground();
+        MouseMove += (_, _) => {
+            _keyboardNavigation = false;
+            UpdateHoverBackground();
+        };
+        PreviewKeyDown += (_, _) => {
+            _keyboardNavigation = true;
+            UpdateHoverBackground();
+        };
         MouseLeave += (_, _) => UpdateHoverBackground();
         GotKeyboardFocus += (_, _) => UpdateHoverBackground();
         LostKeyboardFocus += (_, _) => UpdateHoverBackground();
@@ -101,8 +109,9 @@ public partial class LeftNavMode : UserControl
     /// <summary>悬停和键盘焦点背景从侧栏左端铺开，独立于菜单层级缩进。</summary>
     private void UpdateHoverBackground()
     {
-        var button = FindMenuButton(MenuViewport, item => item.IsMouseOver)
-            ?? FindMenuButton(MenuViewport, item => item.IsKeyboardFocused);
+        var button = _keyboardNavigation
+            ? FindMenuButton(MenuViewport, item => item.IsKeyboardFocused)
+            : FindMenuButton(MenuViewport, item => item.IsMouseOver);
         if (button is null || button.DataContext is NavModel { IsSelected: true })
         {
             HoverBackground.Visibility = Visibility.Collapsed;

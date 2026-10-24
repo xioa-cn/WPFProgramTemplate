@@ -16,6 +16,7 @@ public sealed class EntranceModule : IModule
 
     public void RegisterTypes(IServiceCollection services)
     {
+        services.AddSingleton<ModulesConfigViewModel>();
         services.AddSingleton<UserManagementViewModel>();
         services.AddTransient<UserManagement>();
         services.AddSingleton<PermissionSettingsViewModel>();
@@ -34,6 +35,7 @@ public sealed class EntranceModule : IModule
         services.AddTransient<SuperPage>();
         services.AddTransient<BtnAuthViewModel>();
         services.AddTransient<BtnAuthPage>();
+        services.AddTransient<ModulesConfig>();
 
         services.AddKeyedSingleton<ILoadingBar, LoadingBar>("LoadingBar");
         services.AddSingleton<ISnackBar, Snack>();
@@ -45,6 +47,7 @@ public sealed class EntranceModule : IModule
         navigation.Register("settings/routes", typeof(RouterSetting), "Common");
         navigation.Register("settings/users", typeof(UserManagement), "Common");
         navigation.Register("settings/permissions", typeof(PermissionSettings), "Common");
+        navigation.Register("settings/module", typeof(ModulesConfig), "Common");
 
         navigation.Register("welcome", typeof(Welcome), "Common");
         navigation.Register("home", typeof(HomeView), "Common");

@@ -20,6 +20,7 @@
   <Folder Name="/project/">
     <Project Path="project/PorocoatCellModule/PorocoatCellModule.csproj" />
     <Project Path="project/ProjectCommonNuget/ProjectCommonNuget.csproj" />
+    <Project Path="project/ProjectLinker/ProjectLinker.csproj" />
     <Project Path="project/XinjieThrustTest/XinjieThrustTest.csproj" />
   </Folder>
   <Folder Name="/src/">

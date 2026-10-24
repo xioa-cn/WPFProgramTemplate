@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\project\PorocoatCellModule\PorocoatCellModule.csproj" />
+      <ProjectReference Include="..\project\ProjectLinker\ProjectLinker.csproj" />
       <ProjectReference Include="..\src\Machine.ModuleLoad\Machine.ModuleLoad.csproj" />
       <ProjectReference Include="..\src\MachineApplication.Entrance\MachineApplication.Entrance.csproj" />
       <ProjectReference Include="..\src\WorkFlowCore\WorkFlowCore.csproj" />
@@ -20,7 +20,7 @@
       <None Update="Router.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
       <None Update="appSettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
       <None Update="modules.xml">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
