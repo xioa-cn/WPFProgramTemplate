@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Shell;
 
 namespace MachineApplication.Entrance.Views;
 
@@ -12,12 +15,65 @@ public partial class FloatingPageWindow : Window
     public FloatingPageWindow()
     {
         InitializeComponent();
+        StateChanged += FloatingPageWindowStateChanged;
+        Loaded += FloatingPageWindowLoaded;
+        UpdateWindowCornerPreference();
     }
 
     public ContentControl PageHost => FloatingContent;
 
     // 关闭窗口统一走 RegionManager 的页面回填流程。
     private void DockClick(object sender, RoutedEventArgs args) => Close();
+
+    private void FloatingPageWindowLoaded(object sender, RoutedEventArgs args)
+    {
+        Loaded -= FloatingPageWindowLoaded;
+        StartWindowFrameAnimation();
+    }
+
+    private void FloatingPageWindowStateChanged(object? sender, EventArgs args) => UpdateWindowCornerPreference();
+
+    private void UpdateWindowCornerPreference()
+    {
+        var isMaximized = WindowState == WindowState.Maximized;
+        FloatingWindowFrame.CornerRadius = isMaximized ? new CornerRadius(0) : new CornerRadius(10);
+        FloatingWindowFrame.BorderThickness = isMaximized ? new Thickness(0) : new Thickness(5);
+        if (WindowChrome.GetWindowChrome(this) is { } chrome)
+            chrome.CornerRadius = isMaximized ? new CornerRadius(0) : new CornerRadius(10);
+
+        UpdateWindowContentClip();
+
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero) return;
+        var cornerPreference = isMaximized ? 1 : 2;
+        _ = DwmSetWindowAttribute(handle, 33, ref cornerPreference, sizeof(int));
+    }
+
+    private void FloatingWindowRootSizeChanged(object sender, SizeChangedEventArgs args) => UpdateWindowContentClip();
+
+    private void UpdateWindowContentClip()
+    {
+        var width = FloatingWindowRoot.ActualWidth;
+        var height = FloatingWindowRoot.ActualHeight;
+        if (width <= 0 || height <= 0) return;
+
+        var clipRadius = Math.Max(0, FloatingWindowFrame.CornerRadius.TopLeft - FloatingWindowFrame.BorderThickness.Left);
+        FloatingWindowRoot.Clip = new RectangleGeometry(new Rect(0, 0, width, height), clipRadius, clipRadius);
+    }
+
+    private void StartWindowFrameAnimation()
+    {
+        if (FloatingWindowFrame.BorderBrush is not LinearGradientBrush gradient) return;
+
+        var rotation = new RotateTransform(0, 0.5, 0.5);
+        gradient.RelativeTransform = rotation;
+        rotation.BeginAnimation(
+            RotateTransform.AngleProperty,
+            new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(8)))
+            {
+                RepeatBehavior = RepeatBehavior.Forever
+            });
+    }
     private HwndSource? _windowSource;
     private bool _isClosed;
 
@@ -32,6 +88,7 @@ public partial class FloatingPageWindow : Window
         var source = HwndSource.FromHwnd(handle);
         if (source is null || source.IsDisposed) return;
         _windowSource = source;
+        UpdateWindowCornerPreference();
         _windowSource.AddHook(WindowMessage);
     }
 
@@ -95,4 +152,7 @@ public partial class FloatingPageWindow : Window
     [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+    [DllImport("dwmapi.dll", PreserveSig = true)]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int attributeValue, int attributeSize);
 }

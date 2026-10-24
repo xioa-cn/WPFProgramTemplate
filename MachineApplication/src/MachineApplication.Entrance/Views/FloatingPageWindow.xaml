@@ -11,40 +11,82 @@
         Background="{DynamicResource MaterialDesign.Brush.Background}"
         Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
     <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="52" ResizeBorderThickness="6"
-                            GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+        <shell:WindowChrome CaptionHeight="70" ResizeBorderThickness="6"
+                            GlassFrameThickness="0" CornerRadius="10" UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/MachineApplication.Entrance;component/Theme/MainWindowResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <SolidColorBrush x:Key="FloatingWindowBorderBrush" Color="#737373" />
-            <Style x:Key="FloatingCaptionButton" TargetType="Button" BasedOn="{StaticResource WindowButton}">
-                <Setter Property="Height" Value="36" />
-                <Setter Property="Width" Value="36" />
+            <Style x:Key="FloatingCaptionButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+                <Setter Property="Height" Value="44" />
+                <Setter Property="Width" Value="44" />
             </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
-        <AdornerDecorator>
-            <Grid>
+        <Border
+            x:Name="ThemePrimaryLightSample"
+            Background="{DynamicResource MaterialDesign.Brush.Primary.Light}"
+            Visibility="Collapsed" />
+        <Border
+            x:Name="ThemePrimarySample"
+            Background="{DynamicResource MaterialDesign.Brush.Primary}"
+            Visibility="Collapsed" />
+        <Border
+            x:Name="ThemePrimaryDarkSample"
+            Background="{DynamicResource MaterialDesign.Brush.Primary.Dark}"
+            Visibility="Collapsed" />
+        <Border x:Name="FloatingWindowFrame" BorderThickness="5" CornerRadius="10">
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Offset="0" Color="{Binding Background.Color, ElementName=ThemePrimaryLightSample}" />
+                    <GradientStop Offset="0.28" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                    <GradientStop Offset="0.5" Color="{Binding Background.Color, ElementName=ThemePrimaryDarkSample}" />
+                    <GradientStop Offset="0.72" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                    <GradientStop Offset="1" Color="{Binding Background.Color, ElementName=ThemePrimaryLightSample}" />
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <AdornerDecorator>
+            <Grid x:Name="FloatingWindowRoot"
+                  Background="{DynamicResource MaterialDesign.Brush.Background}"
+                  SizeChanged="FloatingWindowRootSizeChanged">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="52" />
+                    <RowDefinition Height="70" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}" BorderThickness="0,0,0,1"
-                        BorderBrush="{StaticResource FloatingWindowBorderBrush}"
-                        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+                <Border Grid.Row="0"
+                        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Primary.Foreground}">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Offset="0" Color="{Binding Background.Color, ElementName=ThemePrimaryLightSample}" />
+                            <GradientStop Offset="0.32" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                            <GradientStop Offset="0.68" Color="{Binding Background.Color, ElementName=ThemePrimaryDarkSample}" />
+                            <GradientStop Offset="1" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <Grid Margin="16,0,6,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <Border
+                            Grid.ColumnSpan="2"
+                            Margin="-16,0,-6,0"
+                            IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Offset="0" Color="#20FFFFFF" />
+                                    <GradientStop Offset="0.65" Color="#00FFFFFF" />
+                                    <GradientStop Offset="1" Color="#08000000" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
                         <DockPanel VerticalAlignment="Center" Margin="0,0,12,0">
                             <materialDesign:PackIcon DockPanel.Dock="Left" Kind="OpenInNew"
                                                      Width="20" Height="20" Margin="0,0,10,0"
-                                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary}" />
+                                                     Foreground="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
                             <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"
                                        FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 
@@ -115,9 +157,7 @@
                     </ContentControl>
                 </Border>
             </Grid>
-        </AdornerDecorator>
-        <!-- 加粗外框与独立标题栏共同区分主窗口和浮动页面。 -->
-        <Border BorderThickness="2" BorderBrush="{StaticResource FloatingWindowBorderBrush}"
-                IsHitTestVisible="False" SnapsToDevicePixels="True" Panel.ZIndex="1" />
+            </AdornerDecorator>
+        </Border>
     </Grid>
 </Window>

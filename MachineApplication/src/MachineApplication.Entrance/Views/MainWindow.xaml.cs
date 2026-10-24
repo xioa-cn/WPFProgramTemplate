@@ -7,7 +7,9 @@ using System.Windows.Interop;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Shell;
 using Machine.ModuleLoad.ModuleConfig;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Components;
@@ -25,6 +27,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        StateChanged += MainWindowStateChanged;
+        UpdateWindowCornerPreference();
         Loaded += MainWindowLoaded;
         var provider = ModuleProvider.RootProvider;
 
@@ -73,6 +77,7 @@ public partial class MainWindow : Window
     private void MainWindowLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= MainWindowLoaded;
+        StartWindowFrameAnimation();
         var provider = MainProvider.ServiceProvider!;
         var navigation = provider.GetRequiredService<INavigationService>();
         EmptyWorkspaceWelcome.DataContext = new WelcomeViewModel(navigation);
@@ -120,6 +125,54 @@ public partial class MainWindow : Window
     private void WorkspaceTabsScrollChanged(object sender, ScrollChangedEventArgs args) => UpdateWorkspaceTabsOverflow();
 
     private void WorkspaceTabsScrollerSizeChanged(object sender, SizeChangedEventArgs args) => UpdateWorkspaceTabsOverflow();
+
+    private void MainWindowStateChanged(object? sender, EventArgs args) => UpdateWindowCornerPreference();
+
+    private void UpdateWindowCornerPreference()
+    {
+        var isMaximized = WindowState == WindowState.Maximized;
+        WindowFrame.CornerRadius = isMaximized ? new CornerRadius(0) : new CornerRadius(10);
+        WindowFrame.BorderThickness = isMaximized ? new Thickness(0) : new Thickness(5);
+        UpdateWindowContentClip();
+        if (WindowChrome.GetWindowChrome(this) is { } chrome)
+            chrome.CornerRadius = isMaximized ? new CornerRadius(0) : new CornerRadius(10);
+
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero) return;
+
+        // 普通窗口启用系统圆角，最大化时明确关闭，避免屏幕边缘留下圆角缺口。
+        var cornerPreference = isMaximized ? 1 : 2;
+        _ = DwmSetWindowAttribute(handle, 33, ref cornerPreference, sizeof(int));
+    }
+
+    private void MainWindowRootSizeChanged(object sender, SizeChangedEventArgs args) => UpdateWindowContentClip();
+
+    private void UpdateWindowContentClip()
+    {
+        var width = MainWindowRoot.ActualWidth;
+        var height = MainWindowRoot.ActualHeight;
+        if (width <= 0 || height <= 0) return;
+
+        // 子内容默认按矩形绘制；使用内侧圆角裁剪，避免内容盖住外框四角。
+        var borderThickness = WindowFrame.BorderThickness.Left;
+        var clipRadius = Math.Max(0, WindowFrame.CornerRadius.TopLeft - borderThickness);
+        MainWindowRoot.Clip = new RectangleGeometry(new Rect(0, 0, width, height), clipRadius, clipRadius);
+    }
+
+    private void StartWindowFrameAnimation()
+    {
+        if (WindowFrame.BorderBrush is not LinearGradientBrush gradient) return;
+
+        // 旋转主题色阶渐变，让窗体外框的颜色持续流动。
+        var rotation = new RotateTransform(0, 0.5, 0.5);
+        gradient.RelativeTransform = rotation;
+        rotation.BeginAnimation(
+            RotateTransform.AngleProperty,
+            new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(8)))
+            {
+                RepeatBehavior = RepeatBehavior.Forever
+            });
+    }
 
     private void UpdateWorkspaceTabsOverflow()
     {
@@ -206,6 +259,7 @@ public partial class MainWindow : Window
         var source = HwndSource.FromHwnd(handle);
         if (source is null || source.IsDisposed) return;
         _windowSource = source;
+        UpdateWindowCornerPreference();
         _windowSource.AddHook(WindowMessage);
     }
 
@@ -271,4 +325,7 @@ public partial class MainWindow : Window
     [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+    [DllImport("dwmapi.dll", PreserveSig = true)]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int attributeValue, int attributeSize);
 }

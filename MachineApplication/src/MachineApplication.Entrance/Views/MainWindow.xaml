@@ -33,7 +33,7 @@
         <!--  系统非客户区负责拖动、双击最大化和边缘缩放，无需鼠标事件。  -->
         <shell:WindowChrome
             CaptionHeight="70"
-            CornerRadius="0"
+            CornerRadius="10"
             GlassFrameThickness="0"
             ResizeBorderThickness="6"
             UseAeroCaptionButtons="False" />
@@ -42,12 +42,35 @@
         <ResourceDictionary Source="/MachineApplication.Entrance;component/Theme/MainWindowResources.xaml" />
     </Window.Resources>
     <AdornerDecorator>
-        <Border
-            Background="{DynamicResource MaterialDesign.Brush.Background}"
-            BorderBrush="{DynamicResource MaterialDesign.Brush.Divider}"
-            BorderThickness="0">
-
-            <Grid x:Name="MainWindowRoot">
+        <Grid>
+            <Border
+                x:Name="ThemePrimaryLightSample"
+                Background="{DynamicResource MaterialDesign.Brush.Primary.Light}"
+                Visibility="Collapsed" />
+            <Border
+                x:Name="ThemePrimarySample"
+                Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                Visibility="Collapsed" />
+            <Border
+                x:Name="ThemePrimaryDarkSample"
+                Background="{DynamicResource MaterialDesign.Brush.Primary.Dark}"
+                Visibility="Collapsed" />
+            <Border
+                x:Name="WindowFrame"
+                BorderThickness="5"
+                CornerRadius="10">
+                <Border.BorderBrush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Offset="0" Color="{Binding Background.Color, ElementName=ThemePrimaryLightSample}" />
+                        <GradientStop Offset="0.28" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                        <GradientStop Offset="0.5" Color="{Binding Background.Color, ElementName=ThemePrimaryDarkSample}" />
+                        <GradientStop Offset="0.72" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                        <GradientStop Offset="1" Color="{Binding Background.Color, ElementName=ThemePrimaryLightSample}" />
+                    </LinearGradientBrush>
+                </Border.BorderBrush>
+                <Grid x:Name="MainWindowRoot"
+                      Background="{DynamicResource MaterialDesign.Brush.Background}"
+                      SizeChanged="MainWindowRootSizeChanged">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="70" />
                     <RowDefinition Height="*" />
@@ -61,24 +84,30 @@
                                 VerticalContentAlignment="Bottom"
                                 Focusable="False" />
 
-                <!--  标题栏跟随主题主色，波纹揭开旧截图时可见整条标题栏逐步换色。  -->
+                <!-- 标题栏直接使用主题浅色、主色和深色色阶形成渐变。 -->
                 <Border
                     x:Name="ThemeTitleBar"
-                    Background="{DynamicResource MaterialDesign.Brush.Primary}"
                     TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Primary.Foreground}">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Offset="0" Color="{Binding Background.Color, ElementName=ThemePrimaryLightSample}" />
+                            <GradientStop Offset="0.32" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                            <GradientStop Offset="0.68" Color="{Binding Background.Color, ElementName=ThemePrimaryDarkSample}" />
+                            <GradientStop Offset="1" Color="{Binding Background.Color, ElementName=ThemePrimarySample}" />
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <Grid Margin="16,0,6,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <!--  轻微顶部反光保留主色，避免整条标题栏呈现生硬的纯色块。  -->
                         <Border
                             Grid.ColumnSpan="2"
                             Margin="-16,0,-6,0"
                             IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Offset="0" Color="#22FFFFFF" />
+                                    <GradientStop Offset="0" Color="#20FFFFFF" />
                                     <GradientStop Offset="0.65" Color="#00FFFFFF" />
                                     <GradientStop Offset="1" Color="#08000000" />
                                 </LinearGradientBrush>
@@ -665,7 +694,8 @@
                                 VerticalContentAlignment="Top"
                                 IsHitTestVisible="False"
                                 Focusable="False" />
-            </Grid>
-        </Border>
+                </Grid>
+            </Border>
+        </Grid>
     </AdornerDecorator>
 </Window>
