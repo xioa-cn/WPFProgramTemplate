@@ -1,17 +1,18 @@
 using System.Windows;
 using Machine.ModuleLoad.Logger;
 using Machine.ModuleLoad.ModuleConfig;
+using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.StartupTool;
 using Microsoft.Extensions.DependencyInjection;
 using Machine.ModuleLoad.Region;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Machine.ModuleLoad;
 
-public static class WpfApplication
-{
-    public static IServiceCollection Create<T>(string[]? args = null) where T : Application
-    {
+public static class WpfApplication {
+    public static IServiceCollection Create<T>(string[]? args = null) where T : Application {
         CmdTools.InitializeConsole();
         GlobalLogger.Banner(
             @"     __  __         _ _  _____                      _                __          _______  ______ ");
@@ -49,15 +50,13 @@ public static class WpfApplication
         return serviceCollection;
     }
 
-    extension(IServiceCollection serviceCollection)
-    {
+    extension(IServiceCollection serviceCollection) {
         /// <summary>
         /// 注册主窗体并构建Wpf容器 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public IServiceProvider BuildWpfWithStartupWindow<T>() where T : Window
-        {
+        public IServiceProvider BuildWpfWithStartupWindow<T>() where T : Window {
             serviceCollection.AddKeyedSingleton<Window, T>(Config.StartupWindow);
             return serviceCollection.BuildWpfServiceProvider();
         }
@@ -67,35 +66,40 @@ public static class WpfApplication
         /// <typeparam name="TMainWindow">认证后显示的主窗口。</typeparam>
         public IServiceProvider BuildWpfWithLoginStartupWindow<TLoginWindow, TMainWindow>()
             where TLoginWindow : Window, ILoginWindow
-            where TMainWindow : Window
-        {
+            where TMainWindow : Window {
             // Window 关闭后不可再次显示，使用瞬态注册，由流程服务持有当前窗口。
             serviceCollection.AddKeyedTransient<Window, TMainWindow>(Config.StartupWindow);
             serviceCollection.AddKeyedTransient<Window, TLoginWindow>(Config.LoginWindow);
             serviceCollection.AddSingleton<LoginWindowFlow>();
             return serviceCollection.BuildWpfServiceProvider();
         }
+
         /// <summary>
         /// 构建Wpf容器 
         /// </summary>
         /// <returns></returns>
-        public IServiceProvider BuildWpfServiceProvider()
-        {
-            serviceCollection.AddLogger();
+        public IServiceProvider BuildWpfServiceProvider() {
+            serviceCollection.TryAddSingleton<IConfiguration>(_ =>
+                new ConfigurationBuilder()
+                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                    .AddJsonFile("appSettings.json", optional: true, reloadOnChange: false)
+                    .Build()
+            );
+
+            serviceCollection
+                .AddLogger().AddWindowSettings();
 
             GlobalLogger.DebuggerLogger?.Trace("Build the already prepared WPF desktop program");
             // 明确调用 Microsoft DI，避免与宿主扩展方法重名导致递归。
             var provider =
-                ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(serviceCollection);
+                serviceCollection.BuildServiceProvider();
 
-            try
-            {
+            try {
                 GlobalLogger.Initialize(provider.GetRequiredService<IOptions<LoggingOptions>>().Value);
                 MainProvider.ServiceProvider = provider;
                 return provider;
             }
-            catch
-            {
+            catch {
                 provider.Dispose();
                 throw;
             }
@@ -113,8 +117,7 @@ public static class WpfApplication
     /// 启动 MSDI wpf程序
     /// </summary>
     /// <param name="serviceProvider"></param>
-    public static void RunWpf(this IServiceProvider serviceProvider)
-    {
+    public static void RunWpf(this IServiceProvider serviceProvider) {
         var app = serviceProvider.GetRequiredService<Application>();
         (app as IWpfApp)?.InitializeWpfComponent();
         var window = serviceProvider.GetRequiredKeyedService<Window>(
@@ -128,8 +131,7 @@ public static class WpfApplication
     }
 
     /// <summary>启动登录消息循环，主窗口仅在认证成功时解析和组装。</summary>
-    public static void RunWpfOfLogin(this IServiceProvider serviceProvider)
-    {
+    public static void RunWpfOfLogin(this IServiceProvider serviceProvider) {
         var app = serviceProvider.GetRequiredService<Application>();
         (app as IWpfApp)?.InitializeWpfComponent();
         var flow = serviceProvider.GetRequiredService<LoginWindowFlow>();

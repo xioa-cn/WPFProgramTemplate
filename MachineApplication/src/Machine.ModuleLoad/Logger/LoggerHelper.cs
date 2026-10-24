@@ -19,11 +19,7 @@ public static class LoggerHelper
         if (services.Any(descriptor => !descriptor.IsKeyedService &&
                                        descriptor.ServiceType == typeof(GlobalLoggerAdapter)))
             return services;
-
-        services.TryAddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appSettings.json", optional: true, reloadOnChange: false)
-            .Build());
+        
         services.AddOptions<LoggingOptions>().BindConfiguration(LoggingOptions.SectionName);
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IValidateOptions<LoggingOptions>>(new LoggingOptionsValidator()));

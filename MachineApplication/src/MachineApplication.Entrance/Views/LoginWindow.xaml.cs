@@ -25,6 +25,10 @@ public partial class LoginWindow : Window, ILoginWindow
     public LoginWindow(PermissionService permissions)
     {
         InitializeComponent();
+        var workArea = SystemParameters.WorkArea;
+        var scale = Math.Min(1d, Math.Min(workArea.Width * 0.94d / Width, workArea.Height * 0.92d / Height));
+        Width *= scale;
+        Height *= scale;
         _permissions = permissions;
 
         System.ComponentModel.PropertyChangedEventManager.AddHandler(ViewModelLocator.EntranceLang, OnLanguageChanged, string.Empty);

@@ -7,8 +7,12 @@ using MachineApplication.Entrance.Models;
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
 using System.Windows.Threading;
+using Machine.ModuleLoad;
 using Machine.ModuleLoad.Logger;
+using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace MachineApplication.Entrance.ViewModels;
 
@@ -18,6 +22,9 @@ public partial class MainWindowViewModel : MachineViewModelBase
     private readonly INavigationService _navigation;
     private readonly Dispatcher _dispatcher;
     private readonly HashSet<WorkspaceTab> _closingTabs = [];
+
+    public MainWindowSettings MainWindowSettings { get; } =
+        MainProvider.ServiceProvider!.GetRequiredService<IOptions<MainWindowSettings>>().Value;
 
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private bool _isNavigationCollapsed;
