@@ -127,6 +127,7 @@ public static class WpfApplication {
         GlobalLogger.DebuggerLogger?.Success("The WPF desktop program has started successfully.");
         GlobalLogger.DebuggerLogger?.Warn("Start monitoring the desktop program....");
         ModuleProvider.RootProvider = serviceProvider;
+        AppMultipleAccounts.AttachApplication(app);
         app.Run(window);
     }
 
@@ -138,6 +139,7 @@ public static class WpfApplication {
         var login = flow.CreateStartupWindow();
         GlobalLogger.DebuggerLogger?.Info("The login window is ready.");
         ModuleProvider.RootProvider = serviceProvider;
+        AppMultipleAccounts.AttachApplication(app);
         app.Run(login);
     }
 }

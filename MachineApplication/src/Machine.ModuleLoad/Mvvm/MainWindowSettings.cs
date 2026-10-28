@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Machine.ModuleLoad.Mvvm;
 
 public partial class MainWindowSettings : ViewModelBase {
-    [ObservableProperty] private double _height;
-    [ObservableProperty] private double _width;
+    [ObservableProperty] private double _height = 640;
+    [ObservableProperty] private double _width = 1040;
 
     public const string SectionName = "MainWindow";
 }

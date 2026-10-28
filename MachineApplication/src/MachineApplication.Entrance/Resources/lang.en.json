@@ -1,6 +1,6 @@
 {
     "Global":  {
-                   "AppName":  "WPF_Application"
+                   "AppName":  " "
                },
     "MainWindow":  {
                        "CollapseNavigation": "Collapse navigation", "ExpandNavigation": "Expand navigation",
@@ -198,6 +198,13 @@
     "IndexPageHint": "Normal shows the welcome page. Index opens the first registered page accessible to the current account, in menu order. Save and restart the application to apply.",
     "StartupObjectRequired": "The Startup section must be a JSON object.",
     "IndexPageInvalid": "Select a valid startup mode: Normal or Index.",
+    "MainWindowSize": "Main window size",
+    "WindowWidth": "Window width (DIP)",
+    "WindowHeight": "Window height (DIP)",
+    "WindowSizeHint": "Width must be 640–10000 and height 400–10000. Saving resizes the current window immediately and persists the values for restart.",
+    "MainWindowObjectRequired": "The MainWindow section must be a JSON object.",
+    "WindowWidthInvalid": "Main window width must be a number between 640 and 10000.",
+    "WindowHeightInvalid": "Main window height must be a number between 400 and 10000.",
     "LoggingSettings": "Logging settings",
     "ActiveProvider": "Currently active logging provider: {0}",
     "Provider": "Logging provider",

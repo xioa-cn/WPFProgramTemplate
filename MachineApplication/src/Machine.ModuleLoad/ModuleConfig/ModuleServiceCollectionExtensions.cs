@@ -1,9 +1,12 @@
 using System.Windows;
+using System.Windows.Threading;
 using Machine.ModuleLoad.Logger;
 using Machine.ModuleLoad.Region;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ILogger = Machine.ModuleLoad.Logger.ILogger;
 
 namespace Machine.ModuleLoad.ModuleConfig;
 
@@ -15,6 +18,7 @@ public static class ModuleServiceCollectionExtensions
         typeof(IConfiguration),
         typeof(IOptions<LoggingOptions>),
         typeof(ILogger),
+        typeof(Dispatcher),
         typeof(Machine.ModuleLoad.Mapper.PermissionService),
         typeof(StartupCommand),
         typeof(Application),

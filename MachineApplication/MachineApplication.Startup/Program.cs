@@ -12,7 +12,8 @@ public static class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        WpfApplication.Create<App>()
+        WpfApplication.Create<App>(args)
+            .MultipleAccounts("1327916255@qq.com")
             .AddDispatcher()
             .LoadModuleConfig(AppDomain.CurrentDomain.BaseDirectory)
             .BuildWpfWithLoginStartupWindow<LoginWindow, MainWindow>()

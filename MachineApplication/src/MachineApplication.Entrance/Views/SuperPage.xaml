@@ -216,6 +216,26 @@
                         </ComboBox>
                         <TextBlock Style="{StaticResource FieldHint}"
                                    Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_IndexPageHint}" />
+                        <Border Height="1" Background="{DynamicResource MaterialDesign.Brush.Separator.Background}" Margin="0,20" />
+                        <TextBlock Style="{StaticResource SectionTitle}" FontSize="14" Margin="0,0,0,14"
+                                   Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_MainWindowSize}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource FieldLabel}"
+                                           Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_WindowWidth}" />
+                                <TextBox Text="{Binding MainWindowWidth, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsInput}"
+                                         AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_WindowWidth}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource FieldLabel}"
+                                           Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_WindowHeight}" />
+                                <TextBox Text="{Binding MainWindowHeight, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsInput}"
+                                         AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_WindowHeight}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Style="{StaticResource FieldHint}"
+                                   Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_WindowSizeHint}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource SettingsCard}">

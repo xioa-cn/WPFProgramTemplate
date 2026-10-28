@@ -26,6 +26,12 @@ public partial class MainWindowViewModel : MachineViewModelBase
     public MainWindowSettings MainWindowSettings { get; } =
         MainProvider.ServiceProvider!.GetRequiredService<IOptions<MainWindowSettings>>().Value;
 
+    /// <summary>主窗口宽度，供窗口绑定并在设置页保存后即时更新。</summary>
+    public double WindowWidth => MainWindowSettings.Width;
+
+    /// <summary>主窗口高度，供窗口绑定并在设置页保存后即时更新。</summary>
+    public double WindowHeight => MainWindowSettings.Height;
+
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private bool _isNavigationCollapsed;
 
@@ -40,6 +46,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
     {
         _navigation = navigation;
         _dispatcher = System.Windows.Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+        PropertyChangedEventManager.AddHandler(MainWindowSettings, OnMainWindowSettingsChanged, string.Empty);
         ReloadNavigation();
         if (navigation is NavigationService routes)
         {
@@ -52,6 +59,15 @@ public partial class MainWindowViewModel : MachineViewModelBase
         PropertyChangedEventManager.AddHandler(ViewModelLocator.EntranceLang, OnLanguageChanged, string.Empty);
         RefreshLanguages();
     }
+
+    private void OnMainWindowSettingsChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName is nameof(MainWindowSettings.Width) or null or "")
+            OnPropertyChanged(nameof(WindowWidth));
+        if (args.PropertyName is nameof(MainWindowSettings.Height) or null or "")
+            OnPropertyChanged(nameof(WindowHeight));
+    }
+
     public IReadOnlyList<NavModel> NavigationItems { get; private set; } = [];
 
     /// <summary>供标题栏下拉菜单绑定的实际可用语言列表。</summary>
@@ -310,4 +326,3 @@ public partial class MainWindowViewModel : MachineViewModelBase
             foreach (var item in NavigationItems) item.SelectRoute("");
     }
 }
-

@@ -1,6 +1,6 @@
 {
   "Global": {
-    "AppName": "WPF_桌面程序"
+    "AppName": " "
   },
   "MainWindow": {
     "CollapseNavigation": "折叠导航栏",
@@ -199,6 +199,13 @@
     "IndexPageHint": "Normal 保持欢迎页；Index 按菜单顺序自动进入第一个已注册且当前账号有权限的页面。保存后重启应用生效。",
     "StartupObjectRequired": "Startup 配置节必须是 JSON 对象。",
     "IndexPageInvalid": "请选择有效的启动方式：Normal 或 Index。",
+    "MainWindowSize": "主窗口尺寸",
+    "WindowWidth": "窗口宽度（DIP）",
+    "WindowHeight": "窗口高度（DIP）",
+    "WindowSizeHint": "宽度需为 640–10000，高度需为 400–10000。保存后立即调整当前窗口，重启后继续使用。",
+    "MainWindowObjectRequired": "MainWindow 配置节必须是 JSON 对象。",
+    "WindowWidthInvalid": "主窗口宽度必须为 640 到 10000 之间的数字。",
+    "WindowHeightInvalid": "主窗口高度必须为 400 到 10000 之间的数字。",
     "LoggingSettings": "日志设置",
     "ActiveProvider": "当前运行中的日志库：{0}",
     "Provider": "日志库",

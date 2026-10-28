@@ -34,6 +34,7 @@ public static class DispatcherHelper
     {
         ArgumentNullException.ThrowIfNull(services);
         Initialize();
+        services.AddSingleton<Dispatcher>(sp => Application.Current?.Dispatcher);
         return services;
     }
 
