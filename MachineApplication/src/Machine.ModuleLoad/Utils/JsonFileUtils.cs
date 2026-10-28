@@ -11,15 +11,6 @@ namespace Machine.ModuleLoad.Utils;
 /// <summary>通用 UTF-8 JSON 文件读写；预期失败通过 Result 返回，不要求调用方捕获异常。</summary>
 public static class JsonFileUtils
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        WriteIndented = true,
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip, // 新增：忽略JSON中的注释
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // 防止 序列化中文乱码
-        Converters = { new JsonStringEnumConverter() }
-    };
-
     /// <summary>读取 JSON；可提供文件不存在时的默认值工厂，文件损坏不会使用该工厂掩盖错误。</summary>
     /// <typeparam name="T">需要反序列化的配置类型。</typeparam>
     /// <param name="filePath">JSON 文件路径。</param>
@@ -31,7 +22,7 @@ public static class JsonFileUtils
             return Result<T, string>.Err("JSON file path cannot be empty.");
         try
         {
-            var value = JsonSerializer.Deserialize<T>(File.ReadAllText(filePath, Encoding.UTF8), Options);
+            var value = JsonSerializer.Deserialize<T>(File.ReadAllText(filePath, Encoding.UTF8), JsonUtils.Options);
             return value is null
                 ? Result<T, string>.Err($"JSON file '{filePath}' contains null.")
                 : Result<T, string>.Ok(value);
@@ -61,7 +52,7 @@ public static class JsonFileUtils
         try
         {
             // 序列化成功后才接触磁盘，临时文件与目标位于同一卷。
-            var json = JsonSerializer.Serialize(value, Options);
+            var json = JsonSerializer.Serialize(value, JsonUtils.Options);
             var fullPath = Path.GetFullPath(filePath);
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
             temporaryPath = $"{fullPath}.{Guid.NewGuid():N}.tmp";
