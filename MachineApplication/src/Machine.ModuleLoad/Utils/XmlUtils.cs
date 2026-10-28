@@ -31,7 +31,7 @@ public static class XmlUtils
         }
     }
 
-    public static Result<T, Exception> ToModel<T>(this string xmlStr) where T : notnull
+    public static Result<T, Exception> XmlToModel<T>(this string xmlStr) where T : notnull
     {
         try
         {

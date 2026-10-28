@@ -29,7 +29,7 @@ public static class JsonUtils
         }
     }
 
-    public static Result<T, Exception> ToModel<T>(this string jsonStr) where T : notnull
+    public static Result<T, Exception> JsonToModel<T>(this string jsonStr) where T : notnull
     {
         try
         {
