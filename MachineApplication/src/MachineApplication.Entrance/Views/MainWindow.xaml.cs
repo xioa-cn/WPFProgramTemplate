@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shell;
 using Machine.ModuleLoad.ModuleConfig;
+using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Components;
 using MachineApplication.Entrance.Models;
@@ -24,7 +25,7 @@ namespace MachineApplication.Entrance.Views;
 [ModuleDataContextAttribute<MainWindowViewModel>("Common")]
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainWindow(ILoadingBar loadingBar)
     {
         InitializeComponent();
         StateChanged += MainWindowStateChanged;
@@ -32,8 +33,8 @@ public partial class MainWindow : Window
         Loaded += MainWindowLoaded;
         var provider = ModuleProvider.RootProvider;
 
-        var loadingBar = ModuleProvider.GetModuleProvider("Common")
-            .GetRequiredKeyedService<ILoadingBar>("LoadingBar");
+        // var loadingBar = ModuleProvider.GetModuleProvider("Common")
+        //     .GetRequiredKeyedService<ILoadingBar>("LoadingBar");
         if (loadingBar is not FrameworkElement loadingBarElement)
             throw new InvalidOperationException("注册的 LoadingBar 必须继承 FrameworkElement。");
 

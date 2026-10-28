@@ -20,7 +20,7 @@ public partial class HomeViewModel : MachineViewModelBase
     [NotifyCanExecuteChangedFor(nameof(RunLoadingCommand))]
     private bool _isBusy;
 
-    public HomeViewModel([FromKeyedServices("LoadingBar")] ILoadingBar loadingBar, ISnackBar snackBar)
+    public HomeViewModel(ILoadingBar loadingBar, ISnackBar snackBar)
     {
         _loadingBar = loadingBar;
         _snackBar = snackBar;

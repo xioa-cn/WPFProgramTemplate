@@ -15,6 +15,7 @@ public static class Program
         WpfApplication.Create<App>(args)
             .MultipleAccounts("1327916255@qq.com")
             .AddDispatcher()
+            .AddMessageControl()
             .LoadModuleConfig(AppDomain.CurrentDomain.BaseDirectory)
             .BuildWpfWithLoginStartupWindow<LoginWindow, MainWindow>()
             .LoadAndBuildModules()

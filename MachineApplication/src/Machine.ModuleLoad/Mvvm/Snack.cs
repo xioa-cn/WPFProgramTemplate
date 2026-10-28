@@ -1,14 +1,20 @@
-﻿using Machine.ModuleLoad.Region;
-using Machine.ModuleLoad.Logger;
-using MaterialDesignThemes.Wpf;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Markup;
+using Machine.ModuleLoad.Logger;
+using Machine.ModuleLoad.Region;
+using MaterialDesignThemes.Wpf;
 
-namespace MachineApplication.Entrance.Components;
+namespace Machine.ModuleLoad.Mvvm;
 
 public class Snack : Snackbar, ISnackBar, IDisposable
 {
     private readonly SnackbarMessageQueue _messageQueue;
+    private readonly DataTemplate _messageContentTemplate = (DataTemplate)XamlReader.Parse("""
+        <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+            <TextBlock Text="{Binding}" TextWrapping="Wrap" TextTrimming="None" />
+        </DataTemplate>
+        """);
     private readonly object _syncRoot = new();
     private bool _disposed;
 
@@ -21,7 +27,15 @@ public class Snack : Snackbar, ISnackBar, IDisposable
         VerticalAlignment = VerticalAlignment.Bottom;
         Margin = new Thickness(16);
         Focusable = false;
+        SnackbarMessage.SetContentMaxHeight(this, double.PositiveInfinity);
         Panel.SetZIndex(this, 6000);
+    }
+
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (args.Property == MessageProperty && args.NewValue is SnackbarMessage message)
+            message.ContentTemplate = _messageContentTemplate;
     }
 
     /// <summary>将消息加入显示队列；允许从后台线程调用。</summary>

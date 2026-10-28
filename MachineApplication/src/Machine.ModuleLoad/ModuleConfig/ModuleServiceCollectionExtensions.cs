@@ -29,7 +29,9 @@ public static class ModuleServiceCollectionExtensions
         typeof(INavigationService),
         typeof(INavigateAsync),
         typeof(IOptions<LoggingOptions>),
-        typeof(IOptions<MainWindowSettings>)
+        typeof(IOptions<MainWindowSettings>),
+        typeof(ILoadingBar),
+        typeof(ISnackBar)
     ];
 
     /// <summary>将主容器基础服务桥接到模块子容器，并按模块名称绑定区域管理器。</summary>

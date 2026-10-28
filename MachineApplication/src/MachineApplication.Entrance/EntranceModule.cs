@@ -1,5 +1,6 @@
 using Machine.ModuleLoad;
 using Machine.ModuleLoad.ModuleConfig;
+using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.Region;
 using MachineApplication.Entrance.Components;
 using MachineApplication.Entrance.ViewModels;
@@ -37,8 +38,7 @@ public sealed class EntranceModule : IModule
         services.AddTransient<BtnAuthPage>();
         services.AddTransient<ModulesConfig>();
 
-        services.AddKeyedSingleton<ILoadingBar, LoadingBar>("LoadingBar");
-        services.AddSingleton<ISnackBar, Snack>();
+        
     }
 
     public void OnInitialized(IServiceProvider provider)

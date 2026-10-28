@@ -5,7 +5,7 @@ using System.Windows.Media.Animation;
 using Machine.ModuleLoad.Region;
 using RustSharp;
 
-namespace MachineApplication.Entrance.Components;
+namespace Machine.ModuleLoad.Mvvm;
 
 /// <summary>使用 Naive UI LoadingBar 的视觉参数和状态转换的顶部加载条。</summary>
 /// <remarks>放在最外层 Grid 中，作为覆盖层使用，不拦截输入。使用 Start、Finish、Error 控制加载状态。</remarks>
