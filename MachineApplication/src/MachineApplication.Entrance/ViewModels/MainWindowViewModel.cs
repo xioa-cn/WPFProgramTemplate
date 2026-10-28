@@ -23,8 +23,7 @@ public partial class MainWindowViewModel : MachineViewModelBase
     private readonly Dispatcher _dispatcher;
     private readonly HashSet<WorkspaceTab> _closingTabs = [];
 
-    public MainWindowSettings MainWindowSettings { get; } =
-        MainProvider.ServiceProvider!.GetRequiredService<IOptions<MainWindowSettings>>().Value;
+    public MainWindowSettings MainWindowSettings { get; } 
 
     /// <summary>主窗口宽度，供窗口绑定并在设置页保存后即时更新。</summary>
     public double WindowWidth => MainWindowSettings.Width;
@@ -42,8 +41,9 @@ public partial class MainWindowViewModel : MachineViewModelBase
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private string _footerText = "© 2026 MachineApplication. Designed & Developed by XIOA";
     /// <summary>菜单以树结构配置，可在 Children 中继续增加层级。</summary>
-    public MainWindowViewModel(INavigationService navigation, PermissionService permissions)
+    public MainWindowViewModel(INavigationService navigation, PermissionService permissions,IOptions<MainWindowSettings> mainWindowSettings)
     {
+        MainWindowSettings = mainWindowSettings.Value;
         _navigation = navigation;
         _dispatcher = System.Windows.Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
         PropertyChangedEventManager.AddHandler(MainWindowSettings, OnMainWindowSettingsChanged, string.Empty);

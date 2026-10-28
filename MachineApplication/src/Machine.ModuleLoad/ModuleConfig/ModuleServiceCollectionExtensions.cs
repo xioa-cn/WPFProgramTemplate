@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using Machine.ModuleLoad.Logger;
+using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.Region;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +27,9 @@ public static class ModuleServiceCollectionExtensions
         typeof(IRegionManager),
         typeof(NavigationService),
         typeof(INavigationService),
-        typeof(INavigateAsync)
+        typeof(INavigateAsync),
+        typeof(IOptions<LoggingOptions>),
+        typeof(IOptions<MainWindowSettings>)
     ];
 
     /// <summary>将主容器基础服务桥接到模块子容器，并按模块名称绑定区域管理器。</summary>

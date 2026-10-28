@@ -204,6 +204,12 @@
                             <TextBlock Grid.Column="1" Style="{StaticResource SectionTitle}"
                                        Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_StartupSettings}" />
                         </Grid>
+                        <CheckBox IsChecked="{Binding StartWithWindows, Mode=TwoWay}" Margin="0,0,0,6"
+                                  IsEnabled="{Binding IsLoaded}"
+                                  Content="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_StartWithWindows}"
+                                  AutomationProperties.Name="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_StartWithWindows}" />
+                        <TextBlock Style="{StaticResource FieldHint}" Margin="0,0,0,18"
+                                   Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_StartWithWindowsHint}" />
                         <TextBlock Style="{StaticResource FieldLabel}"
                                    Text="{Binding Source={x:Static vm:ViewModelLocator.EntranceLang}, Path=SuperPage_IndexPage}" />
                         <ComboBox SelectedValue="{Binding IndexPage, Mode=TwoWay}" SelectedValuePath="Tag"

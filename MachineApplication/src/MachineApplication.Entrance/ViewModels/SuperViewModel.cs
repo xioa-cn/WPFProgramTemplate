@@ -11,6 +11,7 @@ using Machine.ModuleLoad.Region;
 using Machine.ModuleLoad.Mvvm;
 using Machine.ModuleLoad.Utils;
 using Machine.ModuleLoad.StartupTool;
+using MachineApplication.Entrance.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -25,6 +26,10 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
     private string? _loadedText;
     private Func<string> _statusText = () => string.Empty;
     private readonly MainWindowSettings _mainWindowSettings;
+
+    private readonly WindowsStartupRegistration _startupRegistration = new(
+        Environment.ProcessPath ??
+        throw new InvalidOperationException("Cannot determine the application executable path."));
 
     public string ConfigurationPath { get; } = Path.Combine(AppContext.BaseDirectory, "appSettings.json");
     public string ActiveProvider { get; }
@@ -49,6 +54,8 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
     /// <summary>主窗口启动方式：Normal 显示欢迎页，Index 自动进入首个可访问页面。</summary>
     [ObservableProperty] private string _indexPage = "Normal";
 
+    [ObservableProperty] private bool _startWithWindows;
+
     [ObservableProperty] private string _mainWindowWidth = "1040";
     [ObservableProperty] private string _mainWindowHeight = "640";
 
@@ -64,11 +71,13 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
     [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
     private bool _isLoaded;
 
-    public SuperViewModel() {
-        ActiveProvider = MainProvider.ServiceProvider
-            !.GetRequiredService<IOptions<LoggingOptions>>().Value.Provider.ToString();
-        _mainWindowSettings = MainProvider.ServiceProvider
-            !.GetRequiredService<IOptions<MainWindowSettings>>().Value;
+    private readonly ISnackBar _snackBar;
+
+    public SuperViewModel(IOptions<LoggingOptions> loggerOptions, IOptions<MainWindowSettings> mainWindowSettings,
+        ISnackBar snackBar) {
+        ActiveProvider = loggerOptions.Value.Provider.ToString();
+        _snackBar = snackBar;
+        _mainWindowSettings = mainWindowSettings.Value;
         IsConsoleOpen = CmdTools.IsConsoleOpen;
         System.ComponentModel.PropertyChangedEventManager.AddHandler(
             ViewModelLocator.EntranceLang, OnDisplayLanguageChanged, string.Empty);
@@ -131,6 +140,7 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
             var (document, options, indexPage, windowWidth, windowHeight) =
                 await Task.Run(() => ParseConfiguration(text), cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            StartWithWindows = _startupRegistration.IsEnabled();
             ApplyOptions(options);
             IndexPage = indexPage;
             MainWindowWidth = windowWidth.ToString("0.##", CultureInfo.InvariantCulture);
@@ -210,6 +220,7 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
     private void RestoreDefaults() {
         ApplyOptions(new LoggingOptions());
         IndexPage = "Normal";
+        StartWithWindows = false;
         MainWindowWidth = "1040";
         MainWindowHeight = "640";
         HasError = !IsLoaded;
@@ -295,8 +306,19 @@ public partial class SuperViewModel : MachineViewModelBase, IAsyncNavigationAwar
             _mainWindowSettings.Height = windowHeight;
             try {
                 _loadedText = File.ReadAllText(ConfigurationPath);
+                try {
+                    _startupRegistration.SetEnabled(StartWithWindows);
+                }
+                catch (Exception exception) {
+                    HasError = true;
+                    SetStatus(() =>
+                        string.Format(ViewModelLocator.EntranceLang.SuperPage_StartupSaveFailed, exception.Message));
+                    return;
+                }
+
                 HasError = false;
                 SetStatus(() => ViewModelLocator.EntranceLang.SuperPage_Saved);
+                _snackBar.SendMessage(ViewModelLocator.EntranceLang.SuperPage_Saved,5000);
             }
             catch (Exception exception) {
                 IsLoaded = false;
